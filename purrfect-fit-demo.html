@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Purrfect Fit</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#9aa5b8;--panel:#fff;--navy:#4a5a8a;--navy2:#3a4a7a;
+  --bbg:#7a8aaa;--bborder:#5878c8;
+  --cbg:#eef0f8;--cborder:#c8d0e8;
+  --or:#f5a623;--or2:#d88a10;
+  --gr:#72cc60;--gr2:#52a840;
+  --co:#e8785a;--pk:#f060a8;
+  --ye:#f5d020;--re:#e04848;
+  --tx:#1a2236;--mu:#6a7a9a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(255,255,255,.07),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 90%,rgba(0,0,40,.09),transparent);}
+
+/* ── screens ── */
+.scr{display:none;width:100%;height:100vh;z-index:1;position:relative;}
+.scr.on{display:flex;}
+
+/* ════════ TITLE ════════ */
+#s-title{flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:40px 24px;}
+.t-em{width:84px;height:84px;background:var(--navy);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 5px 0 #2a3050;}
+.t-nm{font-family:'Fredoka One',cursive;font-size:50px;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.2);}
+.t-tg{font-size:12px;color:rgba(255,255,255,.7);font-weight:700;letter-spacing:1px;}
+.deck-sec{width:100%;max-width:460px;}
+.deck-lbl{font-family:'Fredoka One',cursive;font-size:13px;color:#fff;letter-spacing:2px;text-align:center;margin-bottom:10px;}
+.deck-carousel-wrap{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:10px;}
+.deck-carousel{display:flex;gap:10px;overflow:hidden;scroll-snap-type:x mandatory;width:100%;}
+.dk{background:var(--panel);border-radius:12px;padding:13px 10px 10px;cursor:pointer;border:3px solid transparent;transition:all .16s;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.2);flex:0 0 calc(100% - 0px);scroll-snap-align:start;position:relative;}
+.dk:hover{transform:translateY(-2px);}
+.dk.sel{border-color:var(--or);}
+.dk-preview-btn{margin-top:8px;padding:4px 12px;border:none;cursor:pointer;background:rgba(74,90,138,.15);color:var(--navy);font-family:'Fredoka One',cursive;font-size:11px;border-radius:20px;display:block;width:100%;}
+.dk-preview-btn:hover{background:rgba(74,90,138,.28);}
+.dk-arr{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;transition:all .14s;display:flex;align-items:center;justify-content:center;}
+.dk-arr:hover{background:rgba(255,255,255,.3);}
+.dk-arr:disabled{opacity:.25;cursor:default;}
+.deck-dots{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
+.deck-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .15s;}
+.deck-dot.active{background:#fff;transform:scale(1.2);}
+
+.dk .de{font-size:22px;margin-bottom:4px;}
+.dk .dn{font-family:'Fredoka One',cursive;font-size:13px;color:var(--navy);}
+.dk .dd{font-size:10px;color:var(--mu);margin-top:2px;}
+.btn-play{width:100%;padding:13px;border:none;cursor:pointer;background:var(--gr);color:var(--tx);font-family:'Fredoka One',cursive;font-size:20px;letter-spacing:1px;border-radius:50px;box-shadow:0 5px 0 var(--gr2);transition:all .15s;}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--gr2);}
+.btn-cont{background:var(--bborder);color:#fff;box-shadow:0 5px 0 var(--navy2);}
+.btn-cont:hover{box-shadow:0 7px 0 var(--navy2)!important;}
+
+/* ════════ GAME ════════ */
+#s-game{flex-direction:row;align-items:stretch;padding:10px 12px;gap:10px;height:100vh;overflow:hidden;}
+
+/* LEFT */
+.lc{display:flex;flex-direction:column;gap:6px;width:188px;flex-shrink:0;}
+.tline{font-size:10px;color:rgba(255,255,255,.72);font-weight:700;font-style:italic;text-align:center;}
+.card{background:var(--panel);border-radius:12px;padding:8px 13px;box-shadow:0 4px 0 rgba(0,0,0,.14);}
+.card .lb{font-family:'Fredoka One',cursive;font-size:9px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;}
+.card .bv{font-family:'Fredoka One',cursive;font-size:29px;color:var(--tx);line-height:1.05;}
+.card .bv.or{color:var(--or);}
+.card .bv.co{color:var(--co);}
+.earn-b{display:inline-flex;align-items:center;gap:6px;background:var(--or);color:#fff;font-family:'Fredoka One',cursive;font-size:16px;border-radius:50px;padding:3px 10px;box-shadow:0 3px 0 var(--or2);margin-top:3px;}
+.pr{display:flex;gap:6px;margin-top:3px;}
+.pl{flex:1;border-radius:50px;padding:4px 6px;text-align:center;box-shadow:0 3px 0 rgba(0,0,0,.18);}
+.pl .pt{font-family:'Fredoka One',cursive;font-size:8px;letter-spacing:1px;}
+.pl .pv{font-family:'Fredoka One',cursive;font-size:18px;line-height:1;}
+.pl-or{background:var(--or);color:#fff;}.pl-or .pt{color:rgba(255,255,255,.8);}
+.pl-gr{background:var(--gr);color:var(--tx);}.pl-gr .pt{color:rgba(0,0,0,.45);}
+.drow{display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:10px;padding:6px 10px;box-shadow:0 3px 0 rgba(0,0,0,.12);}
+.dlb{font-family:'Fredoka One',cursive;font-size:10px;color:var(--mu);}
+.dpips{display:flex;gap:4px;}
+.dp{width:10px;height:10px;border-radius:50%;background:var(--re);transition:opacity .2s;}
+.dp.used{opacity:.2;}
+.btn-disc{padding:4px 10px;border:none;cursor:pointer;background:var(--co);color:#fff;font-family:'Fredoka One',cursive;font-size:11px;border-radius:18px;box-shadow:0 2px 0 #b05030;}
+.btn-disc:disabled{opacity:.35;cursor:not-allowed;}
+.pfbox{flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-size:56px;filter:drop-shadow(2px 4px 6px rgba(0,0,0,.2));}
+
+/* CENTER */
+.cc{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0;}
+.bwrap{background:var(--bborder);border-radius:16px;padding:7px;box-shadow:0 6px 0 rgba(40,60,120,.4),0 10px 30px rgba(0,0,0,.28);flex:1;display:flex;align-items:center;justify-content:center;max-height:calc(100vh - 168px);}
+.board{display:grid;gap:3px;background:var(--bbg);padding:5px;border-radius:10px;}
+.cell{background:var(--cbg);border-radius:6px;border:2px solid var(--cborder);cursor:pointer;transition:background .07s,border-color .07s;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.cell.ok{background:#d8eeff!important;border-color:var(--bborder)!important;}
+.cell.bad{background:rgba(220,72,72,.18)!important;border-color:var(--re)!important;}
+.cell.filled{border-color:rgba(255,255,255,.18);}
+.cell.filled:hover{filter:brightness(1.13);}
+.cell.pop{animation:pop .32s ease;}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.14);filter:brightness(1.45)}}
+@keyframes scoreFlash{0%,100%{transform:scale(1)}40%{transform:scale(1.08);filter:brightness(1.3);}}
+.score-card-lit{animation:scoreFlash .4s ease;outline:3px solid var(--or);outline-offset:2px;border-radius:12px;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes dealIn{0%{transform:translateY(28px) scale(.85);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+.cslot.deal{animation:dealIn .28s cubic-bezier(.175,.885,.32,1.275) both;}
+.bbtns{display:flex;gap:8px;align-items:center;}
+.board-treats{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;}
+.bt-pill{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,.18);border-radius:20px;padding:2px 8px 2px 4px;font-size:10px;font-weight:800;color:#fff;border:1.5px solid rgba(255,255,255,.25);cursor:default;position:relative;}
+.bt-pill.req-fail{filter:grayscale(1);opacity:0.45;border-color:rgba(255,0,0,.4);}
+.bt-pill-em{font-size:14px;}
+.bt-pill-nm{font-size:9px;font-family:'Fredoka One',cursive;letter-spacing:.3px;}
+.btn-reload-cfg{padding:7px 18px;border:2px solid rgba(255,255,255,.2);cursor:pointer;background:transparent;color:rgba(255,255,255,.45);font-family:'Fredoka One',cursive;font-size:13px;border-radius:50px;transition:all .15s;width:100%;margin-top:4px;}
+.btn-reload-cfg:hover{border-color:rgba(255,255,255,.5);color:rgba(255,255,255,.85);}
+.btn-menu-exit{padding:7px 14px;border:2px solid rgba(255,255,255,.18);cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.65);font-family:'Fredoka One',cursive;font-size:12px;border-radius:50px;transition:all .14s;width:100%;margin-top:auto;}
+.btn-menu-exit:hover{background:rgba(255,255,255,.2);color:#fff;}
+.btn-clr{padding:8px 14px;border:none;cursor:pointer;background:var(--re);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;border-radius:50px;box-shadow:0 4px 0 #a02828;transition:all .14s;}
+.btn-clr:hover{transform:translateY(-2px);}
+.btn-fit{padding:11px 34px;border:none;cursor:pointer;background:var(--gr);color:var(--tx);font-family:'Fredoka One',cursive;font-size:23px;letter-spacing:2px;border-radius:50px;box-shadow:0 5px 0 var(--gr2);transition:all .14s;}
+.btn-fit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 7px 0 var(--gr2);}
+.btn-fit:disabled{opacity:.45;cursor:not-allowed;}
+.hand{display:flex;gap:5px;align-items:flex-end;width:100%;justify-content:center;}
+.deck-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:2px;}
+.discard-inline{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 6px 3px 10px;}
+.dinfo-s{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);border-radius:20px;padding:3px 10px;}
+.dlb2{font-family:'Fredoka One',cursive;font-size:9px;color:rgba(255,255,255,.65);letter-spacing:1px;text-transform:uppercase;}
+.bv2{font-family:'Fredoka One',cursive;font-size:16px;color:#fff;margin-left:4px;}
+.bv2.co{color:var(--co);}
+.cslot{width:62px;height:76px;background:var(--panel);border-radius:10px;border:2px solid transparent;cursor:pointer;transition:all .14s;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 3px 0 rgba(0,0,0,.14);padding:5px;gap:2px;}
+.cslot:hover{border-color:var(--or);transform:translateY(-3px);}
+.cslot.held{border-color:var(--or);opacity:.45;transform:translateY(-3px);}
+.csn{font-size:8px;font-weight:800;color:var(--mu);text-align:center;line-height:1.1;}
+.eslot{width:62px;height:76px;background:rgba(255,255,255,.16);border-radius:10px;border:2px dashed rgba(255,255,255,.26);}
+
+/* RIGHT */
+.rc{display:flex;flex-direction:column;gap:6px;width:240px;flex-shrink:0;}
+.bpcard{background:var(--navy);border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.22);overflow:hidden;}
+.bphdr{background:var(--panel);margin:6px 6px 0;border-radius:8px;padding:5px 10px;text-align:center;font-family:'Fredoka One',cursive;font-size:13px;color:var(--tx);}
+.bpgw{padding:5px;}
+.bpg{display:grid;gap:3px;background:rgba(0,0,0,.22);padding:4px;border-radius:7px;}
+.bpc{background:rgba(255,255,255,.09);border-radius:4px;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .09s;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.bpc.ft{border-color:rgba(255,255,255,.22);}
+.bpc.ok{background:rgba(100,210,90,.22)!important;border-color:var(--gr)!important;}
+.bpc.bad{background:rgba(220,72,72,.18)!important;border-color:var(--re)!important;}
+.bpc.sel-t{outline:2px solid var(--ye);outline-offset:1px;}
+.bpcap{font-size:9px;color:rgba(255,255,255,.42);font-style:italic;text-align:center;padding:2px 6px 5px;}
+
+/* treat tooltip */
+.ttp{background:var(--panel);border-radius:12px;padding:9px 11px;box-shadow:0 4px 0 rgba(0,0,0,.14);display:none;}
+.ttp.on{display:block;}
+.ttn{font-family:'Fredoka One',cursive;font-size:14px;color:var(--pk);letter-spacing:.5px;}
+.tte{font-size:10px;font-weight:800;color:var(--tx);margin-top:2px;line-height:1.5;}
+.tte span{color:var(--pk);}
+.ttr{background:var(--or);color:#fff;border-radius:6px;padding:3px 7px;font-size:9px;font-weight:800;margin-top:4px;line-height:1.4;display:none;}
+.ttf{font-size:9px;color:var(--mu);font-style:italic;margin-top:4px;text-align:center;}
+.ttsell{margin-top:5px;display:flex;gap:6px;align-items:center;}
+.btn-sell{padding:3px 10px;border:none;cursor:pointer;background:#d09010;color:#fff;font-family:'Fredoka One',cursive;font-size:10px;border-radius:12px;box-shadow:0 2px 0 #a06008;}
+.btn-place{padding:3px 10px;border:none;cursor:pointer;background:var(--bborder);color:#fff;font-family:'Fredoka One',cursive;font-size:10px;border-radius:12px;box-shadow:0 2px 0 var(--navy2);}
+
+.dinfo{background:var(--panel);border-radius:12px;padding:8px;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.14);}
+.dinfo .lb{font-family:'Fredoka One',cursive;font-size:11px;color:var(--mu);}
+.dinfo .bv{font-family:'Fredoka One',cursive;font-size:22px;color:var(--or);}
+.rinfo{background:var(--panel);border-radius:12px;padding:8px 12px;text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.14);}
+.rinfo .lb{font-family:'Fredoka One',cursive;font-size:8px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;}
+.rinfo .bv{font-family:'Fredoka One',cursive;font-size:26px;color:var(--co);line-height:1;}
+.rinfo .sub{font-size:9px;color:var(--mu);}
+
+/* ── GHOST (follows cursor) ── */
+#ghost{position:fixed;pointer-events:none;z-index:9999;display:none;transform:translate(-50%,-50%);transition:none;}
+.gh-grid{display:grid;gap:3px;}
+.gh-cell{border-radius:5px;border:2px solid rgba(255,255,255,.5);}
+
+/* ── INSTRUCTION HUD ── */
+#ihud{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  background:rgba(20,28,52,.86);color:#fff;border-radius:12px;
+  padding:7px 16px;display:none;flex-direction:row;gap:12px;align-items:center;
+  font-size:10px;font-weight:700;z-index:9998;
+  backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 4px 18px rgba(0,0,0,.32);
+}
+#ihud.on{display:flex;}
+.ik{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:5px;padding:2px 7px;font-family:'Fredoka One',cursive;font-size:11px;}
+.isep{color:rgba(255,255,255,.28);}
+
+/* ── OVERLAYS ── */
+.ov{position:fixed;inset:0;background:rgba(16,24,52,.76);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(5px);}
+.ov.off{display:none;}
+.ob{background:var(--panel);border-radius:20px;padding:32px 40px;text-align:center;max-width:390px;width:90%;box-shadow:0 8px 0 rgba(0,0,0,.28),0 18px 50px rgba(0,0,0,.38);animation:pIn .28s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes pIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.ob h1{font-family:'Fredoka One',cursive;font-size:34px;color:var(--tx);margin-bottom:4px;}
+.ob .sub{color:var(--mu);margin-bottom:10px;font-size:12px;font-weight:700;}
+.ob .big{font-family:'Fredoka One',cursive;font-size:52px;line-height:1;color:var(--tx);}
+.ob .brk{font-size:10px;color:var(--mu);margin-top:7px;line-height:2.1;}
+/* score sequence overlay */
+#ov-score-seq{position:fixed;inset:0;z-index:400;pointer-events:none;overflow:hidden;}
+#ov-score-seq.active{pointer-events:auto;}
+.score-board-overlay{position:absolute;pointer-events:none;}
+.score-cell-label{
+  position:absolute;display:flex;align-items:center;justify-content:center;
+  font-family:'Fredoka One',cursive;font-size:13px;color:#fff;
+  background:rgba(0,0,0,.55);border-radius:6px;pointer-events:none;
+  transition:all .3s ease;opacity:0;transform:scale(.6);
+  border:2px solid rgba(255,255,255,.3);
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
+}
+.score-cell-label.show{opacity:1;transform:scale(1);}
+.score-cell-label.boosted{background:rgba(245,166,35,.85);border-color:#fff;transform:scale(1.15);}
+.score-treat-flash{
+  position:absolute;border-radius:8px;pointer-events:none;
+  border:3px solid rgba(255,255,255,.9);
+  box-shadow:0 0 16px 4px rgba(255,255,255,.5);
+  opacity:0;transition:opacity .25s;
+}
+.score-treat-flash.on{opacity:1;}
+.score-counter-wrap{position:fixed;top:32%;left:50%;transform:translateX(-50%);z-index:401;text-align:center;}
+.seq-score-counter{
+  font-family:'Fredoka One',cursive;font-size:64px;color:#fff;
+  text-shadow:0 4px 0 rgba(0,0,0,.4),0 0 30px rgba(255,255,255,.2);
+  letter-spacing:2px;line-height:1;
+}
+.score-total-banner{
+  position:fixed;bottom:20%;left:50%;transform:translateX(-50%) scale(.5);
+  background:var(--gr);color:var(--tx);
+  font-family:'Fredoka One',cursive;font-size:48px;
+  border-radius:20px;padding:16px 40px;
+  box-shadow:0 8px 0 var(--gr2),0 14px 40px rgba(0,0,0,.4);
+  opacity:0;transition:all .4s cubic-bezier(.175,.885,.32,1.275);
+  white-space:nowrap;z-index:401;
+}
+.score-total-banner.show{opacity:1;transform:translateX(-50%) scale(1);}
+.score-continue-btn{
+  position:fixed;bottom:12%;left:50%;transform:translateX(-50%);
+  padding:12px 32px;border:none;cursor:pointer;
+  background:#fff;color:var(--tx);font-family:'Fredoka One',cursive;font-size:16px;
+  border-radius:50px;box-shadow:0 4px 0 rgba(0,0,0,.2);
+  opacity:0;transition:opacity .3s;z-index:402;
+}
+.score-continue-btn.show{opacity:1;}
+.seq-log{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12% + 60px);
+  display:flex;flex-direction:column;align-items:center;gap:4px;z-index:401;
+  max-width:320px;width:90%;
+}
+.seq-log-line{
+  background:rgba(26,34,54,.88);color:#fff;border-radius:10px;
+  padding:5px 14px;font-family:'Fredoka One',cursive;font-size:12px;
+  opacity:0;transform:translateY(8px);transition:all .25s;text-align:center;
+}
+.seq-log-line.show{opacity:1;transform:translateY(0);}
+.ost{display:flex;justify-content:center;gap:20px;margin-bottom:14px;}
+.os .v{font-family:'Fredoka One',cursive;font-size:24px;color:var(--tx);}
+.os .l{font-size:9px;color:var(--mu);text-transform:uppercase;font-weight:800;}
+.bok{margin-top:12px;display:inline-block;padding:10px 28px;border:none;cursor:pointer;background:var(--gr);color:var(--tx);font-family:'Fredoka One',cursive;font-size:15px;border-radius:50px;box-shadow:0 4px 0 var(--gr2);}
+.bok:hover{transform:translateY(-2px);}
+.bok.re{background:var(--co);color:#fff;box-shadow:0 4px 0 #b04020;}
+.bok.or{background:var(--or);color:#fff;box-shadow:0 4px 0 var(--or2);}
+
+/* ════ ROUNDS SCREEN ════ */
+#s-rounds{flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.rds-bg{position:absolute;inset:0;background:linear-gradient(135deg,#2a3560 0%,#4a5a8a 50%,#2a3560 100%);}
+.rds-bg::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 40px,rgba(255,255,255,.02) 40px,rgba(255,255,255,.02) 41px);}
+.rds-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:28px;width:100%;max-width:860px;padding:32px 24px;}
+.rds-topbar{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;}
+.rds-title{font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,255,255,.45);letter-spacing:4px;text-transform:uppercase;}
+.rds-btn-exit{padding:7px 16px;border:2px solid rgba(255,255,255,.2);cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-family:'Fredoka One',cursive;font-size:12px;border-radius:50px;transition:all .14s;letter-spacing:.5px;}
+.rds-btn-exit:hover{background:rgba(255,255,255,.2);color:#fff;transform:translateY(-1px);}
+.rds-cash-badge{display:flex;align-items:center;gap:8px;background:var(--or);color:#fff;
+  border-radius:50px;padding:7px 18px;font-family:'Fredoka One',cursive;font-size:20px;
+  box-shadow:0 4px 0 var(--or2),0 6px 16px rgba(0,0,0,.3);}
+.rds-coin{font-size:20px;}
+.rds-rounds-track{display:flex;align-items:center;gap:0;width:100%;justify-content:center;}
+.rds-round-item{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;}
+.rds-connector{width:32px;height:3px;background:rgba(255,255,255,.2);flex-shrink:0;margin-top:-20px;}
+.rds-connector.done{background:var(--gr);}
+.rr-bubble{
+  width:64px;height:64px;border-radius:50%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;border:3px solid rgba(255,255,255,.2);
+  font-family:'Fredoka One',cursive;transition:all .2s;
+}
+.rr-bubble.past{background:rgba(255,255,255,.15);border-color:var(--gr);opacity:.7;}
+.rr-bubble.current{
+  width:88px;height:88px;background:var(--or);border-color:#fff;border-width:4px;
+  box-shadow:0 0 0 6px rgba(245,166,35,.3),0 8px 24px rgba(0,0,0,.4);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 6px rgba(245,166,35,.3),0 8px 24px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 12px rgba(245,166,35,.15),0 8px 24px rgba(0,0,0,.4)}}
+.rr-bubble.future{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.15);opacity:.55;}
+.rr-num{font-family:'Fredoka One',cursive;font-size:22px;color:#fff;line-height:1;}
+.rr-cat{font-size:18px;line-height:1;}
+.rr-lbl{font-size:9px;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:1px;text-transform:uppercase;}
+.rr-tgt{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;}
+.rr-lbl.current-lbl{color:var(--ye);font-size:11px;}
+.rds-actions{display:flex;gap:16px;align-items:center;}
+.rds-pip-row{display:flex;gap:8px;align-items:center;justify-content:center;}
+.rds-pip{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);transition:all .2s;cursor:default;}
+.rds-pip.done{background:var(--gr);}
+.rds-pip.cur{width:16px;height:16px;background:var(--or);box-shadow:0 0 0 4px rgba(245,166,35,.3);}
+.rds-round-card{background:rgba(255,255,255,.1);border-radius:24px;padding:28px 40px;text-align:center;border:2px solid rgba(255,255,255,.18);backdrop-filter:blur(6px);box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.rds-rc-label{font-family:'Fredoka One',cursive;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:4px;text-transform:uppercase;margin-bottom:2px;}
+.rds-rc-num{font-family:'Fredoka One',cursive;font-size:72px;line-height:1;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.2);}
+.rds-rc-stats{display:flex;align-items:center;justify-content:center;gap:0;margin-top:16px;}
+.rds-rc-stat{padding:0 20px;text-align:center;}
+.rds-rc-div{width:1px;height:32px;background:rgba(255,255,255,.2);}
+.rds-rc-sv{font-family:'Fredoka One',cursive;font-size:22px;color:var(--ye);}
+.rds-rc-sl{font-size:10px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.rds-shop-col{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.rds-btn-shop{
+  padding:12px 26px;border:none;cursor:pointer;
+  background:rgba(255,255,255,.14);color:#fff;
+  font-family:'Fredoka One',cursive;font-size:15px;border-radius:50px;
+  border:2px solid rgba(255,255,255,.25);transition:all .14s;letter-spacing:.5px;
+}
+.rds-btn-shop:hover{background:rgba(255,255,255,.22);transform:translateY(-2px);}
+.rds-btn-play{
+  padding:14px 36px;border:none;cursor:pointer;
+  background:var(--gr);color:var(--tx);
+  font-family:'Fredoka One',cursive;font-size:20px;border-radius:50px;
+  box-shadow:0 5px 0 var(--gr2),0 8px 20px rgba(0,0,0,.3);
+  transition:all .14s;letter-spacing:1px;
+}
+.rds-btn-play:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--gr2),0 10px 24px rgba(0,0,0,.3);}
+.rds-hint{font-size:11px;color:rgba(255,255,255,.45);font-style:italic;text-align:center;}
+.shop-warn-tip{
+  position:fixed;z-index:9999;pointer-events:none;
+  background:var(--or);color:#fff;border-radius:20px;padding:7px 16px;
+  font-family:'Fredoka One',cursive;font-size:13px;letter-spacing:.5px;
+  box-shadow:0 4px 0 var(--or2),0 6px 18px rgba(0,0,0,.35);
+  opacity:0;transition:opacity .2s,transform .2s;
+  transform:translateX(-50%) translateY(4px);
+  white-space:nowrap;
+}
+.shop-warn-tip.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.rr-info-block{display:flex;flex-direction:row;align-items:stretch;gap:10px;margin-top:12px;}
+.rr-stat{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.rr-info-tgt{
+  font-family:'Fredoka One',cursive;font-size:22px;color:#fff;
+  background:rgba(255,255,255,.15);border-radius:14px;padding:8px 20px;
+  border:2px solid rgba(255,255,255,.25);letter-spacing:.5px;line-height:1.1;
+  text-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+.rr-info-tgt-lbl{font-size:8px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase;}
+.rr-info-earn{
+  font-family:'Fredoka One',cursive;font-size:22px;color:#1a2236;
+  background:var(--ye);border-radius:14px;padding:8px 20px;
+  box-shadow:0 4px 0 #b89000,0 6px 16px rgba(0,0,0,.3);line-height:1.1;
+}
+.rr-info-earn-lbl{font-size:8px;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase;}
+.rr-stat-row{display:flex;gap:10px;align-items:stretch;}
+
+/* ════ SHOP ════ */
+#s-shop{
+  flex-direction:row;align-items:stretch;overflow:hidden;
+  background:#5a6585;
+}
+/* left panel */
+.sp-left{
+  width:280px;flex-shrink:0;display:flex;flex-direction:column;
+  padding:18px 20px;gap:12px;position:relative;overflow:hidden;
+}
+.sp-left::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 30% 110%,rgba(0,0,40,.25),transparent);
+}
+.sp-topbar{display:flex;align-items:center;gap:10px;z-index:1;}
+.sp-back{display:flex;align-items:center;gap:7px;background:var(--gr);color:var(--tx);
+  font-family:'Fredoka One',cursive;font-size:14px;border-radius:50px;padding:7px 16px;
+  border:none;cursor:pointer;box-shadow:0 4px 0 var(--gr2);transition:all .14s;letter-spacing:.5px;}
+.sp-back:hover{transform:translateY(-2px);}
+.sp-mon{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);
+  border-radius:50px;padding:6px 14px;border:2px solid rgba(255,255,255,.22);}
+.sp-mon-lbl{font-family:'Fredoka One',cursive;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:1px;}
+.sp-mon-val{display:flex;align-items:center;gap:5px;font-family:'Fredoka One',cursive;font-size:18px;color:#fff;}
+.sp-coin{width:22px;height:22px;background:var(--or);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 0 var(--or2);}
+.sp-quote{font-size:10px;color:rgba(255,255,255,.55);font-style:italic;z-index:1;}
+.sp-label{font-family:'Fredoka One',cursive;font-size:9px;color:var(--or);letter-spacing:2px;text-transform:uppercase;z-index:1;}
+.sp-title{font-family:'Fredoka One',cursive;font-size:44px;color:#fff;line-height:1;
+  text-shadow:3px 4px 0 rgba(0,0,0,.25);z-index:1;margin-top:-4px;}
+.sp-mascot{flex:1;display:flex;align-items:flex-end;justify-content:center;z-index:1;padding-bottom:8px;}
+.sp-bag{font-size:100px;filter:drop-shadow(4px 6px 8px rgba(0,0,0,.35));line-height:1;}
+
+/* center panel */
+.sp-center{
+  flex:0 0 300px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:20px 16px;gap:10px;
+}
+.sp-bp-card{
+  background:rgba(255,255,255,.12);border-radius:18px;
+  border:2px solid rgba(255,255,255,.2);overflow:hidden;
+  box-shadow:0 6px 24px rgba(0,0,0,.22);width:100%;
+}
+.sp-bp-hdr{
+  background:rgba(255,255,255,.9);border-radius:12px;
+  margin:10px 10px 0;padding:6px 12px;text-align:center;
+  font-family:'Fredoka One',cursive;font-size:14px;color:var(--tx);letter-spacing:2px;
+}
+.sp-bp-gw{padding:10px 10px 8px;}
+.sp-bpg{display:grid;gap:4px;background:rgba(0,0,0,.15);padding:6px;border-radius:10px;}
+.sp-bpc{background:rgba(255,255,255,.12);border-radius:5px;border:1px solid rgba(255,255,255,.1);
+  cursor:pointer;transition:all .09s;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.sp-bpc.ft{border-color:rgba(255,255,255,.3);}
+.sp-bpc.ok{background:rgba(100,210,90,.25)!important;border-color:var(--gr)!important;}
+.sp-bpc.bad{background:rgba(220,72,72,.2)!important;border-color:var(--re)!important;}
+.sp-bpc.sel-t{outline:2px solid var(--ye);outline-offset:1px;}
+.sp-bp-cap{font-size:9px;color:rgba(255,255,255,.45);font-style:italic;text-align:center;padding:4px 10px 10px;}
+.sp-bp-inv{margin-top:6px;width:100%;}
+.sp-bp-inv-hdr{font-family:'Fredoka One',cursive;font-size:10px;color:rgba(255,255,255,.6);letter-spacing:1px;margin-bottom:5px;text-align:center;}
+.sp-inv-list{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;}
+.sp-inv-row{background:rgba(255,255,255,.1);border-radius:8px;padding:5px 8px;
+  display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.12);}
+.sp-inv-em{font-size:16px;}
+.sp-inv-nm{font-family:'Fredoka One',cursive;font-size:10px;color:#fff;flex:1;}
+.sp-inv-sell{padding:2px 8px;border:none;cursor:pointer;background:#c08010;color:#fff;
+  font-family:'Fredoka One',cursive;font-size:9px;border-radius:8px;box-shadow:0 2px 0 #805008;
+  white-space:nowrap;}
+
+/* right panel */
+.sp-right{
+  flex:1;display:flex;flex-direction:column;overflow-y:auto;
+  padding:14px 16px 14px 8px;gap:12px;
+}
+/* treat section */
+.treat-section{
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 4px 0 rgba(0,0,0,.2);
+}
+.treat-section.blue{background:#3060c0;}
+.treat-sec-hdr{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:rgba(255,255,255,.1);
+}
+.treat-sec-lbl{
+  font-family:'Fredoka One',cursive;font-size:16px;color:#fff;letter-spacing:2px;flex:1;
+}
+.treat-reroll{
+  background:var(--re);color:#fff;border:none;cursor:pointer;
+  border-radius:50px;height:34px;padding:0 14px;display:flex;align-items:center;justify-content:center;gap:5px;
+  font-family:'Fredoka One',cursive;font-size:13px;box-shadow:0 3px 0 #a02020;
+  transition:all .12s;white-space:nowrap;
+}
+.treat-reroll:hover{transform:translateY(-2px);}
+.treat-reroll:disabled{opacity:.35;cursor:not-allowed;}
+.treat-sec-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;}
+.treat-row{display:flex;gap:8px;}
+/* individual treat card */
+.tc{
+  flex:1;background:rgba(255,255,255,.92);border-radius:12px;
+  padding:10px 8px 8px;cursor:pointer;border:3px solid transparent;
+  transition:all .15s;box-shadow:0 3px 0 rgba(0,0,0,.18);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  position:relative;min-width:0;
+}
+.tc:hover:not(.tc-dis){transform:translateY(-3px);border-color:var(--pk);box-shadow:0 5px 0 rgba(0,0,0,.2);}
+.tc.tc-dis{opacity:.42;cursor:not-allowed;}
+.tc.tc-bought{opacity:.38;pointer-events:none;}
+.tc-em{font-size:32px;line-height:1;}
+.tc-shape{display:flex;justify-content:center;}
+.tc-nm{font-family:'Fredoka One',cursive;font-size:12px;color:var(--tx);text-align:center;line-height:1.2;}
+.tc-ef{font-size:11px;color:var(--mu);text-align:center;line-height:1.4;font-weight:800;}
+/* coin price badge */
+.tc-price{
+  display:flex;align-items:center;gap:4px;margin-top:2px;
+  background:var(--or);color:#fff;border-radius:50px;
+  padding:3px 10px 3px 4px;box-shadow:0 3px 0 var(--or2);
+  font-family:'Fredoka One',cursive;font-size:14px;
+}
+.tc-price-coin{width:20px;height:20px;background:#f8d040;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.15);}
+.tc-price.sold{background:#aaa;box-shadow:0 3px 0 #888;}
+.treat-sec-flavor{font-size:9px;color:rgba(255,255,255,.5);font-style:italic;text-align:right;padding:0 10px 8px;}
+</style>
+</head>
+<body>
+
+<div id="ov-deck" class="ov off" onclick="closeDeckPopup()">
+  <div class="ob deck-ob" onclick="event.stopPropagation()" style="max-width:520px;max-height:80vh;overflow-y:auto;padding:24px 28px;">
+    <h1 style="font-size:22px;margin-bottom:4px;">📦 Remaining Deck</h1>
+    <div class="sub" id="deck-pop-sub">30 cards left</div>
+    <div id="deck-pop-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;margin-top:16px;"></div>
+    <button class="bok" onclick="closeDeckPopup()" style="margin-top:18px;">Close</button>
+  </div>
+</div>
+<div id="ghost"><div id="gh-grid" class="gh-grid"></div></div>
+<div id="board-tip" style="position:fixed;display:none;z-index:9990;pointer-events:none;background:rgba(20,28,52,.94);color:#fff;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:700;max-width:180px;border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 14px rgba(0,0,0,.4);line-height:1.5;"></div>
+<div id="ihud">
+  <div class="ik">R</div><span>or</span><div class="ik">RMB</div><span>Rotate</span>
+  <div class="isep">|</div>
+  <div class="ik">Click</div><span>Place</span>
+  <div class="isep">|</div>
+  <div class="ik">ESC</div><span>Cancel</span>
+</div>
+
+<!-- LOADING SCREEN -->
+<div id="s-loading" class="scr on" style="flex-direction:column;align-items:center;justify-content:center;gap:18px;">
+  <div style="font-size:56px;animation:spin 1.2s linear infinite;">🐱</div>
+  <div style="font-family:'Fredoka One',cursive;font-size:22px;color:#fff;letter-spacing:2px;">Loading config...</div>
+  <div id="load-status" style="font-size:12px;color:rgba(255,255,255,.55);font-style:italic;">fetching sheets</div>
+  <div id="load-error" style="display:none;background:rgba(220,72,72,.2);border:1px solid var(--re);border-radius:12px;padding:12px 20px;font-size:12px;color:#ffaaaa;text-align:center;max-width:360px;"></div>
+</div>
+<!-- TITLE -->
+<div id="s-title" class="scr">
+  <div style="text-align:center;margin-bottom:4px;">
+    <div class="t-em">🐱</div>
+    <div class="t-nm">Purrfect Fit</div>
+    <div class="t-tg">plan · place · purr-fect your score!</div>
+  </div>
+  <div class="deck-sec">
+    <div class="deck-lbl">SELECT YOUR DECK</div>
+    <div class="deck-carousel-wrap">
+      <button class="dk-arr" id="dk-arr-l" onclick="deckNav(-1)" disabled>&#9664;</button>
+      <div class="deck-carousel" id="deck-carousel">
+        <div class="dk sel" data-deck="classic"><div class="de">🟠⬛</div><div class="dn">Cheddar &amp; Pepper</div><div class="dd">Balanced orange &amp; black</div><button class="dk-preview-btn" onclick="openDeckPreview('classic')">👁 Preview Deck</button></div>
+        <div class="dk" data-deck="orange"><div class="de">🟠🟠</div><div class="dn">Orange Gang</div><div class="dd">All orange, big type synergy</div><button class="dk-preview-btn" onclick="openDeckPreview('orange')">👁 Preview Deck</button></div>
+        <div class="dk" data-deck="wild"><div class="de">🌈😺</div><div class="dn">Wildcat Chaos</div><div class="dd">All types, wild combos</div><button class="dk-preview-btn" onclick="openDeckPreview('wild')">👁 Preview Deck</button></div>
+        <div class="dk" data-deck="big"><div class="de">📦🐾</div><div class="dn">Chonk Squad</div><div class="dd">Big shapes, max cells</div><button class="dk-preview-btn" onclick="openDeckPreview('big')">👁 Preview Deck</button></div>
+      </div>
+      <button class="dk-arr" id="dk-arr-r" onclick="deckNav(1)">&#9654;</button>
+    </div>
+    <div class="deck-dots" id="deck-dots"></div>
+    <button id="btn-continue" class="btn-play btn-cont" onclick="continueGame()" style="display:none;margin-bottom:6px;">▶ Continue Game</button>
+    <button class="btn-play" onclick="startGame()">🐾 New Game</button>
+    <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
+    <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-8px;"></div>
+  </div>
+</div>
+
+<!-- ROUNDS SCREEN -->
+<div id="s-rounds" class="scr">
+  <div class="rds-bg"></div>
+  <div class="rds-content">
+    <div class="rds-topbar">
+      <button class="rds-btn-exit" onclick="exitToMenu()">← Menu</button>
+      <div class="rds-title">PURRFECT FIT</div>
+      <div style="width:80px;"></div>
+    </div>
+
+    <!-- Progress pip track -->
+    <div class="rds-pip-row" id="rds-pips"></div>
+
+    <!-- Central round card -->
+    <div class="rds-round-card">
+      <div class="rds-rc-label">ROUND</div>
+      <div class="rds-rc-num" id="rds-play-num">1</div>
+      <div class="rds-rc-stats">
+        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-tgt">180</div><div class="rds-rc-sl">Target</div></div>
+        <div class="rds-rc-div"></div>
+        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-earn">+$4</div><div class="rds-rc-sl">Earn</div></div>
+        <div class="rds-rc-div"></div>
+        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-board">4×4</div><div class="rds-rc-sl">Board</div></div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="rds-actions">
+      <div class="rds-shop-col">
+        <div class="rds-cash-badge"><span class="rds-coin">🪙</span><span id="rds-cash">0</span></div>
+        <button class="rds-btn-shop" onclick="openShopFromRounds()">🏪 PET STORE</button>
+      </div>
+      <button class="rds-btn-play" onclick="startRound()">▶ PLAY</button>
+    </div>
+    <div class="rds-hint" id="rds-hint"></div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="s-game" class="scr">
+  <div class="lc">
+    <div class="tline">"plan. place. purr-fect your score!"</div>
+    <div class="card"><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div></div>
+    <div class="card" style="padding:6px 13px;"><div class="lb">Earn</div><div class="earn-b">🪙 <span id="g-earn">3</span></div></div>
+    <div class="card">
+      <div class="lb">Scored So Far</div>
+      <div class="bv or" id="g-score">0</div>
+      <div class="pr">
+        <div class="pl pl-or"><div class="pt">HANDS</div><div class="pv" id="g-hands">4</div></div>
+        <div class="pl pl-gr"><div class="pt">LAST</div><div class="pv" id="g-last">0</div></div>
+      </div>
+    </div>
+
+    <div class="pfbox">📦</div>
+    <button class="btn-menu-exit" onclick="exitToMenu()">← Menu</button>
+  </div>
+
+  <div class="cc">
+    <div class="bwrap"><div class="board" id="board"></div></div>
+    <div class="bbtns">
+      <button class="btn-clr" onclick="clearBoard()">CLEAR</button>
+      <button class="btn-fit" id="btn-fit" onclick="doFit()" disabled>FIT!</button>
+    </div>
+    <div class="hand" id="hand"></div>
+    <div class="deck-row">
+      <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
+      <div class="dinfo-s"><span class="dlb2">ROUND</span><span class="bv2 co" id="g-round">1</span></div>
+      <div class="dinfo-s"><span class="dlb2" id="g-bsize">4×4</span></div>
+      <div class="discard-inline">
+        <div class="dpips" id="dpips"></div>
+        <button class="btn-disc" id="btn-disc" onclick="doDiscard()" disabled>TOSS</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rc">
+    <div class="bpcard">
+      <div class="bphdr">BACKPACK</div>
+      <div class="bpgw"><div class="bpg" id="bpg"></div></div>
+      <div class="bpcap">"bag full of purr-fection"</div>
+    </div>
+    <div class="ttp" id="ttp">
+      <div class="ttn" id="ttn"></div>
+      <div class="tte" id="tte"></div>
+      <div class="ttr" id="ttr"></div>
+      <div class="ttf" id="ttf"></div>
+      <div class="ttsell">
+        <button class="btn-place" id="btn-place" onclick="pickupTreat()">Place on board</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHOP -->
+<div id="s-shop" class="scr">
+  <!-- LEFT: title + mascot -->
+  <div class="sp-left">
+    <div class="sp-topbar">
+      <button class="sp-back" onclick="leaveShop()">EXIT 🐾</button>
+      <div class="sp-mon">
+        <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="shop-cash">5</span></span>
+      </div>
+    </div>
+    <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
+    <div class="sp-label">PREPARE FOR THE DAY</div>
+    <div class="sp-title">PET<br>STORE</div>
+    <div class="sp-mascot"><div class="sp-bag">🛍️</div></div>
+  </div>
+
+  <!-- CENTER: backpack -->
+  <div class="sp-center">
+    <div class="sp-bp-card">
+      <div class="sp-bp-hdr">BACKPACK</div>
+      <div class="sp-bp-gw"><div class="sp-bpg" id="shop-bpg"></div></div>
+      <div class="sp-bp-cap">"bag full of purr-fection"</div>
+    </div>
+    <div class="sp-bp-inv">
+      <div class="sp-bp-inv-hdr">— IN BACKPACK —</div>
+      <div class="sp-inv-list" id="shop-bp-list"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: treat sections -->
+  <div class="sp-right">
+    <div class="treat-section blue" id="treats-section">
+      <div class="treat-sec-hdr">
+        <span class="treat-sec-lbl">TREATS</span>
+        <button class="treat-reroll" id="treats-reroll" onclick="rerollTreats()">↺ REROLL <span id="reroll-cost">$1</span></button>
+      </div>
+      <div class="treat-sec-body">
+        <div class="treat-row" id="treats-row"></div>
+      </div>
+      <div class="treat-sec-flavor" id="treats-flavor"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- OV: WIN -->
+<div class="ov off" id="ov-win">
+  <div class="ob">
+    <h1>PURRFECT! 😸</h1><div class="sub">Round cleared!</div>
+    <div class="ost">
+      <div class="os"><div class="v" id="wv-sc" style="color:var(--gr)">0</div><div class="l">Score</div></div>
+      <div class="os"><div class="v" id="wv-ea" style="color:var(--or)">+$0</div><div class="l">Earned</div></div>
+    </div>
+    <button class="bok or" onclick="goShop()">Visit Pet Store 🏪</button>
+  </div>
+</div>
+<!-- OV: FAIL -->
+<div class="ov off" id="ov-fail">
+  <div class="ob">
+    <h1 style="color:var(--re)">Meow... 😿</h1><div class="sub">Target not reached!</div>
+    <div class="ost">
+      <div class="os"><div class="v" id="fv-sc" style="color:var(--re)">0</div><div class="l">Score</div></div>
+      <div class="os"><div class="v" id="fv-tg">180</div><div class="l">Target</div></div>
+    </div>
+    <button class="bok re" onclick="restart()">Try Again 🔄</button>
+  </div>
+</div>
+
+<!-- Score sequence overlay -->
+<div id="ov-score-seq"></div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════
+//  DATA — Cat shapes
+// ══════════════════════════════════════════════════════
+const CSHAPES={
+  straight:[[1,1,1]], tall:[[1],[1],[1],[1]],
+  L:[[1,0],[1,0],[1,1]], J:[[0,1],[0,1],[1,1]],
+  Z:[[1,1,0],[0,1,1]], S:[[0,1,1],[1,1,0]],   // Z and reverse-Z (S)
+  T:[[1,1,1],[0,1,0]], sq:[[1,1],[1,1]],
+  duo:[[1,1]], trio:[[1,1,1]],
+  curl:[[1,1],[1,0],[1,0]],
+  corner:[[1,1],[0,1]],
+  fat:[[1,1,1],[1,1,1]],
+  cross:[[0,1,0],[1,1,1],[0,1,0]],
+  chonk:[[1,1],[1,1],[1,0]],
+  stair:[[0,1],[1,1],[1,0]],
+  uno:[[1]],
+};
+
+// ── Treat definitions ──
+// bpShape: how it occupies the backpack grid
+// 1×1 = common weak, 1×2 or 2×1 = moderate, 2×2 = powerful/legendary
+// ══════════════════════════════════════════════════════
+//  GOOGLE SHEETS CONFIG — loaded at runtime
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwbOwIorizFvR5NR1gw5I4ZWCt34MLlcpszclCPyt1NKJgSu_Ad9c-5Z835ILd2hmN/exec';
+
+// These will be populated by loadConfig()
+let TDEFS = [];
+let COLS = {};
+let EMS  = {};
+let DECKS = {};
+let RCFG  = [];
+let CFG   = {};
+// Deck display metadata — seeded with defaults, overwritten by sheet on load
+const DECK_META={
+  classic:{name:'Cheddar & Pepper',em:'🟠⬛',desc:'Balanced orange & black'},
+  orange: {name:'Orange Gang',     em:'🟠🟠',desc:'All orange, big type synergy'},
+  wild:   {name:'Wildcat Chaos',   em:'🌈😺',desc:'All types, wild combos'},
+  big:    {name:'Chonk Squad',     em:'📦🐾',desc:'Big shapes, max cells'},
+}; // general config: hand_count, discard_count, deck_card_count, etc.
+
+function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
+
+// ── treat fn lookup — maps sheet effect strings to engine functions ──
+function buildTreatFn(id, ef, phase){
+  // add-phase fns
+  if(phase==='add'){
+    if(ef.includes('ALL'))      return (b,cats)=>allAdd(cats, extractNum(ef));
+    if(ef.includes('ROW'))      return (b,c,t,p)=>rowAdd(b,p, extractNum(ef));
+    if(ef.includes('COL'))      return (b,c,t,p)=>colAdd(b,p, extractNum(ef));
+    if(ef.includes('SURR'))     return (b,c,t,p)=>surrAdd(b,p, extractNum(ef));
+    return (b,cats)=>allAdd(cats, extractNum(ef));
+  }
+  // mul-phase fns
+  const m = extractMul(ef);
+  if(id==='tuna')   return (b,cats,ts,p,cs)=>{const gids=Object.keys(cs).filter(gid=>{const grp=cats.find(c=>c.gid===gid);return grp&&grp.type==='orange';});return{gids,m};};
+  if(id==='nap')    return (b,cats,ts,p,cs)=>ts.length<=1?allMulCS(cats,cs,m):{gids:[],m:1};
+  if(id==='frenzy') return (b,cats,ts,p,cs)=>{if([...new Set(cats.map(c=>c.type))].length>1)return{gids:[],m:1};return surrMulCS(b,cats,p,m,cs);};
+  if(ef.includes('COL')) return (b,cats,t,p,cs)=>colMul(b,cats,p,m);
+  if(ef.includes('/')){
+    // parse shape list from effect like "×2 L/J/T/curl/chonk cats"
+    const shapeMatch=ef.match(/([A-Za-z][A-Za-z0-9]*(?:\/[A-Za-z][A-Za-z0-9]*)+)/);
+    const shapes=shapeMatch?shapeMatch[1].split('/'):['L','J','T','curl','chonk'];
+    return (b,cats)=>shapeMul(cats,shapes,m);
+  }
+  return (b,cats,ts,p,cs)=>allMulCS(cats,cs,m);
+}
+function extractNum(ef){const m=ef.match(/[+](\d+)/);return m?parseInt(m[1]):0;}
+function extractMul(ef){const m=ef.match(/[×x](\d+)/);return m?parseInt(m[1]):2;}
+
+// ── BP shape parser: "1×2" → [[1,1]], "2×1" → [[1],[1]], "2×2" → [[1,1],[1,1]] ──
+function parseBpShape(s){
+  const clean=String(s).replace(/\*/g,'').trim();
+  const [rows,cols]=clean.split(/[×x]/).map(Number);
+  if(!rows||!cols)return[[1]];
+  return Array.from({length:rows},()=>Array(cols).fill(1));
+}
+
+async function fetchSheet(name){
+  const url=APPS_SCRIPT_URL+'?sheet='+encodeURIComponent(name);
+  const res=await fetch(url);
+  if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
+  const json=await res.json();
+  if(!Array.isArray(json))throw new Error(`Sheet "${name}" returned unexpected data: `+JSON.stringify(json).slice(0,120));
+  return json;
+}
+
+function setLoadStatus(msg){
+  const el=g('load-status');if(el)el.textContent=msg;
+}
+
+// Core data fetcher — shared by initial load and reload
+async function loadConfigData(onStatus){
+  const status=onStatus||setLoadStatus;
+  status('loading general config...');
+  const genRows=await fetchSheet('General Config');
+  genRows.forEach(r=>{CFG[r['Setting']]=isNaN(r['Value'])?r['Value']:Number(r['Value']);});
+
+  status('loading rounds...');
+  const rndRows=await fetchSheet('Rounds Config');
+  RCFG=rndRows.map(r=>{
+    // Support both "Board Size" (square) and separate "Board Rows"/"Board Cols"
+    const bsr=Number(r['Board Rows']||r['Board Size']||4);
+    const bsc=Number(r['Board Cols']||r['Board Size']||4);
+    return{tgt:Number(r['Target Score']),bsr,bsc,earn:Number(r['Earn (coins)']),h:Number(r['Hands per Round'])};
+  });
+
+  status('loading cat types...');
+  const catRows=await fetchSheet('Cat Types');
+  catRows.forEach(r=>{
+    COLS[r['Type']]=r['Color (hex)'];
+    EMS[r['Type']] =r['Emoji'];
+  });
+
+  status('loading treats...');
+  const treatRows=await fetchSheet('Treats');
+  TDEFS=treatRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>{
+    const id=String(r['ID']||'').trim();
+    const ef=String(r['Effect']||r['Effect '||'']||'').trim();
+    const phase=String(r['Phase']||'add').trim().toLowerCase();
+    const bpRaw=r['BP Shape']||r['BP Shape ']||'1×1';
+    const bpS=parseBpShape(bpRaw);
+    const rar=String(r['Rarity']||'common').trim().toLowerCase();
+    const buyRaw=r['Buy Price']||r['Buy Price ']||r['Price']||1;
+    const sellRaw=r['Sell Price']||r['Sell Price ']||r['Sell']||0;
+    return{
+      id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
+      bpS, ef, req:String(r['Requirement']||r['Req']||'').trim(),
+      pr:Number(buyRaw)||1, sp:Number(sellRaw)||0,
+      fl:String(r['Flavor']||r['Flavour']||''),
+      fn:buildTreatFn(id,ef,phase),
+    };
+  });
+
+  status('loading cat shapes...');
+  try{
+    const shapeRows=await fetchSheet('Cat Shapes');
+    shapeRows.filter(r=>r['Shape Name']&&String(r['Shape Name']).trim()).forEach(r=>{
+      const name=String(r['Shape Name']).trim();
+      const gridStr=String(r['Grid (rows, comma-sep)']||'').trim();
+      if(!gridStr)return;
+      // Parse grid: rows separated by |, cells by comma
+      const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
+      if(grid.length&&grid[0].length)CSHAPES[name]=grid;
+    });
+  }catch(e){console.warn('Cat Shapes sheet not found, using defaults:',e.message);}
+
+  status('loading decks...');
+  const deckRows=await fetchSheet('Decks Config');
+  DECKS={};
+  deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
+    const id=String(r['Deck ID']).trim();
+    const ty=String(r['Cat Types (pool)']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
+    const sh=String(r['Shapes (pool, 30 cards cycling)']||'straight').split(',').map(s=>s.trim()).filter(Boolean);
+    const name=String(r['Deck Name']||r['Name']||id);
+    const em=String(r['Emoji']||'🐱');
+    const desc=String(r['Description']||'');
+    DECKS[id]={ty,sh};
+    // Update DECK_META live from sheet
+    DECK_META[id]={name,em,desc};
+  });
+}
+
+// Initial boot load
+async function loadConfig(){
+  try{
+    await loadConfigData();
+    setLoadStatus('ready!');
+    await new Promise(res=>setTimeout(res,300));
+    show('s-title');
+    initDeckCarousel();
+  }catch(err){
+    console.error('Config load error:',err);
+    const errEl=g('load-error');
+    if(errEl){
+      errEl.style.display='block';
+      errEl.innerHTML=`<strong>Failed to load config</strong><br>${err.message}<br><br>Check that your Google Sheet is published to web (File → Share → Publish to web → CSV).`;
+    }
+    setLoadStatus('error — see below');
+    setTimeout(()=>{loadFallbackConfig();show('s-title');initDeckCarousel();},3000);
+  }
+}
+
+// Title-screen reload button
+async function reloadConfig(){
+  const btn=g('btn-reload-cfg');
+  const statusEl=g('reload-status');
+  if(btn){btn.textContent='↺ Reloading...';btn.disabled=true;}
+  if(statusEl){statusEl.style.display='block';statusEl.style.color='rgba(255,255,255,.5)';statusEl.textContent='fetching sheets...';}
+  try{
+    await loadConfigData(msg=>{if(statusEl)statusEl.textContent=msg;});
+    if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
+    if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
+    initDeckCarousel();
+    setTimeout(()=>{
+      if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
+      if(statusEl)statusEl.style.display='none';
+    },2500);
+  }catch(err){
+    if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
+    if(statusEl){statusEl.textContent='✗ '+err.message;statusEl.style.color='#ffaaaa';}
+    setTimeout(()=>{if(statusEl){statusEl.style.display='none';statusEl.style.color='';}},3500);
+  }
+}
+
+// Rarity colours for treat card tinting — configurable via sheet "Rarity Colors" tab (optional)
+const RARITY_COLORS={common:'#a0b8e0',rare:'#60a0f0',epic:'#9060c8',legendary:'#e04040'};
+function rarCol(rar){return RARITY_COLORS[rar?.toLowerCase()]||'#a0b8e0';}
+
+function loadFallbackConfig(){
+  // Embedded fallback so game works even if sheets are unreachable
+  COLS={orange:'#e8875a',black:'#2a2a3a',white:'#b0b8d0',grey:'#6878a0',tabby:'#a07040'};
+  EMS ={orange:'🟠',black:'⬛',white:'⬜',grey:'🩶',tabby:'🐾'};
+  CFG={hand_count:7,discard_count:3,deck_card_count:30,starting_cash:5,reroll_cost:1,base_score_per_cell:10,board_fill_bonus:5,backpack_rows:4,backpack_cols:4};
+  RCFG=[{tgt:180,bsr:4,bsc:4,earn:4,h:3},{tgt:450,bsr:4,bsc:4,earn:6,h:3},{tgt:950,bsr:5,bsc:5,earn:9,h:3},{tgt:2000,bsr:5,bsc:5,earn:13,h:3},{tgt:4200,bsr:6,bsc:6,earn:17,h:3},{tgt:8500,bsr:6,bsc:6,earn:22,h:3},{tgt:17000,bsr:7,bsc:7,earn:28,h:3}];
+  TDEFS=[
+    {id:'milk',nm:'WARM MILK',em:'🥛',rar:'common',col:'#a0b8e0',phase:'add',bpS:[[1]],ef:'+8 to ALL cats',req:'',pr:1,sp:0,fl:'"one treat keeps the bites away"',fn:(b,cats)=>allAdd(cats,8)},
+    {id:'catnip',nm:'CATNIP',em:'🌿',rar:'common',col:'#72b860',phase:'add',bpS:[[1]],ef:'+12 to cats in same ROW',req:'',pr:2,sp:1,fl:'"eat. sleep. catnip. repeat."',fn:(b,c,t,p)=>rowAdd(b,p,12)},
+    {id:'feather',nm:'FEATHER',em:'🪶',rar:'common',col:'#c090d0',phase:'add',bpS:[[1]],ef:'+10 to cats in same COL',req:'',pr:2,sp:1,fl:'"light as a whisker"',fn:(b,c,t,p)=>colAdd(b,p,10)},
+    {id:'bcat',nm:'BLACK CAT',em:'🐱',rar:'rare',col:'#485068',phase:'add',bpS:[[1,1]],ef:'+25 to SURROUNDING cats',req:'',pr:4,sp:2,fl:'"devil advocate"',fn:(b,c,t,p)=>surrAdd(b,p,25)},
+    {id:'fish',nm:'SARDINE TIN',em:'🐟',rar:'rare',col:'#60a0f0',phase:'add',bpS:[[1,1]],ef:'+20 per cat in column',req:'',pr:4,sp:2,fl:'"something smells fishy..."',fn:(b,c,t,p)=>colAdd(b,p,20)},
+    {id:'yarn',nm:'YARN BALL',em:'🧶',rar:'rare',col:'#50a8f0',phase:'mul',bpS:[[1],[1]],ef:'×2 L/J/T/curl/chonk cats',req:'',pr:5,sp:2,fl:'"bag full of purr-fection"',fn:(b,cats)=>shapeMul(cats,['L','J','T','curl','chonk'],2)},
+    {id:'tuna',nm:'TUNA CAN',em:'🥫',rar:'rare',col:'#e87850',phase:'mul',bpS:[[1],[1]],ef:'×2 all ORANGE cats',req:'NEEDS ORANGE',pr:5,sp:2,fl:'"the forbidden can"',fn:(b,cats,ts,p,cs)=>{const gids=Object.keys(cs).filter(gid=>{const grp=cats.find(c=>c.gid===gid);return grp&&grp.type==='orange';});return{gids,m:2};}},
+    {id:'laser',nm:'LASER POINTER',em:'🔴',rar:'epic',col:'#f0c820',phase:'mul',bpS:[[1,1,1]],ef:'×3 cats in same COLUMN',req:'',pr:7,sp:3,fl:'"the red dot never lies"',fn:(b,cats,t,p,cs)=>colMul(b,cats,p,3)},
+    {id:'nap',nm:'POWER NAP',em:'😴',rar:'epic',col:'#9060c8',phase:'mul',bpS:[[1,1],[1,0]],ef:'×2 ALL cats',req:'NO OTHER TREAT',pr:8,sp:4,fl:'"never stop napping"',fn:(b,cats,ts,p,cs)=>ts.length<=1?allMulCS(cats,cs,2):{gids:[],m:1}},
+    {id:'frenzy',nm:'FRENZY BALL',em:'🔮',rar:'legendary',col:'#a060e0',phase:'mul',bpS:[[1,1],[1,1]],ef:'×3 surrounding cats',req:'ALL SAME TYPE',pr:10,sp:5,fl:'"purrfect for world domination"',fn:(b,cats,ts,p,cs)=>{if([...new Set(cats.map(c=>c.type))].length>1)return{gids:[],m:1};return surrMulCS(b,cats,p,3,cs);}},
+    {id:'catnado',nm:'CATNADO',em:'🌪️',rar:'legendary',col:'#e04040',phase:'mul',bpS:[[1,1],[1,1]],ef:'×2 ALL cats',req:'',pr:10,sp:5,fl:'"nothing can stop it now"',fn:(b,cats,ts,p,cs)=>allMulCS(cats,cs,2)},
+  ];
+  DECKS={
+    classic:{ty:['orange','orange','orange','black','black','black','white','grey'],sh:['straight','L','T','Z','sq','duo','trio','J','curl','corner','straight','L','T','chonk','straight','J','duo','trio','Z','S','fat','stair','L','T','straight','duo','trio','corner','curl','chonk']},
+    orange:{ty:['orange'],sh:['straight','L','T','Z','sq','duo','trio','J','curl','corner','straight','L','T','chonk','fat','stair','cross','straight','L','T','duo','trio','Z','S','chonk','curl','corner','L','T','straight']},
+    wild:{ty:['orange','black','white','grey','tabby'],sh:['straight','L','T','Z','sq','duo','trio','J','S','curl','corner','fat','cross','chonk','stair','straight','L','T','Z','duo','trio','curl','corner','chonk','fat','cross','stair','L','T']},
+    big:{ty:['orange','black','grey','tabby'],sh:['L','L','J','J','T','T','fat','fat','chonk','chonk','cross','cross','straight','straight','curl','curl','Z','S','L','J','fat','chonk','T','cross','L','J','fat','chonk','T','straight']},
+  };
+}
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+const BPS_DEFAULT=4;
+function getBPR(){return CFG.backpack_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
+function getBPC(){return CFG.backpack_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
+let G={};
+let gameInProgress=false;
+let curDeck='classic';
+
+// ── Shared helpers ──
+function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};}
+function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null};}
+
+// HELD — what the cursor is currently carrying
+// kind: null | 'cat' | 'treat'
+// source: 'hand' | 'board' | 'bp'
+let H=resetH();
+
+function newGame(deckId){
+  const c=rcfg(1);
+  G={
+    round:1,score:0,tgt:c.tgt,bsr:c.bsr,bsc:c.bsc,earn:c.earn,hands:c.h,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
+    deckId,deck:[],hand:[],
+    bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
+    bpGroups:[],
+    board:[],cats:[],treats:[],
+    lastScore:0,selBpGid:null,firstShop:true,visitedShop:false,shopVisitedThisRound:false,newCardIndices:new Set(),
+  };
+  mkDeck();dealHand();
+}
+
+function mk2d(r,c,init){return Array.from({length:r},()=>Array.from({length:c},init));}
+
+function mkDeck(){
+  const cfg=DECKS[G.deckId];G.deck=[];
+  // Filter out 1x1 shapes for cats
+  const validShapes=Object.entries(CSHAPES).filter(([k,v])=>{
+    const total=v.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0);return total>1;
+  }).map(([k])=>k);
+  for(let i=0;i<(CFG.deck_card_count||30);i++){
+    const type=cfg.ty[i%cfg.ty.length];
+    let shape=cfg.sh[i%cfg.sh.length];
+    if(!validShapes.includes(shape)||CSHAPES[shape].reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0)<=1)
+      shape=validShapes[i%validShapes.length];
+    G.deck.push({id:i+Date.now(),name:cap(type)+' Cat',type,shape,
+      cells:CSHAPES[shape],col:COLS[type],em:EMS[type]});
+  }
+  sfl(G.deck);
+}
+
+function dealHand(){
+  G.newCardIndices=new Set();
+  while(G.hand.length<(CFG.hand_count||7)&&G.deck.length>0){
+    G.newCardIndices.add(G.hand.length);
+    G.hand.push(G.deck.shift());
+  }
+  // return any board treats to backpack
+  G.treats.forEach(bt=>bpAutoPlace(bt.tdef));
+  G.cats=[];G.treats=[];
+  H=resetH();
+  mkBoard();
+}
+
+function mkBoard(){
+  G.board=mk2d(G.bsr,G.bsc,()=>(emptyCell()));
+}
+
+// ══════════════════════════════════════════════════════
+//  HELD MECHANICS
+// ══════════════════════════════════════════════════════
+function pickupCat(idx){
+  // if already holding this cat, cancel
+  if(H.kind==='cat'&&H.handIdx===idx){dropHeld();return;}
+  dropHeld();
+  const cat=G.hand[idx];
+  const _cells0=rotC(cat.cells,0);
+  H={kind:'cat',source:'hand',data:cat,cells:_cells0,rot:0,
+     color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
+     grabDr:Math.floor(_cells0.length/2),grabDc:Math.floor(_cells0[0].length/2),dragging:false};
+  updateGhost();showHUD();renderHand();renderBP();
+  g('btn-disc').disabled=G.disc<=0;
+}
+
+function pickupCatWithGrab(idx,grabDr,grabDc){
+  if(H.kind==='cat'&&H.handIdx===idx){dropHeld();return;}
+  dropHeld();
+  const cat=G.hand[idx];
+  const cells=rotC(cat.cells,0);
+  // always snap to center of the shape
+  const cDr=Math.floor(cells.length/2);
+  const cDc=Math.floor(cells[0].length/2);
+  H={kind:'cat',source:'hand',data:cat,cells,rot:0,
+     color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
+     grabDr:cDr,grabDc:cDc,dragging:true};
+  updateGhost();showHUD();renderHand();renderBP();
+  g('btn-disc').disabled=G.disc<=0;
+}
+
+function pickupCatFromBoard(r,c){
+  const bd=G.board[r][c];
+  if(!bd.filled||bd.kind!=='cat')return;
+  const grp=G.cats.find(g=>g.cells.some(([gr,gc])=>gr===r&&gc===c));
+  if(!grp)return;
+  // lift all cells off board
+  grp.cells.forEach(([gr,gc])=>G.board[gr][gc]=emptyCell());
+  G.cats=G.cats.filter(g=>g.gid!==grp.gid);
+  // put back in hand temporarily
+  G.hand.push(grp.cat);
+  const idx=G.hand.length-1;
+  const _bCells=rotC(grp.cat.cells,0);
+  H={kind:'cat',source:'board',data:grp.cat,cells:_bCells,rot:0,
+     color:grp.cat.col,em:grp.cat.em,handIdx:idx,boardGid:grp.gid,bpGid:null,
+     grabDr:Math.floor(_bCells.length/2),grabDc:Math.floor(_bCells[0].length/2),dragging:false};
+  updateGhost();showHUD();renderAll();
+}
+
+function pickupTreat(){
+  // called from "Place on board" button in treat tooltip
+  if(!G.selBpGid)return;
+  const grp=G.bpGroups.find(g=>g.gid===G.selBpGid);
+  if(!grp)return;
+  dropHeld();
+  // remove from BP
+  removeBpGid(G.selBpGid);
+  G.selBpGid=null;hideTTP();
+  H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+     color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:grp.gid,
+     grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:false};
+  updateGhost();showHUD();renderBP();
+}
+
+function dropHeld(){
+  if(!H.kind)return;
+  // cat from board: was removed from board+cats and pushed to hand on pickup.
+  // On cancel we leave it in hand — it's playable there. Nothing to undo.
+  if(H.kind==='treat'&&H.source==='bp'){
+    // treat was removed from BP on pickup — return it
+    bpAutoPlace(H.data);
+  }
+  H=resetH();
+  updateGhost();hideHUD();renderHand();renderBP();
+  g('btn-disc').disabled=true;
+}
+
+function rotate(){
+  if(!H.kind)return;
+  H.rot=(H.rot+1)%4;
+  if(H.kind==='cat'){
+    H.cells=rotC(H.data.cells,H.rot);
+    H.grabDr=Math.floor(H.cells.length/2);
+    H.grabDc=Math.floor(H.cells[0].length/2);
+  } else if(H.kind==='treat'||H.kind==='shop-treat'){
+    H.cells=rotC(H.data.bpS,H.rot);
+    H.grabDr=Math.floor(H.cells.length/2);
+    H.grabDc=Math.floor(H.cells[0].length/2);
+  }
+  updateGhost();
+  clrBoardPrev();clrBPPrev();
+  // re-fire hover preview if we know last hovered cell
+  if(H._lastBoardR!==undefined) onBoardEnter(H._lastBoardR,H._lastBoardC);
+  if(H._lastBpR!==undefined) onBPEnter(H._lastBpR,H._lastBpC);
+}
+
+// right-click = rotate
+document.addEventListener('contextmenu',e=>{e.preventDefault();rotate();});
+// R key = rotate
+document.addEventListener('keydown',e=>{
+  if(e.key==='r'||e.key==='R') rotate();
+  if(e.key==='Escape') dropHeld();
+});
+// Global mouseup — unified drag-drop handler
+document.addEventListener('mouseup',e=>{
+  if(e.button!==0)return; // ignore right/middle clicks
+  // Shop treat dropped on shop backpack grid
+  if(H.kind==='shop-treat'){
+    const bpEl=g('shop-bpg');
+    if(!bpEl){H=resetH();updateGhost();hideHUD();return;}
+    const rect=bpEl.getBoundingClientRect();
+    const inside=e.clientX>=rect.left&&e.clientX<=rect.right&&e.clientY>=rect.top&&e.clientY<=rect.bottom;
+    if(!inside){
+      H=resetH();
+      updateGhost();hideHUD();
+      document.querySelectorAll('.sp-bpc.ok,.sp-bpc.bad').forEach(x=>x.classList.remove('ok','bad'));
+    }
+    // If inside, the shopBPEnter+shopDropOnBP click handler handles it
+    return;
+  }
+
+  // Game treat dragged from BP — drop on board cell under mouse
+  if(H.kind==='treat'){
+    // If dropped on shop BP grid, shopDropOnBP handles it
+    const shopBpEl=g('shop-bpg');
+    if(shopBpEl){
+      const sr=shopBpEl.getBoundingClientRect();
+      if(e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom){
+        return; // shopDropOnBP cell mouseup will handle
+      }
+    }
+    const boardEl=g('board');
+    if(!boardEl){bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();return;}
+    const boardRect=boardEl.getBoundingClientRect();
+    const inside=e.clientX>=boardRect.left&&e.clientX<=boardRect.right&&e.clientY>=boardRect.top&&e.clientY<=boardRect.bottom;
+    if(inside){
+      // Find which cell we're over using element from point
+      const el=document.elementFromPoint(e.clientX,e.clientY);
+      const boardCells=boardEl.querySelectorAll('.cell');
+      let anchorR=-1,anchorC=-1;
+      boardCells.forEach((cell,idx)=>{
+        if(cell===el||cell.contains(el)){
+          anchorR=Math.floor(idx/G.bsc); anchorC=idx%G.bsc;
+        }
+      });
+      let found=false;
+      if(anchorR>=0){
+        const or=anchorR-H.grabDr, oc=anchorC-H.grabDc;
+        if(boardCanPlace(H.cells,or,oc)){
+          placeTreatOnBoard(anchorR,anchorC); // handles H reset + renderAll
+          found=true;
+        }
+      }
+      if(found){
+        // placeTreatOnBoard already reset H and rendered
+      } else {
+        // Can't place — return to BP
+        bpAutoPlace(H.data);
+        H=resetH();
+        updateGhost();hideHUD();renderBP();clrBoardPrev();
+      }
+    } else {
+      // Check if dropped on game backpack grid (rearrange)
+      const bpGridEl=g('bpg');
+      if(bpGridEl){
+        const bpRect=bpGridEl.getBoundingClientRect();
+        const onBP=e.clientX>=bpRect.left&&e.clientX<=bpRect.right&&e.clientY>=bpRect.top&&e.clientY<=bpRect.bottom;
+        if(onBP){
+          // onBPMouseUp on the cell will handle placement, just clear ghost
+          H=resetH();
+          updateGhost();hideHUD();clrBoardPrev();return;
+        }
+      }
+      // Outside board + not on BP — return to BP
+      bpAutoPlace(H.data);
+      H=resetH();
+      updateGhost();hideHUD();renderBP();clrBoardPrev();
+    }
+  }
+});
+
+// ghost follows mouse
+document.addEventListener('mousemove',e=>{
+  if(!H.kind){g('ghost').style.display='none';return;}
+  const gh=g('ghost');
+  gh.style.display='block';
+  gh.style.left=e.clientX+'px';
+  gh.style.top=e.clientY+'px';
+});
+
+function updateGhost(){
+  if(!H.kind){g('ghost').style.display='none';return;}
+  const cells=H.cells;
+  const cols=cells[0].length;
+  const cs=H.kind==='cat'?38:26;
+  const grid=g('gh-grid');
+  grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
+  grid.style.gap='3px';
+  grid.innerHTML='';
+  cells.forEach(row=>row.forEach(v=>{
+    const d=document.createElement('div');
+    d.className='gh-cell';
+    d.style.width=cs+'px';d.style.height=cs+'px';
+    if(v){d.style.background=H.color;d.style.borderColor='rgba(255,255,255,.55)';}
+    else{d.style.background='transparent';d.style.border='none';}
+    grid.appendChild(d);
+  }));
+}
+
+function showHUD(){g('ihud').classList.add('on');}
+function hideHUD(){g('ihud').classList.remove('on');}
+
+// ══════════════════════════════════════════════════════
+//  BOARD INTERACTION
+// ══════════════════════════════════════════════════════
+function onBoardEnter(r,c){
+  if(!H.kind)return;
+  clrBoardPrev();
+  if(H.kind==='treat'){
+    const or=r-H.grabDr, oc=c-H.grabDc;
+    const ok=boardCanPlace(H.cells,or,oc);
+    H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+      if(!v)return;
+      const rr=or+dr,cc=oc+dc;
+      if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc){
+        const el=getBCell(rr,cc);
+        if(el) el.classList.add(ok&&!G.board[rr][cc].filled?'ok':'bad');
+      }
+    }));
+    return;
+  }
+  // offset placement by grab position
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  const ok=boardCanPlace(H.cells,or,oc);
+  H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;
+    const rr=or+dr,cc=oc+dc;
+    if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc){
+      const el=getBCell(rr,cc);
+      if(el&&!G.board[rr][cc].filled) el.classList.add(ok?'ok':'bad');
+    }
+  }));
+}
+function onBoardLeave(){clrBoardPrev();}
+
+function onBoardClick(r,c){
+  if(!H.kind){
+    // no held item — try to pick up
+    const bd=G.board[r][c];
+    if(bd.filled&&bd.kind==='cat'){pickupCatFromBoard(r,c);return;}
+    if(bd.filled&&bd.kind==='treat'){
+      // pick up treat back to BP — clear all cells of this treat's gid
+      const gid=bd.gid;
+      const ti=G.treats.findIndex(t=>t.gid===gid);
+      if(ti>=0){
+        bpAutoPlace(G.treats[ti].tdef);
+        G.treats[ti].cells.forEach(([tr,tc])=>{
+          G.board[tr][tc]=emptyCell();
+        });
+        G.treats.splice(ti,1);
+        renderAll();
+      }
+      return;
+    }
+    return;
+  }
+
+  if(H.kind==='cat')  { placeCatOnBoard(r,c); }
+  if(H.kind==='treat') { placeTreatOnBoard(r,c); }
+}
+
+function placeCatOnBoard(r,c){
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  if(!boardCanPlace(H.cells,or,oc))return;
+  const gid=uid();const placed=[];
+  H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;const rr=or+dr,cc=oc+dc;
+    G.board[rr][cc]={filled:true,col:H.color,kind:'cat',em:H.em,gid,shape:H.data.shape,type:H.data.type};
+    placed.push([rr,cc]);
+  }));
+  G.cats.push({cells:placed,col:H.color,shape:H.data.shape,type:H.data.type,cat:H.data,gid});
+  G.hand.splice(H.handIdx,1);
+  H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();
+}
+function placeTreatOnBoard(r,c){
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  if(!boardCanPlace(H.cells,or,oc))return;
+  const gid=uid();const placed=[];
+  H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;const rr=or+dr,cc=oc+dc;
+    G.board[rr][cc]={filled:true,col:H.color,kind:'treat',em:H.em,gid,shape:null,type:null};
+    placed.push([rr,cc]);
+  }));
+  G.treats.push({cells:placed,gid,tdef:H.data});
+  H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();
+}
+
+function boardCanPlace(cells,r,c){
+  for(let dr=0;dr<cells.length;dr++) for(let dc=0;dc<cells[dr].length;dc++){
+    if(!cells[dr][dc])continue;
+    const rr=r+dr,cc=c+dc;
+    if(rr>=G.bsr||cc>=G.bsc||rr<0||cc<0)return false;
+    if(G.board[rr][cc].filled)return false;
+  }
+  return true;
+}
+
+function clrBoardPrev(){document.querySelectorAll('.cell.ok,.cell.bad').forEach(c=>c.classList.remove('ok','bad'));}
+function getBCell(r,c){return g('board').querySelectorAll('.cell')[r*G.bsc+c]||null;}
+
+// ══════════════════════════════════════════════════════
+//  BACKPACK INTERACTION
+// ══════════════════════════════════════════════════════
+function onBPEnter(r,c){
+  if(H.kind!=='treat')return;
+  clrBPPrev();
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  const ok=bpCanAt(H.cells,or,oc);
+  H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;const rr=or+dr,cc=oc+dc;
+    if(rr>=0&&rr<getBPR()&&cc>=0&&cc<getBPC()){
+      const el=getBPCell(rr,cc);
+      if(el)el.classList.add(ok?'ok':'bad');
+    }
+  }));
+}
+function onBPLeave(){clrBPPrev();}
+
+function clrBPPrev(){document.querySelectorAll('.bpc.ok,.bpc.bad').forEach(c=>c.classList.remove('ok','bad'));}
+function onBPMouseUp(r,c){
+  if(H.kind!=='treat')return;
+  // Use grab offset so treat anchors correctly
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  if(!bpCanAt(H.cells,or,oc))return;
+  bpPlaceAt(H.data,H.cells,or,oc);
+  H=resetH();
+  updateGhost();hideHUD();clrBPPrev();renderBP();
+}
+function getBPCell(r,c){return g('bpg').querySelectorAll('.bpc')[r*getBPC()+c]||null;}
+
+// ── BP helpers ──
+function bpAutoPlace(tdef){
+  const shape=tdef.bpS;
+  for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c);return true;}
+  return false;
+}
+function bpCanAt(cells,r,c){
+  for(let dr=0;dr<cells.length;dr++) for(let dc=0;dc<cells[dr].length;dc++){
+    if(!cells[dr][dc])continue;
+    const rr=r+dr,cc=c+dc;
+    if(rr>=getBPR()||cc>=getBPC()||rr<0||cc<0)return false;
+    if(G.bp[rr][cc].filled)return false;
+  }
+  return true;
+}
+function bpCanFit(shape){for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c))return true;return false;}
+function bpPlaceAt(tdef,cells,r,c){
+  const gid=uid();const placed=[];
+  cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;const rr=r+dr,cc=c+dc;
+    G.bp[rr][cc]={filled:true,col:tdef.col,em:tdef.em,gid,tdef};
+    placed.push([rr,cc]);
+  }));
+  G.bpGroups.push({gid,tdef,cells:placed});
+}
+function removeBpGid(gid){
+  const grp=G.bpGroups.find(g=>g.gid===gid);if(!grp)return;
+  grp.cells.forEach(([r,c])=>G.bp[r][c]={filled:false,col:null,em:null,gid:null,tdef:null});
+  G.bpGroups=G.bpGroups.filter(g=>g.gid!==gid);
+}
+
+function sellTreatFromShop(gid){
+  // Only callable from shop screen
+  const grp=G.bpGroups.find(g=>g.gid===gid);if(!grp)return;
+  G.cash+=grp.tdef.sp;
+  removeBpGid(gid);
+  renderAll(); // update backpack display
+  renderShopFull(); // refresh shop listing
+  g('shop-cash').textContent=G.cash;
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function openDeckPopup(){
+  const deck=G.deck;
+  g('deck-pop-sub').textContent=deck.length+' card'+(deck.length!==1?'s':'')+' remaining';
+  const grid=g('deck-pop-grid');
+  grid.innerHTML='';
+  if(deck.length===0){grid.innerHTML='<div style="color:var(--mu);font-size:13px;grid-column:1/-1;text-align:center;padding:12px;">Deck is empty!</div>';g('ov-deck').classList.remove('off');return;}
+  deck.forEach(cat=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
+    d.innerHTML=shpHTML(cat.cells,cat.col,10)+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
+    grid.appendChild(d);
+  });
+  g('ov-deck').classList.remove('off');
+}
+function closeDeckPopup(){g('ov-deck').classList.add('off');}
+
+function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
+// pickDeck replaced by deckGoTo+renderDeckCarousel
+// ── Deck carousel ──
+let DECK_ORDER=['classic','orange','wild','big']; // rebuilt from DECKS in initDeckCarousel
+let deckIdx=0;
+function initDeckCarousel(){
+  const carousel=g('deck-carousel');
+  if(!carousel)return;
+  // Rebuild DECK_ORDER from loaded DECKS
+  DECK_ORDER=Object.keys(DECKS);
+  if(!DECK_ORDER.length)DECK_ORDER=['classic'];
+  // Rebuild carousel cards from DECKS
+  carousel.innerHTML='';
+  DECK_ORDER.forEach((id,i)=>{
+    const meta=DECK_META[id]||{name:id,em:'🐱',desc:''};
+    const card=document.createElement('div');
+    card.className='dk'+(i===0?' sel':'');
+    card.dataset.deck=id;
+    card.innerHTML=`<div class="de">${meta.em}</div><div class="dn">${meta.name}</div><div class="dd">${meta.desc}</div><button class="dk-preview-btn" onclick="openDeckPreview('${id}')">👁 Preview Deck</button>`;
+    card.addEventListener('click',e=>{
+      if(e.target.classList.contains('dk-preview-btn'))return;
+      deckGoTo(i);
+    });
+    carousel.appendChild(card);
+  });
+  deckIdx=Math.max(0,DECK_ORDER.indexOf(curDeck));
+  renderDeckCarousel();
+}
+function renderDeckCarousel(){
+  const carousel=g('deck-carousel');
+  if(!carousel)return;
+  carousel.querySelectorAll('.dk').forEach((c,i)=>c.classList.toggle('sel',i===deckIdx));
+  // Use scrollLeft based on card width
+  const cardW=carousel.offsetWidth;
+  carousel.scrollTo({left:deckIdx*cardW,behavior:'smooth'});
+  const arrL=g('dk-arr-l'),arrR=g('dk-arr-r');
+  if(arrL)arrL.disabled=deckIdx===0;
+  if(arrR)arrR.disabled=deckIdx===DECK_ORDER.length-1;
+  // dots
+  const dots=g('deck-dots');
+  if(dots){dots.innerHTML='';DECK_ORDER.forEach((_,i)=>{const d=document.createElement('div');d.className='deck-dot'+(i===deckIdx?' active':'');d.onclick=()=>deckGoTo(i);dots.appendChild(d);});}
+  curDeck=DECK_ORDER[deckIdx];
+}
+function deckNav(dir){deckGoTo(Math.max(0,Math.min(DECK_ORDER.length-1,deckIdx+dir)));}
+function deckGoTo(i){deckIdx=i;renderDeckCarousel();}
+function openDeckPreview(deckId){
+  // Build a preview deck and show popup
+  const cfg=DECKS[deckId];
+  const validShapes=Object.entries(CSHAPES).filter(([k,v])=>v.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0)>1).map(([k])=>k);
+  const previewCards=[];
+  for(let i=0;i<(CFG.deck_card_count||30);i++){
+    const type=cfg.ty[i%cfg.ty.length];
+    let shape=cfg.sh[i%cfg.sh.length];
+    if(!validShapes.includes(shape))shape=validShapes[i%validShapes.length];
+    previewCards.push({type,shape,cells:CSHAPES[shape],col:COLS[type],em:EMS[type]});
+  }
+  const grid=g('deck-pop-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  previewCards.forEach(cat=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
+    d.innerHTML=shpHTML(cat.cells,cat.col,10)+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
+    grid.appendChild(d);
+  });
+  const deckName=(DECK_META[deckId]&&DECK_META[deckId].name)||deckId;
+  g('deck-pop-sub').textContent=deckName+' — '+(CFG.deck_card_count||30)+' cards';
+  g('ov-deck').classList.remove('off');
+}
+// Keyboard nav on title screen
+document.addEventListener('keydown',e=>{
+  if(!g('s-title').classList.contains('on'))return;
+  if(e.key==='ArrowLeft')deckNav(-1);
+  if(e.key==='ArrowRight')deckNav(1);
+});
+// Boot: fetch sheets then init
+document.addEventListener('DOMContentLoaded',loadConfig);
+
+function startGame(){newGame(curDeck);gameInProgress=true;updateContinueBtn();openRounds();}
+function updateContinueBtn(){
+  const btn=g('btn-continue');
+  if(btn) btn.style.display=gameInProgress?'block':'none';
+}
+function continueGame(){
+  if(!gameInProgress)return;
+  openRounds();
+}
+function exitToMenu(){
+  // Reset held state so nothing lingers
+  H=resetH();
+  updateGhost();hideHUD();
+  show('s-title');
+  updateContinueBtn();
+}
+function openRounds(){
+  G.shopVisitedThisRound=false;
+  // Clear any stale warned flag
+  const _pb=document.querySelector('.rds-btn-play');
+  if(_pb) delete _pb.dataset.warned;
+  renderRoundsTrack();
+  g('rds-play-num').textContent=G.round;
+  g('rds-cash').textContent=G.cash;
+  const hints=['"every round is a new chance to purr-fect your strategy"',
+    '"the board grows, but so does your wisdom"','"treats make everything better"',
+    '"a cat in the right place scores every time"'];
+  g('rds-hint').textContent=hints[(G.round-1)%hints.length];
+  show('s-rounds');
+}
+function openShopFromRounds(){openShop();}
+function startRound(){
+  // Warn player if they haven't visited the shop yet
+  if(!G.shopVisitedThisRound&&G.round>=1){
+    showShopWarning();
+    // allow second click to bypass
+    const btn=document.querySelector('.rds-btn-play');
+    if(btn&&!btn.dataset.warned){btn.dataset.warned='1';return;}
+  }
+  G.firstShop=false;
+  const btn=document.querySelector('.rds-btn-play');
+  if(btn) delete btn.dataset.warned;
+  show('s-game');renderAll();
+}
+function showShopWarning(){
+  const shopBtn=document.querySelector('.rds-btn-shop');
+  if(!shopBtn)return;
+  const tip=document.createElement('div');
+  tip.className='shop-warn-tip';
+  tip.textContent='CHECK OUT THE GOODS! 🏪';
+  document.body.appendChild(tip);
+  const rect=shopBtn.getBoundingClientRect();
+  tip.style.left=rect.left+(rect.width/2)+'px';
+  tip.style.top=(rect.top-42)+'px';
+  tip.style.transform='translateX(-50%)';
+  setTimeout(()=>tip.classList.add('show'),10);
+  setTimeout(()=>{tip.classList.remove('show');setTimeout(()=>tip.remove(),300);},2200);
+}
+function renderRoundsTrack(){
+  // Pip track
+  const pips=g('rds-pips');
+  if(pips){
+    pips.innerHTML='';
+    for(let i=1;i<=RCFG.length;i++){
+      const p=document.createElement('div');
+      p.className='rds-pip'+(i<G.round?' done':i===G.round?' cur':'');
+      p.title='Round '+i;
+      pips.appendChild(p);
+    }
+  }
+  // Update round card stats
+  const cfg=rcfg(G.round);
+  const rn=g('rds-play-num');if(rn)rn.textContent=G.round;
+  const rt=g('rds-tgt');if(rt)rt.textContent=cfg.tgt.toLocaleString();
+  const re=g('rds-earn');if(re)re.textContent='+$'+cfg.earn;
+  const rb=g('rds-board');if(rb)rb.textContent=cfg.bsr+'×'+cfg.bsc;
+}
+function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();}
+
+function renderStats(){
+  g('g-tgt').textContent=G.tgt.toLocaleString();
+  g('g-earn').textContent=G.earn;
+  g('g-score').textContent=G.score.toLocaleString();
+  g('g-hands').textContent=G.hands;
+  g('g-last').textContent=G.lastScore;
+  g('g-deck').textContent=G.deck.length;
+  g('g-round').textContent=G.round;
+  g('g-bsize').textContent=`${G.bsr}×${G.bsc} board`;
+  const pips=g('dpips');pips.innerHTML='';
+  for(let i=0;i<(CFG.discard_count||3);i++){const p=document.createElement('div');p.className='dp'+(i>=G.disc?' used':'');pips.appendChild(p);}
+  g('btn-disc').disabled=H.kind!=='cat'||G.disc<=0;
+}
+
+function treatReqFails(td){
+  // Check if this treat's requirement is not met given current board state
+  if(!td.req)return false;
+  if(td.req==='NO OTHER TREAT') return G.treats.length>1;
+  if(td.req==='NEEDS ORANGE') return !G.cats.some(c=>c.type==='orange');
+  if(td.req==='ALL SAME TYPE'){
+    const types=[...new Set(G.cats.map(c=>c.type))];
+    return types.length>1;
+  }
+  return false;
+}
+
+function showBoardTip(e,r,c){
+  if(H.kind)return; // don't show tip while dragging
+  const bd=G.board[r][c];if(!bd.filled)return;
+  const tip=g('board-tip');
+  if(bd.kind==='cat'){
+    // find cat group score (cells * 10 base)
+    const grp=G.cats.find(g=>g.cells.some(([gr,gc])=>gr===r&&gc===c));
+    if(!grp)return;
+    const base=grp.cells.length*(CFG.base_score_per_cell||10);
+    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:var(--or)">${cap(grp.type)} Cat</div><div style="font-size:10px;margin-top:2px;">${grp.shape} shape · ${grp.cells.length} cells</div><div style="color:#72cc60;margin-top:2px;">Base: +${base} pts</div>`;
+  } else if(bd.kind==='treat'){
+    const gid=bd.gid;
+    const ti=G.treats.find(t=>t.gid===gid);
+    if(!ti)return;
+    const td=ti.tdef;
+    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
+  }
+  tip.style.display='block';
+  moveBoardTip(e);
+}
+function moveTip(e){
+  const tip=g('board-tip');
+  if(tip.style.display==='none')return;
+  tip.style.left=Math.min(e.clientX+14,window.innerWidth-190)+'px';
+  tip.style.top=Math.max(e.clientY-8,4)+'px';
+}
+function moveBoardTip(e){moveTip(e);}
+function hideBoardTip(){g('board-tip').style.display='none';}
+function showBPTip(e,r,c){
+  if(H.kind)return;
+  const bd=G.bp[r][c];if(!bd.filled||!bd.tdef)return;
+  const td=bd.tdef;
+  const fail=treatReqFails(td);
+  const tip=g('board-tip');
+  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}${fail?'<div style="font-size:9px;color:#f04040;margin-top:3px;">⚠ Requirement not met</div>':''}`;
+  tip.style.display='block';
+  moveBPTip(e);
+}
+function moveBPTip(e){moveTip(e);}
+function hideBPTip(){g('board-tip').style.display='none';}
+
+function renderBoard(){
+  const el=g('board');
+  const maxH=window.innerHeight-168,maxW=(document.querySelector('.cc')?.offsetWidth||440)-38;
+  const cs=Math.min(Math.floor((maxH-14)/G.bsr)-3,Math.floor((maxW-14)/G.bsc)-3,78);
+  el.style.gridTemplateColumns=`repeat(${G.bsc},${cs}px)`;
+  el.innerHTML='';
+  for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
+    const div=document.createElement('div');
+    div.className='cell';
+    div.style.width=cs+'px';div.style.height=cs+'px';
+    div.style.fontSize=Math.floor(cs*.36)+'px';
+    const bd=G.board[r][c];
+    if(bd.filled){
+      div.classList.add('filled');
+      div.style.background=bd.col;
+      div.style.borderColor='rgba(255,255,255,.18)';
+      div.title=bd.kind==='cat'?'Click to pick up':'Click to return to backpack';
+      if(bd.kind==='cat'){
+        div.textContent='';
+      } else {
+        div.style.fontSize=Math.floor(cs*.45)+'px';
+        div.textContent=bd.em||'';
+        // dim treat if its requirement fails
+        const gid=bd.gid;
+        const bt=G.treats.find(t=>t.gid===gid);
+        if(bt&&treatReqFails(bt.tdef)){
+          div.style.filter='grayscale(1)';
+          div.style.opacity='0.55';
+          // add red badge
+          div.style.position='relative';
+          const badge=document.createElement('span');
+          badge.style.cssText='position:absolute;top:-5px;right:-5px;background:#e04848;color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;line-height:1;';
+          badge.textContent='!';
+          div.appendChild(badge);
+        }
+      }
+    }
+    div.addEventListener('mouseenter',(e)=>{H._lastBoardR=r;H._lastBoardC=c;delete H._lastBpR;onBoardEnter(r,c);showBoardTip(e,r,c);});
+    div.addEventListener('mousemove',(e)=>moveBoardTip(e));
+    div.addEventListener('mouseleave',()=>{onBoardLeave();hideBoardTip();});
+    div.addEventListener('click',()=>onBoardClick(r,c));
+    el.appendChild(div);
+  }
+}
+
+function renderHand(){
+  const row=g('hand');row.innerHTML='';
+  G.hand.forEach((cat,i)=>{
+    const isHeld=H.kind==='cat'&&H.handIdx===i;
+    const d=document.createElement('div');
+    const isNew=G.newCardIndices&&G.newCardIndices.has(i);
+    d.className='cslot'+(isHeld?' held':'')+(isNew?' deal':'');
+    if(isNew) d.style.animationDelay=(i*0.045)+'s';
+    d.innerHTML=shpHTML(cat.cells,cat.col,9)+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
+    d.addEventListener('mousedown',(e)=>{
+      if(e.button!==0)return;
+      // compute grab offset within the mini shape preview
+      const cells=rotC(cat.cells,H.kind==='cat'&&H.handIdx===i?H.rot:0);
+      const sz=9,gap=1;
+      const gridW=cells[0].length*(sz+gap);
+      const gridH=cells.length*(sz+gap);
+      const rect=d.getBoundingClientRect();
+      const slotCX=rect.left+rect.width/2, slotCY=rect.top+rect.height/2-8;
+      const relX=e.clientX-(slotCX-gridW/2);
+      const relY=e.clientY-(slotCY-gridH/2);
+      const grabDc=Math.max(0,Math.min(cells[0].length-1,Math.floor(relX/(sz+gap))));
+      const grabDr=Math.max(0,Math.min(cells.length-1,Math.floor(relY/(sz+gap))));
+      pickupCatWithGrab(i,grabDr,grabDc);
+    });
+    d.addEventListener('click',()=>{if(!H.dragging)pickupCat(i);});
+    row.appendChild(d);
+  });
+  for(let i=G.hand.length;i<(CFG.hand_count||7);i++){const e=document.createElement('div');e.className='eslot';row.appendChild(e);}
+}
+
+function renderBP(){
+  const grid=g('bpg');
+  const cs=46;
+  grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
+  grid.innerHTML='';
+  for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
+    const div=document.createElement('div');
+    div.className='bpc';
+    div.style.width=cs+'px';div.style.height=cs+'px';
+    const bd=G.bp[r][c];
+    if(bd.filled){
+      div.classList.add('ft');
+      const _grp=G.bpGroups.find(g=>g.gid===bd.gid);
+      const _fail=_grp&&treatReqFails(_grp.tdef);
+      div.style.background=_fail?'rgba(150,150,150,.5)':bd.col+'bb';
+      div.style.borderColor=_fail?'rgba(150,150,150,.6)':bd.col;
+      div.style.filter=_fail?'grayscale(1)':'';
+      div.style.position='relative';
+      div.textContent=bd.em||'';
+      if(_fail){
+        const badge=document.createElement('span');
+        badge.style.cssText='position:absolute;top:-4px;right:-4px;background:#e04848;color:#fff;border-radius:50%;width:14px;height:14px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;line-height:1;';
+        badge.textContent='!';
+        div.appendChild(badge);
+      }
+      if(bd.gid===G.selBpGid) div.classList.add('sel-t');
+      // Use drag-threshold: only pick up if mouse moves > 5px after mousedown
+      div.addEventListener('mousedown',(e)=>{
+        if(e.button!==0)return;
+        const gid=bd.gid;
+        const grp=G.bpGroups.find(g=>g.gid===gid);
+        if(!grp)return;
+        e.stopPropagation();
+        const startX=e.clientX,startY=e.clientY;
+        let dragging=false;
+        const onMove=(me)=>{
+          if(dragging)return;
+          if(Math.abs(me.clientX-startX)>5||Math.abs(me.clientY-startY)>5){
+            dragging=true;
+            document.removeEventListener('mousemove',onMove);
+            document.removeEventListener('mouseup',onUp);
+            dropHeld();
+            removeBpGid(gid);
+            G.selBpGid=null;hideTTP();
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+               color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
+               grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+            updateGhost();showHUD();renderBP();
+          }
+        };
+        const onUp=()=>{
+          document.removeEventListener('mousemove',onMove);
+          document.removeEventListener('mouseup',onUp);
+          // Was a click (no drag): select/deselect
+          if(!dragging){
+            if(G.selBpGid===gid){G.selBpGid=null;hideTTP();}
+            else{G.selBpGid=gid;showTTP(grp.tdef);}
+            renderBP();
+          }
+        };
+        document.addEventListener('mousemove',onMove);
+        document.addEventListener('mouseup',onUp);
+      });
+    }
+    div.addEventListener('mouseenter',(e)=>{H._lastBpR=r;H._lastBpC=c;delete H._lastBoardR;onBPEnter(r,c);showBPTip(e,r,c);});
+    div.addEventListener('mousemove',(e)=>moveBPTip(e));
+    div.addEventListener('mouseleave',()=>{onBPLeave();hideBPTip();});
+    div.addEventListener('mouseup',()=>onBPMouseUp(r,c));
+    grid.appendChild(div);
+  }
+}
+
+function shpHTML(cells,col,sz){
+  const cols=cells[0].length;
+  let h=`<div style="display:grid;grid-template-columns:repeat(${cols},${sz}px);gap:1px">`;
+  cells.forEach(row=>row.forEach(v=>{
+    if(v) h+=`<div style="width:${sz}px;height:${sz}px;border-radius:2px;background:${col};"></div>`;
+    else  h+=`<div style="width:${sz}px;height:${sz}px;"></div>`;
+  }));
+  return h+'</div>';
+}
+
+function showTTP(t){
+  g('ttn').textContent=t.nm;
+  g('tte').innerHTML=t.ef.replace(/×(\d+)/g,'<span>×$1</span>').replace(/\+(\d+)/g,'<span>+$1</span>');
+  const ttr=g('ttr');if(t.req){ttr.textContent=t.req;ttr.style.display='block';}else ttr.style.display='none';
+  g('ttf').textContent=t.fl||'';
+  g('ttp').classList.add('on');
+}
+function hideTTP(){g('ttp').classList.remove('on');}
+function updFit(){g('btn-fit').disabled=G.cats.length===0;}
+
+// ══════════════════════════════════════════════════════
+//  BOARD ACTIONS
+// ══════════════════════════════════════════════════════
+function clearBoard(){
+  G.cats.forEach(grp=>G.hand.push(grp.cat));
+  G.treats.forEach(bt=>{
+    // clear all board cells for this treat
+    bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
+    bpAutoPlace(bt.tdef);
+  });
+  G.cats=[];G.treats=[];
+  if(H.kind==='cat'||H.kind==='treat'){H=resetH();updateGhost();hideHUD();}
+  mkBoard();renderAll();hideTTP();
+}
+
+function doDiscard(){
+  if(H.kind!=='cat'||G.disc<=0)return;
+  G.deck.push(G.hand.splice(H.handIdx,1)[0]);sfl(G.deck);
+  G.disc--;
+  H=resetH();updateGhost();hideHUD();
+  if(G.deck.length>0)G.hand.push(G.deck.shift());
+  renderAll();
+}
+
+// ══════════════════════════════════════════════════════
+//  SCORING — animated sequence
+// ══════════════════════════════════════════════════════
+function doFit(){
+  if(!G.cats.length)return;
+
+  // ── Phase 0: base scores (cells × 10) ──
+  const catScores={};
+  const basePerCell=CFG.base_score_per_cell||10;
+  G.cats.forEach(grp=>{catScores[grp.gid]=grp.cells.length*basePerCell;});
+
+  const sorted=[...G.treats].sort((a,b)=>a.cells[0][0]-b.cells[0][0]);
+  const addTreats=sorted.filter(t=>t.tdef.phase==='add');
+  const mulTreats=sorted.filter(t=>t.tdef.phase==='mul');
+
+  // ── Phase A: +Add treats boost catScores directly ──
+  const addResults=addTreats.map(t=>{
+    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells[0],catScores)||{bonus:0,desc:''};
+    // distribute add bonus into affected groups
+    applyAddResult(t,res,catScores);
+    return{treat:t,result:res,phase:'add'};
+  });
+
+  // ── Phase B: ×Mul treats multiply current catScores ──
+  const mulResults=mulTreats.map(t=>{
+    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells[0],catScores)||{gids:[],m:1};
+    applyMulResult(t,res,catScores);
+    return{treat:t,result:res,phase:'mul'};
+  });
+
+  // ── Phase C: sum cat scores ──
+  const catTotal=Object.values(catScores).reduce((a,b)=>a+b,0);
+
+  // ── Phase D: board filled bonus (all cells × 5) ──
+  const filledCells=G.board.flat().filter(c=>c.filled).length;
+  const totalBoardCells=G.bsr*G.bsc;
+  const boardFull=filledCells===totalBoardCells;
+  const boardBonus=boardFull?totalBoardCells*(CFG.board_fill_bonus||5):0;
+
+  const total=catTotal+boardBonus;
+  G.score+=total; G.lastScore=total;
+
+  // snapshot cats before clearing (animation still needs them)
+  const catsSnapshot=[...G.cats];
+
+  // Return treats to BP, clear board cells
+  G.treats.forEach(bt=>{
+    bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
+    bpAutoPlace(bt.tdef);
+  });
+  G.treats=[];
+
+  // Launch animation
+  runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,total,catsSnapshot);
+}
+
+// Distribute an add-treat's bonus into catScores
+function applyAddResult(t,res,catScores){
+  if(!res||!res.bonus)return;
+  const ef=t.tdef.ef;
+  const amt=extractNum(ef); // per-cell amount from effect string
+  const [tRow,tCol]=t.cells[0];
+  const affected=[];
+  G.cats.forEach(grp=>{
+    let hit=false;
+    if(ef.includes('ALL')) hit=true;
+    else if(ef.includes('ROW')) hit=grp.cells.some(([r])=>r===tRow);
+    else if(ef.includes('COL')) hit=grp.cells.some(([,c])=>c===tCol);
+    else if(ef.includes('SURR')||ef.includes('surrounding')) hit=grp.cells.some(([r,c])=>Math.abs(r-tRow)<=1&&Math.abs(c-tCol)<=1);
+    else hit=true;
+    if(hit) affected.push({gid:grp.gid, cells:grp.cells.length});
+  });
+  if(!affected.length)return;
+  // Each affected group gets amt × its own cell count (matches how the fn computed total bonus)
+  affected.forEach(({gid,cells})=>{if(catScores[gid]!==undefined)catScores[gid]+=amt*cells;});
+}
+
+// Apply a mul-treat's multiplier to specific catScores
+function applyMulResult(t,res,catScores){
+  if(!res)return;
+  // res format: {gids:[...], m:multiplier} OR legacy {bonus, desc}
+  if(res.gids!==undefined){
+    // new format
+    const {gids,m}=res;
+    if(!gids.length||m<=1)return;
+    gids.forEach(gid=>{if(catScores[gid]!==undefined)catScores[gid]=Math.round(catScores[gid]*m);});
+  }
+}
+
+function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,total,catsSnapshot){
+  const seq=g('ov-score-seq');
+  seq.innerHTML='';
+  seq.classList.add('active');
+
+  const boardEl=g('board');
+  const firstCell=boardEl.children[0]?.getBoundingClientRect();
+  if(!firstCell){endScoreSequence(total);return;}
+  const cellW=firstCell.width;
+  const labelW=Math.max(32,Math.min(48,cellW*.75));
+  const labelH=Math.max(20,Math.min(30,cellW*.45));
+  const labelFS=Math.max(9,Math.min(14,cellW*.22));
+
+  // dim overlay
+  const dim=document.createElement('div');
+  dim.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:-1;';
+  seq.appendChild(dim);
+
+  // grpMap mirrors catScores for display — starts at base, updated per phase
+  const grpMap={};
+  catsSnapshot.forEach(grp=>{
+    grpMap[grp.gid]={cells:grp.cells,score:grp.cells.length*(CFG.base_score_per_cell||10),els:[]};
+  });
+
+  const updateLabels=(highlightGids=[],color)=>{
+    Object.entries(grpMap).forEach(([gid,info])=>{
+      const perCell=Math.round(info.score/info.cells.length);
+      info.els.forEach(lbl=>{
+        lbl.textContent='+'+perCell;
+        if(highlightGids.includes(gid)){
+          lbl.style.background=color||'rgba(245,166,35,.85)';
+          lbl.classList.add('boosted');
+          setTimeout(()=>{lbl.classList.remove('boosted');lbl.style.background='';},700);
+        }
+      });
+    });
+  };
+
+  // place cell labels over board
+  catsSnapshot.forEach(grp=>{
+    grp.cells.forEach(([r,c],ci)=>{
+      const lbl=document.createElement('div');
+      lbl.className='score-cell-label';
+      const cellEl=boardEl.children[r*G.bsc+c];
+      if(!cellEl)return;
+      const rect=cellEl.getBoundingClientRect();
+      lbl.style.left=(rect.left+(rect.width-labelW)/2)+'px';
+      lbl.style.top=(rect.top+(rect.height-labelH)/2)+'px';
+      lbl.style.width=labelW+'px';lbl.style.height=labelH+'px';lbl.style.fontSize=labelFS+'px';
+      lbl.textContent='+'+(CFG.base_score_per_cell||10);
+      lbl.dataset.gid=grp.gid;
+      seq.appendChild(lbl);
+      grpMap[grp.gid].els.push(lbl);
+    });
+  });
+
+  // Score counter — animates g-score on left panel
+  const scoreEl=g('g-score');
+  const scoreCard=scoreEl?.closest('.card');
+  const baseScoreBeforeHand=G.score-total;
+  let displayedScore=0;
+  let _counterIv=null;
+  function animateCounter(targetScore,duration){
+    if(!scoreEl)return;
+    if(_counterIv){clearInterval(_counterIv);_counterIv=null;}
+    const start=displayedScore,diff=targetScore-start;
+    if(diff<=0){scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();displayedScore=targetScore;return;}
+    const steps=Math.min(30,Math.ceil(duration/16));let step=0;
+    if(scoreCard){scoreCard.classList.remove('score-card-lit');void scoreCard.offsetWidth;scoreCard.classList.add('score-card-lit');}
+    _counterIv=setInterval(()=>{
+      step++;displayedScore=Math.round(start+diff*(step/steps));
+      if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+displayedScore).toLocaleString();
+      if(step>=steps){clearInterval(_counterIv);_counterIv=null;displayedScore=targetScore;if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();}
+    },Math.ceil(duration/steps));
+  }
+
+  const logDiv=document.createElement('div');logDiv.className='seq-log';seq.appendChild(logDiv);
+  const banner=document.createElement('div');banner.className='score-total-banner';
+  banner.textContent='+'+total.toLocaleString();seq.appendChild(banner);
+
+  // ── Step queue — each step waits for user to click Next ──
+  const stepExplain=document.createElement('div');
+  stepExplain.style.cssText='position:fixed;bottom:calc(12% + 60px);left:50%;transform:translateX(-50%);z-index:403;text-align:center;font-family:\'Fredoka One\',cursive;font-size:14px;color:rgba(255,255,255,.8);max-width:340px;width:90%;background:rgba(26,34,54,.88);border-radius:14px;padding:10px 18px;';
+  seq.appendChild(stepExplain);
+
+  const nextBtn=document.createElement('button');
+  nextBtn.style.cssText='position:fixed;bottom:12%;left:50%;transform:translateX(-50%);z-index:404;padding:12px 36px;border:none;cursor:pointer;background:#fff;color:var(--tx);font-family:\'Fredoka One\',cursive;font-size:16px;border-radius:50px;box-shadow:0 4px 0 rgba(0,0,0,.2);';
+  nextBtn.textContent='Next →';
+  seq.appendChild(nextBtn);
+
+  const steps=[];
+
+  // Step 1: base
+  const totalBaseCells=catsSnapshot.reduce((s,g)=>s+g.cells.length,0);
+  const baseTotal=totalBaseCells*(CFG.base_score_per_cell||10);
+  steps.push({
+    explain:`🐾 Base score: each cat cell is worth ${CFG.base_score_per_cell||10} pts. You have ${totalBaseCells} cells.`,
+    run(){
+      Object.values(grpMap).forEach(info=>info.els.forEach(el=>el.classList.add('show')));
+      addLogLine(logDiv,`🐾 Base: ${totalBaseCells} × ${CFG.base_score_per_cell||10} = ${baseTotal.toLocaleString()}`);
+      animateCounter(baseTotal,500);
+    }
+  });
+
+  // Step 2: +Add treats
+  addResults.forEach(({treat,result})=>{
+    if(!result||result.bonus===0)return;
+    steps.push({
+      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}" — adds +${result.bonus} pts to affected cats.`,
+      run(){
+        flashTreat(seq,boardEl,treat,G.bsc);
+        const ef=treat.tdef.ef;const[tRow,tCol]=treat.cells[0];
+        const aff=[];
+        Object.entries(grpMap).forEach(([gid,info])=>{
+          let hit=false;
+          if(ef.includes('ALL'))hit=true;
+          else if(ef.includes('ROW'))hit=info.cells.some(([r])=>r===tRow);
+          else if(ef.includes('COL'))hit=info.cells.some(([,c])=>c===tCol);
+          else if(ef.includes('SURR')||ef.includes('surrounding'))hit=info.cells.some(([r,c])=>Math.abs(r-tRow)<=1&&Math.abs(c-tCol)<=1);
+          else hit=true;
+          if(hit)aff.push(gid);
+        });
+        // Each group gets amt × its own cell count
+        const _amt=extractNum(treat.tdef.ef);
+        aff.forEach(gid=>{
+          if(grpMap[gid]) grpMap[gid].score+=_amt*grpMap[gid].cells.length;
+        });
+        updateLabels(aff,'rgba(100,210,90,.85)');
+        addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
+        animateCounter(displayedScore+result.bonus,350);
+      }
+    });
+  });
+
+  // Step 3: ×Mul treats
+  mulResults.forEach(({treat,result})=>{
+    if(!result||!result.gids||!result.gids.length||result.m<=1)return;
+    steps.push({
+      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}" — multiplies affected cats' current score by ×${result.m}.`,
+      run(){
+        flashTreat(seq,boardEl,treat,G.bsc);
+        let mulBonus=0;
+        result.gids.forEach(gid=>{
+          if(grpMap[gid]){
+            const prev=grpMap[gid].score;
+            grpMap[gid].score=Math.round(prev*result.m);
+            mulBonus+=grpMap[gid].score-prev;
+          }
+        });
+        updateLabels(result.gids,'rgba(240,120,40,.9)');
+        addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m} (+${mulBonus})`);
+        animateCounter(displayedScore+mulBonus,350);
+      }
+    });
+  });
+
+  // Step 4: board bonus
+  if(boardBonus>0){
+    steps.push({
+      explain:`✨ Board Filled Bonus! Every cell is occupied — ${G.bsr*G.bsc} cells × ${CFG.board_fill_bonus||5} = +${boardBonus} pts!`,
+      run(){
+        addLogLine(logDiv,`✨ Board Filled! ${G.bsr*G.bsc} × ${CFG.board_fill_bonus||5} = +${boardBonus}`);
+        animateCounter(displayedScore+boardBonus,400);
+      }
+    });
+  }
+
+  // Step 5: final tally
+  steps.push({
+    explain:`🏆 Final tally! All cat scores are summed${boardBonus>0?' (including board bonus)':''} = +${total.toLocaleString()} pts this hand.`,
+    run(){
+      updateLabels([]);
+      const allCells=[];
+      catsSnapshot.forEach(grp=>{
+        grp.cells.forEach(([r,c],ci)=>{
+          if(grpMap[grp.gid]&&grpMap[grp.gid].els[ci])
+            allCells.push({r,c,el:grpMap[grp.gid].els[ci]});
+        });
+      });
+      allCells.sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c);
+      allCells.forEach((item,i)=>setTimeout(()=>{item.el.classList.add('boosted');setTimeout(()=>item.el.classList.remove('boosted'),400);},i*60));
+      setTimeout(()=>{
+        animateCounter(total,400);
+        addLogLine(logDiv,`🏆 Total: +${total.toLocaleString()}`);
+        banner.textContent='+'+total.toLocaleString();
+        banner.classList.add('show');
+      },allCells.length*60+150);
+    },
+    isLast:true
+  });
+
+  let stepIdx=-1;
+  function runNextStep(){
+    stepIdx++;
+    if(stepIdx>=steps.length){endScoreSequence(total);return;}
+    const step=steps[stepIdx];
+    stepExplain.textContent=step.explain;
+    // small delay so animation settles before next action
+    setTimeout(()=>step.run(),80);
+    nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
+    if(step.isLast){
+      // auto-advance after a moment, or wait for click
+      nextBtn.onclick=()=>endScoreSequence(total);
+    } else {
+      nextBtn.onclick=runNextStep;
+    }
+  }
+  // show first explanation immediately, then wait for clicks
+  runNextStep();
+}
+
+function flashTreat(seq,boardEl,treat,bsc){
+  treat.cells.forEach(([tr,tc])=>{
+    const el=boardEl.children[tr*bsc+tc];
+    if(!el)return;
+    const flash=document.createElement('div');
+    flash.className='score-treat-flash';
+    const rect=el.getBoundingClientRect();
+    flash.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;border-radius:8px;border:3px solid #fff;box-shadow:0 0 18px 6px rgba(255,220,60,.7);pointer-events:none;opacity:0;transition:opacity .2s;`;
+    seq.appendChild(flash);
+    setTimeout(()=>flash.style.opacity='1',20);
+    setTimeout(()=>flash.style.opacity='0',600);
+    setTimeout(()=>flash.remove(),900);
+  });
+}
+
+function addLogLine(parent,text){
+  const line=document.createElement('div');
+  line.className='seq-log-line';
+  line.textContent=text;
+  parent.appendChild(line);
+  setTimeout(()=>line.classList.add('show'),20);
+}
+
+function endScoreSequence(total){
+  const seq=g('ov-score-seq');
+  seq.innerHTML='';
+  seq.classList.remove('active');
+  // Sync score display
+  const scoreEl=g('g-score');
+  if(scoreEl) scoreEl.textContent=G.score.toLocaleString();
+  // No popup — go straight to next hand logic
+  G.hands--;
+  if(G.score>=G.tgt){roundWin();return;}
+  if(G.hands<=0||(G.deck.length===0&&G.hand.length===0)){roundFail();return;}
+  dealHand();renderAll();
+}
+
+function roundWin(){
+  // base earn + $1 per unused hand remaining
+  const bonus=G.hands; // G.hands was decremented before roundWin called, so this is hands remaining
+  const total=G.earn+bonus;
+  G.cash+=total;
+  g('wv-sc').textContent=G.score.toLocaleString();
+  g('wv-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} unused hands)`;
+  g('ov-win').classList.remove('off');
+}
+function goShop(){
+  g('ov-win').classList.add('off');
+  // advance round
+  G.round++;
+  const c=rcfg(G.round);
+  G.tgt=c.tgt;G.bsr=c.bsr;G.bsc=c.bsc;G.earn=c.earn;G.hands=c.h;G.disc=CFG.discard_count||3;G.score=0;
+  G.firstShop=false;
+  G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
+  openRounds();
+}
+function roundFail(){
+  g('fv-sc').textContent=G.score.toLocaleString();
+  g('fv-tg').textContent=G.tgt.toLocaleString();
+  g('ov-fail').classList.remove('off');
+}
+function restart(){g('ov-fail').classList.add('off');gameInProgress=false;updateContinueBtn();show('s-title');}
+
+// ══════════════════════════════════════════════════════
+//  SHOP
+// ══════════════════════════════════════════════════════
+let shopPool=[]; // current treat pool shown
+let shopBoughtIds=new Set(); // treats bought this shop visit
+// REROLL_COST now comes from CFG.reroll_cost (loaded from sheets)
+const REROLL_COST_DEFAULT=1;
+function getRerollCost(){return CFG.reroll_cost||REROLL_COST_DEFAULT;}
+
+function openShop(){
+  const isFirst=G.round===1&&!G.visitedShop;
+  G.visitedShop=true;
+  G.shopVisitedThisRound=true;
+  shopBoughtIds=new Set();
+  g('shop-sub').textContent=isFirst?'"stock up before the round!"':'"back for more treats!"';
+  g('shop-cash').textContent=G.cash;
+  const pool=[...TDEFS];sfl(pool);
+  shopPool=pool.slice(0,3);
+  renderShopFull();
+  show('s-shop');
+}
+
+function leaveShop(){
+  // commit any pending shop treats (already in bpGroups — they were placed during drag)
+  // cancel any held shop treat
+  if(H.kind==='shop-treat'){
+    H=resetH();
+    updateGhost();hideHUD();
+  }
+  openRounds();
+}
+
+function rerollTreats(){
+  if(G.cash<getRerollCost())return;
+  G.cash-=getRerollCost();
+  const pool=[...TDEFS];sfl(pool);
+  shopPool=pool.slice(0,3);
+  renderShopFull();
+}
+
+function renderShopFull(){
+  const rcEl=g('reroll-cost');if(rcEl)rcEl.textContent='$'+getRerollCost();
+  g('shop-cash').textContent=G.cash;
+  renderShopBPGrid();
+  renderShopBPList();
+  renderTreatsRow();
+  // reroll button disabled if broke
+  const rr=g('treats-reroll');
+  if(rr){rr.disabled=G.cash<getRerollCost();const rc=g('reroll-cost');if(rc)rc.textContent='$'+getRerollCost();}
+}
+
+// ── Backpack grid (mirror of game BP, shown in shop center) ──
+function renderShopBPGrid(){
+  const grid=g('shop-bpg');if(!grid)return;
+  const cs=42;
+  grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
+  grid.innerHTML='';
+  for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
+    const div=document.createElement('div');
+    div.className='sp-bpc';
+    div.style.width=cs+'px';div.style.height=cs+'px';
+    const bd=G.bp[r][c];
+    if(bd.filled){
+      div.classList.add('ft');
+      const _grp=G.bpGroups.find(g=>g.gid===bd.gid);
+      const _fail=_grp&&treatReqFails(_grp.tdef);
+      div.style.background=_fail?'rgba(150,150,150,.5)':bd.col+'bb';
+      div.style.borderColor=_fail?'rgba(150,150,150,.6)':bd.col;
+      div.style.filter=_fail?'grayscale(1)':'';
+      div.style.position='relative';
+      div.textContent=bd.em||'';
+      if(_fail){
+        const badge=document.createElement('span');
+        badge.style.cssText='position:absolute;top:-4px;right:-4px;background:#e04848;color:#fff;border-radius:50%;width:14px;height:14px;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;line-height:1;';
+        badge.textContent='!';
+        div.appendChild(badge);
+      }
+      // Rearrange: drag from shop BP
+      div.addEventListener('mousedown',(e)=>{
+        if(H.kind==='shop-treat')return;
+        if(e.button!==0)return;
+        const gid=bd.gid;
+        const grp=G.bpGroups.find(g=>g.gid===gid);
+        if(!grp)return;
+        e.stopPropagation();
+        removeBpGid(gid);
+        H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+           color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
+           grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+        updateGhost();showHUD();renderShopBPGrid();
+      });
+    }
+    div.addEventListener('mouseenter',(e)=>{shopBPEnter(r,c);showShopBPTip(e,r,c);});
+    div.addEventListener('mousemove',(e)=>moveShopBPTip(e));
+    div.addEventListener('mouseleave',()=>{shopBPLeave();hideShopBPTip();});
+    div.addEventListener('mouseup',()=>shopDropOnBP(r,c));
+    div.addEventListener('click',()=>shopDropOnBP(r,c));
+    grid.appendChild(div);
+  }
+}
+
+function shopBPEnter(r,c){
+  if(H.kind!=='shop-treat'&&H.kind!=='treat')return;
+  document.querySelectorAll('.sp-bpc.ok,.sp-bpc.bad').forEach(x=>x.classList.remove('ok','bad'));
+  const anchorR=r-H.grabDr, anchorC=c-H.grabDc;
+  const ok=bpCanAt(H.cells,anchorR,anchorC);
+  H.cells.forEach((row,dr)=>row.forEach((v,dc)=>{
+    if(!v)return;const rr=anchorR+dr,cc=anchorC+dc;
+    if(rr>=0&&rr<getBPR()&&cc>=0&&cc<getBPC()){
+      const idx=rr*getBPC()+cc;
+      const el=g('shop-bpg').querySelectorAll('.sp-bpc')[idx];
+      if(el)el.classList.add(ok?'ok':'bad');
+    }
+  }));
+}
+function shopBPLeave(){
+  document.querySelectorAll('.sp-bpc.ok,.sp-bpc.bad').forEach(x=>x.classList.remove('ok','bad'));
+}
+function showShopBPTip(e,r,c){
+  if(H.kind==='shop-treat'||H.kind==='treat')return;
+  const bd=G.bp[r][c];if(!bd.filled||!bd.tdef)return;
+  const td=bd.tdef;
+  const tip=g('board-tip');
+  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
+  tip.style.display='block';
+  moveShopBPTip(e);
+}
+function moveShopBPTip(e){moveTip(e);}
+function hideShopBPTip(){g('board-tip').style.display='none';}
+
+// ── Backpack inventory list with sell buttons ──
+function renderShopBPList(){
+  const el=g('shop-bp-list');if(!el)return;
+  el.innerHTML='';
+  if(G.bpGroups.length===0){
+    el.innerHTML='<div style="font-size:10px;color:rgba(255,255,255,.35);font-style:italic;text-align:center;padding:6px;">Backpack is empty</div>';
+    return;
+  }
+  G.bpGroups.forEach(grp=>{
+    const t=grp.tdef;
+    const d=document.createElement('div');
+    d.className='sp-inv-row';
+    d.innerHTML=`<span class="sp-inv-em">${t.em}</span>
+      <span class="sp-inv-nm">${t.nm}</span>
+      <button class="sp-inv-sell" onclick="sellTreatFromShop('${grp.gid}')">Sell $${t.sp}</button>`;
+    el.appendChild(d);
+  });
+}
+
+// ── Treat cards row ──
+function renderTreatsRow(){
+  const row=g('treats-row');if(!row)return;
+  row.innerHTML='';
+  // pick a flavor quote from the treats shown
+  const flavors=shopPool.filter(t=>t.fl).map(t=>t.fl);
+  const flavorEl=g('treats-flavor');
+  if(flavorEl) flavorEl.textContent=flavors[0]||'';
+
+  // Show sold-out placeholder for bought treats
+  shopPool.filter(td=>shopBoughtIds.has(td.id)).forEach(td=>{
+    const card=document.createElement('div');
+    card.className='tc tc-dis';
+    card.style.background='rgba(255,255,255,.3)';
+    card.style.opacity='0.35';
+    card.innerHTML=`<div class="tc-em">${td.em}</div><div class="tc-nm">${td.nm}</div><div style="font-family:'Fredoka One',cursive;font-size:11px;color:#888;margin-top:4px;">SOLD OUT</div>`;
+    row.appendChild(card);
+  });
+  shopPool.filter(td=>!shopBoughtIds.has(td.id)).forEach(td=>{
+    const broke=G.cash<td.pr;
+    const noSpc=!bpCanFit(td.bpS);
+    const dis=broke||noSpc;
+    const card=document.createElement('div');
+    card.className='tc'+(dis?' tc-dis':'');
+
+    // backpack shape mini grid
+    const cols=td.bpS[0].length;
+    let shapeHtml=`<div class="tc-shape"><div style="display:grid;grid-template-columns:repeat(${cols},16px);gap:2px;background:rgba(0,0,0,.07);padding:4px;border-radius:6px;">`;
+    td.bpS.forEach(row=>row.forEach(v=>{
+      shapeHtml+=`<div style="width:16px;height:16px;border-radius:3px;background:${v?td.col+'ee':'rgba(0,0,0,.08)'};border:1px solid ${v?td.col+'88':'rgba(0,0,0,.08)'}"></div>`;
+    }));
+    shapeHtml+='</div></div>';
+
+    const priceClass=dis?'tc-price sold':'tc-price';
+    card.innerHTML=`
+      <div class="tc-em">${td.em}</div>
+      ${shapeHtml}
+      <div class="tc-nm">${td.nm}</div>
+      <div class="tc-ef">${td.ef}</div>
+      ${td.req?`<div style="font-size:7px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
+      <div class="${priceClass}">
+        <div class="tc-price-coin">🪙</div>${td.pr}
+      </div>
+      ${noSpc&&!broke?'<div style="font-size:7px;color:var(--re);margin-top:1px;">Bag full!</div>':''}`;
+
+    if(!dis){
+      card.style.cursor='grab';
+      card.addEventListener('mousedown',(e)=>{if(e.button===0)shopPickupTreat(td);});
+    }
+    row.appendChild(card);
+  });
+}
+
+function shopPickupTreat(td){
+  // Pick up a treat from shop to drag into backpack
+  if(G.cash<td.pr)return;
+  dropHeld();
+  H={kind:'shop-treat',source:'shop',data:td,cells:td.bpS,rot:0,
+     color:td.col,em:td.em,handIdx:null,boardGid:null,bpGid:null,
+     grabDr:Math.floor(td.bpS.length/2),grabDc:Math.floor(td.bpS[0].length/2),dragging:true};
+  updateGhost();showHUD();
+}
+
+function shopDropOnBP(r,c){
+  if(H.kind==='treat'){
+    // rearrange existing BP treat — apply grab offset
+    const or=r-H.grabDr, oc=c-H.grabDc;
+    if(!bpCanAt(H.cells,or,oc))return;
+    bpPlaceAt(H.data,H.cells,or,oc);
+    H=resetH();
+    updateGhost();hideHUD();clrBPPrev();
+    renderShopFull();
+    return;
+  }
+  if(H.kind!=='shop-treat')return;
+  const td=H.data;
+  if(G.cash<td.pr){dropHeld();return;}
+  if(!bpCanAt(H.cells,r,c)){dropHeld();return;}
+  // commit purchase
+  G.cash-=td.pr;
+  bpPlaceAt(td,H.cells,r,c);
+  shopBoughtIds.add(td.id);
+  H=resetH();
+  updateGhost();hideHUD();
+  renderShopFull();
+}
+
+// ══════════════════════════════════════════════════════
+//  TREAT EFFECTS
+//  Add-treats return {bonus, desc} — bonus is added to affected catScores
+//  Mul-treats return {gids:[], m:N} — engine multiplies those catScores by m
+// ══════════════════════════════════════════════════════
+
+// ── Add helpers ──
+function surrAdd(b,pos,amt){
+  const[tr,tc]=pos;
+  const adjGids=new Set();
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    if(!dr&&!dc)continue;
+    const rr=tr+dr,cc=tc+dc;
+    if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
+      adjGids.add(b[rr][cc].gid);
+  }
+  const n=G.cats.filter(g=>adjGids.has(g.gid)).reduce((s,g)=>s+g.cells.length,0);
+  return{bonus:n*amt,desc:`+${amt}×${n} cells in adj cats = +${n*amt}`};
+}
+function rowAdd(b,pos,amt){
+  const[r]=pos;let n=0;for(let c=0;c<G.bsc;c++) if(b[r][c].kind==='cat')n++;
+  return{bonus:n*amt,desc:`+${amt}×${n} in row = +${n*amt}`};
+}
+function colAdd(b,pos,amt){
+  const[,c]=pos;let n=0;for(let rr=0;rr<G.bsr;rr++) if(b[rr][c].kind==='cat')n++;
+  return{bonus:n*amt,desc:`+${amt}×${n} in col = +${n*amt}`};
+}
+function allAdd(cats,amt){
+  const n=cats.reduce((s,c)=>s+c.cells.length,0);
+  return{bonus:n*amt,desc:`+${amt}×${n} all cats = +${n*amt}`};
+}
+
+// ── Mul helpers — return {gids, m} so engine applies to real catScores ──
+function allMulCS(cats,cs,m){
+  return{gids:cats.map(c=>c.gid),m};
+}
+function colMul(b,cats,pos,m){
+  const[,c]=pos;
+  const gids=cats.filter(grp=>grp.cells.some(([,cc])=>cc===c)).map(grp=>grp.gid);
+  return{gids,m};
+}
+function surrMulCS(b,cats,pos,m,cs){
+  const[tr,tc]=pos;
+  const adjGids=new Set();
+  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+    if(!dr&&!dc)continue;
+    const rr=tr+dr,cc=tc+dc;
+    if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
+      adjGids.add(b[rr][cc].gid);
+  }
+  return{gids:[...adjGids],m};
+}
+function shapeMul(cats,shapes,m){
+  const gids=cats.filter(c=>shapes.includes(c.shape)).map(c=>c.gid);
+  return{gids,m};
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function rotC(cells,rot){
+  let c=cells.map(r=>[...r]);
+  for(let i=0;i<rot%4;i++){
+    const rows=c.length,cols=c[0].length;
+    const n=Array.from({length:cols},()=>Array(rows).fill(0));
+    for(let r=0;r<rows;r++) for(let cc=0;cc<cols;cc++) n[cc][rows-1-r]=c[r][cc];
+    c=n;
+  }
+  return c;
+}
+function sfl(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function g(id){return document.getElementById(id);}
+function uid(){return Math.random().toString(36).slice(2,9);}
+window.addEventListener('resize',()=>{if(G.board?.length)renderBoard();});
+</script>
+</body>
+</html>
