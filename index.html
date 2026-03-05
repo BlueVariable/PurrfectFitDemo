@@ -710,7 +710,7 @@ const CSHAPES={
 // ══════════════════════════════════════════════════════
 //  GOOGLE SHEETS CONFIG — loaded at runtime
 // ══════════════════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwbOwIorizFvR5NR1gw5I4ZWCt34MLlcpszclCPyt1NKJgSu_Ad9c-5Z835ILd2hmN/exec';
+const SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?output=csv';
 
 // These will be populated by loadConfig()
 let TDEFS = [];
@@ -764,13 +764,31 @@ function parseBpShape(s){
   return Array.from({length:rows},()=>Array(cols).fill(1));
 }
 
+function parseCSVRow(line){
+  const result=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+    else cur+=c;
+  }
+  result.push(cur.trim());return result;
+}
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  if(!lines.length)return[];
+  const headers=parseCSVRow(lines[0]);
+  return lines.slice(1)
+    .map(line=>{const vals=parseCSVRow(line);const obj={};headers.forEach((h,i)=>{obj[h]=vals[i]??'';});return obj;})
+    .filter(r=>Object.values(r).some(v=>v!==''));
+}
+
 async function fetchSheet(name){
-  const url=APPS_SCRIPT_URL+'?sheet='+encodeURIComponent(name);
+  const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name);
   const res=await fetch(url);
   if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
-  const json=await res.json();
-  if(!Array.isArray(json))throw new Error(`Sheet "${name}" returned unexpected data: `+JSON.stringify(json).slice(0,120));
-  return json;
+  const text=await res.text();
+  return parseCSV(text);
 }
 
 function setLoadStatus(msg){
