@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Purrfect Fit</title>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -16,7 +17,7 @@
   --tx:#1a2236;--mu:#6a7a9a;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{width:100%;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none;}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(255,255,255,.07),transparent),
@@ -954,6 +955,11 @@ let curDeck='classic';
 function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};}
 function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null};}
 
+// Touch drag tracking — true once finger has moved enough to constitute a drag
+let _touchMovedWhileHeld=false;
+// Extract clientX/Y from mouse or touch event
+function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.changedTouches&&e.changedTouches.length)?e.changedTouches[0]:e;return{clientX:t.clientX,clientY:t.clientY};}
+
 // HELD — what the cursor is currently carrying
 // kind: null | 'cat' | 'treat'
 // source: 'hand' | 'board' | 'bp'
@@ -1192,6 +1198,15 @@ document.addEventListener('mouseup',e=>{
   }
 });
 
+// Global touchend — handle drops for touch drag gestures
+document.addEventListener('touchend',e=>{
+  if(!H.kind)return;
+  if(!_touchMovedWhileHeld)return; // was a tap not a drag — let click/touchstart handle it
+  _touchMovedWhileHeld=false;
+  const{clientX,clientY}=getCoords(e);
+  handleTouchDrop(clientX,clientY);
+});
+
 // ghost follows mouse
 document.addEventListener('mousemove',e=>{
   if(!H.kind){g('ghost').style.display='none';return;}
@@ -1200,6 +1215,115 @@ document.addEventListener('mousemove',e=>{
   gh.style.left=e.clientX+'px';
   gh.style.top=e.clientY+'px';
 });
+
+// ghost follows touch + simulate hover over board/bp cells
+document.addEventListener('touchmove',e=>{
+  if(!H.kind)return;
+  e.preventDefault();
+  _touchMovedWhileHeld=true;
+  const{clientX,clientY}=getCoords(e);
+  const gh=g('ghost');
+  gh.style.display='block';
+  gh.style.left=clientX+'px';
+  gh.style.top=clientY+'px';
+  simulateTouchHover(clientX,clientY);
+},{passive:false});
+
+// Simulate mouseenter/leave on board and BP cells during touch drag
+function simulateTouchHover(cx,cy){
+  const el=document.elementFromPoint(cx,cy);
+  // Board cells
+  const boardEl=g('board');
+  if(boardEl){
+    const cells=boardEl.querySelectorAll('.cell');
+    let bR=-1,bC=-1;
+    cells.forEach((cell,idx)=>{if(cell===el||cell.contains(el)){bR=Math.floor(idx/G.bsc);bC=idx%G.bsc;}});
+    if(bR>=0&&(bR!==H._lastBoardR||bC!==H._lastBoardC)){
+      H._lastBoardR=bR;H._lastBoardC=bC;delete H._lastBpR;onBoardEnter(bR,bC);
+    }else if(bR<0&&H._lastBoardR!==undefined){
+      delete H._lastBoardR;delete H._lastBoardC;onBoardLeave();
+    }
+  }
+  // Game BP cells
+  const bpEl=g('bpg');
+  if(bpEl){
+    const cells=bpEl.querySelectorAll('.bpc');
+    let pR=-1,pC=-1;
+    cells.forEach((cell,idx)=>{if(cell===el||cell.contains(el)){pR=Math.floor(idx/getBPC());pC=idx%getBPC();}});
+    if(pR>=0&&(pR!==H._lastBpR||pC!==H._lastBpC)){
+      H._lastBpR=pR;H._lastBpC=pC;delete H._lastBoardR;onBPEnter(pR,pC);
+    }else if(pR<0&&H._lastBpR!==undefined){
+      delete H._lastBpR;delete H._lastBpC;onBPLeave();
+    }
+  }
+  // Shop BP cells
+  const shopBpEl=g('shop-bpg');
+  if(shopBpEl){
+    const cells=shopBpEl.querySelectorAll('.sp-bpc');
+    let sR=-1,sC=-1;
+    cells.forEach((cell,idx)=>{if(cell===el||cell.contains(el)){sR=Math.floor(idx/getBPC());sC=idx%getBPC();}});
+    if(sR>=0)shopBPEnter(sR,sC);else shopBPLeave();
+  }
+}
+
+// Find a grid cell under point by checking bounding rects
+function cellAtPoint(cells,cx,cy){
+  let found=-1;
+  cells.forEach((cell,idx)=>{const r=cell.getBoundingClientRect();if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom)found=idx;});
+  return found;
+}
+
+// Handle touch-based drop: place held piece at the finger's lifted position
+function handleTouchDrop(cx,cy){
+  if(H.kind==='shop-treat'){
+    const bpEl=g('shop-bpg');
+    if(!bpEl){H=resetH();updateGhost();hideHUD();return;}
+    const cells=bpEl.querySelectorAll('.sp-bpc');
+    const idx=cellAtPoint(cells,cx,cy);
+    if(idx>=0){shopDropOnBP(Math.floor(idx/getBPC()),idx%getBPC());}
+    else{H=resetH();updateGhost();hideHUD();document.querySelectorAll('.sp-bpc.ok,.sp-bpc.bad').forEach(x=>x.classList.remove('ok','bad'));}
+    return;
+  }
+  if(H.kind==='treat'){
+    // Try shop BP first
+    const shopBpEl=g('shop-bpg');
+    if(shopBpEl){
+      const cells=shopBpEl.querySelectorAll('.sp-bpc');
+      const idx=cellAtPoint(cells,cx,cy);
+      if(idx>=0){shopDropOnBP(Math.floor(idx/getBPC()),idx%getBPC());return;}
+    }
+    // Try game board
+    const boardEl=g('board');
+    if(boardEl){
+      const cells=boardEl.querySelectorAll('.cell');
+      const idx=cellAtPoint(cells,cx,cy);
+      if(idx>=0){
+        const r=Math.floor(idx/G.bsc),c=idx%G.bsc;
+        const or=r-H.grabDr,oc=c-H.grabDc;
+        if(boardCanPlace(H.cells,or,oc)){placeTreatOnBoard(r,c);return;}
+      }
+    }
+    // Try game BP
+    const bpEl=g('bpg');
+    if(bpEl){
+      const cells=bpEl.querySelectorAll('.bpc');
+      const idx=cellAtPoint(cells,cx,cy);
+      if(idx>=0){const r=Math.floor(idx/getBPC()),c=idx%getBPC();onBPMouseUp(r,c);if(!H.kind)return;}
+    }
+    // Fall back: return treat to BP
+    bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();clrBoardPrev();
+    return;
+  }
+  if(H.kind==='cat'){
+    const boardEl=g('board');
+    if(boardEl){
+      const cells=boardEl.querySelectorAll('.cell');
+      const idx=cellAtPoint(cells,cx,cy);
+      if(idx>=0){onBoardClick(Math.floor(idx/G.bsc),idx%G.bsc);return;}
+    }
+    dropHeld();
+  }
+}
 
 function updateGhost(){
   if(!H.kind){g('ghost').style.display='none';return;}
@@ -1677,6 +1801,15 @@ function renderBoard(){
     div.addEventListener('mousemove',(e)=>moveBoardTip(e));
     div.addEventListener('mouseleave',()=>{onBoardLeave();hideBoardTip();});
     div.addEventListener('click',()=>onBoardClick(r,c));
+    // Touch: pick up filled cells to start a drag; empty cells handled by global touchend
+    div.addEventListener('touchstart',(e)=>{
+      if(H.kind)return; // already holding — drop handled by global touchend
+      const bd=G.board[r][c];
+      if(!bd.filled)return;
+      e.preventDefault();
+      _touchMovedWhileHeld=false;
+      onBoardClick(r,c); // picks up cat or treat
+    },{passive:false});
     el.appendChild(div);
   }
 }
@@ -1705,6 +1838,22 @@ function renderHand(){
       const grabDr=Math.max(0,Math.min(cells.length-1,Math.floor(relY/(sz+gap))));
       pickupCatWithGrab(i,grabDr,grabDc);
     });
+    d.addEventListener('touchstart',(e)=>{
+      e.preventDefault();
+      _touchMovedWhileHeld=false;
+      const t=e.touches[0];
+      const cells=rotC(cat.cells,H.kind==='cat'&&H.handIdx===i?H.rot:0);
+      const sz=9,gap=1;
+      const gridW=cells[0].length*(sz+gap);
+      const gridH=cells.length*(sz+gap);
+      const rect=d.getBoundingClientRect();
+      const slotCX=rect.left+rect.width/2, slotCY=rect.top+rect.height/2-8;
+      const relX=t.clientX-(slotCX-gridW/2);
+      const relY=t.clientY-(slotCY-gridH/2);
+      const grabDc=Math.max(0,Math.min(cells[0].length-1,Math.floor(relX/(sz+gap))));
+      const grabDr=Math.max(0,Math.min(cells.length-1,Math.floor(relY/(sz+gap))));
+      pickupCatWithGrab(i,grabDr,grabDc);
+    },{passive:false});
     d.addEventListener('click',()=>{if(!H.dragging)pickupCat(i);});
     row.appendChild(d);
   });
@@ -1774,6 +1923,44 @@ function renderBP(){
         document.addEventListener('mousemove',onMove);
         document.addEventListener('mouseup',onUp);
       });
+      // Touch: drag-threshold same as mouse (> 5px = drag, else tap = select/deselect)
+      div.addEventListener('touchstart',(e)=>{
+        const gid=bd.gid;
+        const grp=G.bpGroups.find(g=>g.gid===gid);
+        if(!grp)return;
+        e.stopPropagation();
+        const t=e.touches[0];
+        const startX=t.clientX,startY=t.clientY;
+        let tdragging=false;
+        const onTMove=(me)=>{
+          if(tdragging)return;
+          const mt=me.touches[0];
+          if(Math.abs(mt.clientX-startX)>5||Math.abs(mt.clientY-startY)>5){
+            tdragging=true;
+            _touchMovedWhileHeld=true;
+            document.removeEventListener('touchmove',onTMove);
+            document.removeEventListener('touchend',onTEnd);
+            dropHeld();
+            removeBpGid(gid);
+            G.selBpGid=null;hideTTP();
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+               color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
+               grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+            updateGhost();showHUD();renderBP();
+          }
+        };
+        const onTEnd=()=>{
+          document.removeEventListener('touchmove',onTMove);
+          document.removeEventListener('touchend',onTEnd);
+          if(!tdragging){
+            if(G.selBpGid===gid){G.selBpGid=null;hideTTP();}
+            else{G.selBpGid=gid;showTTP(grp.tdef);}
+            renderBP();
+          }
+        };
+        document.addEventListener('touchmove',onTMove,{passive:false});
+        document.addEventListener('touchend',onTEnd);
+      },{passive:true});
     }
     div.addEventListener('mouseenter',(e)=>{H._lastBpR=r;H._lastBpC=c;delete H._lastBoardR;onBPEnter(r,c);showBPTip(e,r,c);});
     div.addEventListener('mousemove',(e)=>moveBPTip(e));
@@ -2281,6 +2468,21 @@ function renderShopBPGrid(){
            grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
         updateGhost();showHUD();renderShopBPGrid();
       });
+      // Touch: drag from shop BP
+      div.addEventListener('touchstart',(e)=>{
+        if(H.kind==='shop-treat')return;
+        const gid=bd.gid;
+        const grp=G.bpGroups.find(g=>g.gid===gid);
+        if(!grp)return;
+        e.preventDefault();
+        e.stopPropagation();
+        _touchMovedWhileHeld=false;
+        removeBpGid(gid);
+        H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+           color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
+           grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+        updateGhost();showHUD();renderShopBPGrid();
+      },{passive:false});
     }
     div.addEventListener('mouseenter',(e)=>{shopBPEnter(r,c);showShopBPTip(e,r,c);});
     div.addEventListener('mousemove',(e)=>moveShopBPTip(e));
@@ -2387,6 +2589,11 @@ function renderTreatsRow(){
     if(!dis){
       card.style.cursor='grab';
       card.addEventListener('mousedown',(e)=>{if(e.button===0)shopPickupTreat(td);});
+      card.addEventListener('touchstart',(e)=>{
+        e.preventDefault();
+        _touchMovedWhileHeld=false;
+        shopPickupTreat(td);
+      },{passive:false});
     }
     row.appendChild(card);
   });
