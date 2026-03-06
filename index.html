@@ -107,6 +107,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
 .bt-pill-nm{font-size:9px;font-family:'Fredoka One',cursive;letter-spacing:.3px;}
 .btn-reload-cfg{padding:7px 18px;border:2px solid rgba(255,255,255,.2);cursor:pointer;background:transparent;color:rgba(255,255,255,.45);font-family:'Fredoka One',cursive;font-size:13px;border-radius:50px;transition:all .15s;width:100%;margin-top:4px;}
 .btn-reload-cfg:hover{border-color:rgba(255,255,255,.5);color:rgba(255,255,255,.85);}
+.btn-dev-toggle{padding:5px 14px;border:1px solid rgba(255,255,255,.15);cursor:pointer;background:transparent;color:rgba(255,255,255,.3);font-family:'Fredoka One',cursive;font-size:11px;border-radius:50px;transition:all .15s;letter-spacing:.5px;}
+.btn-dev-toggle:hover{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.6);}
+.btn-dev-toggle.active{border-color:rgba(245,166,35,.6);color:rgba(245,166,35,.9);background:rgba(245,166,35,.08);}
+.dev-panel{display:none;flex-direction:column;gap:6px;width:100%;padding:8px 0 0;border-top:1px solid rgba(255,255,255,.1);margin-top:4px;}
+.dev-panel.on{display:flex;}
 .btn-menu-exit{padding:7px 14px;border:2px solid rgba(255,255,255,.18);cursor:pointer;background:rgba(255,255,255,.1);color:rgba(255,255,255,.65);font-family:'Fredoka One',cursive;font-size:12px;border-radius:50px;transition:all .14s;width:100%;margin-top:auto;}
 .btn-menu-exit:hover{background:rgba(255,255,255,.2);color:#fff;}
 .btn-clr{padding:8px 14px;border:none;cursor:pointer;background:var(--re);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;border-radius:50px;box-shadow:0 4px 0 #a02828;transition:all .14s;}
@@ -516,8 +521,14 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
     <div class="deck-dots" id="deck-dots"></div>
     <button id="btn-continue" class="btn-play btn-cont" onclick="continueGame()" style="display:none;margin-bottom:6px;">▶ Continue Game</button>
     <button class="btn-play" onclick="startGame()">🐾 New Game</button>
-    <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
-    <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-8px;"></div>
+    <div style="display:flex;justify-content:center;margin-top:6px;">
+      <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
+    </div>
+    <div class="dev-panel" id="dev-panel">
+      <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
+      <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-4px;"></div>
+      <button class="btn-reload-cfg" onclick="openConfigSheet()">📋 Config Sheet</button>
+    </div>
   </div>
 </div>
 
@@ -725,6 +736,7 @@ let EMS  = {};
 let DECKS = {};
 let RCFG  = [];
 let CFG   = {};
+let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
 // Deck display metadata — seeded with defaults, overwritten by sheet on load
 const DECK_META={
   classic:{name:'Cheddar & Pepper',em:'🟠⬛',desc:'Balanced orange & black'},
@@ -912,7 +924,7 @@ async function loadConfig(){
       setLoadStatus('ready!');
       await new Promise(res=>setTimeout(res,100));
       show('s-title');
-      initDeckCarousel();
+      initDeckCarousel();applyDevModeUI();
       _bgCheckConfig();
       return;
     }catch(e){/* fall through to full load */}
@@ -924,7 +936,7 @@ async function loadConfig(){
     setLoadStatus('ready!');
     await new Promise(res=>setTimeout(res,300));
     show('s-title');
-    initDeckCarousel();
+    initDeckCarousel();applyDevModeUI();
   }catch(err){
     console.error('Config load error:',err);
     const errEl=g('load-error');
@@ -933,8 +945,24 @@ async function loadConfig(){
       errEl.innerHTML=`<strong>Failed to load config</strong><br>${err.message}<br><br>Check that your Google Sheet is published to web (File → Share → Publish to web → CSV).`;
     }
     setLoadStatus('error — see below');
-    setTimeout(()=>{loadFallbackConfig();show('s-title');initDeckCarousel();},3000);
+    setTimeout(()=>{loadFallbackConfig();show('s-title');initDeckCarousel();applyDevModeUI();},3000);
   }
+}
+
+function applyDevModeUI(){
+  const btn=g('btn-dev-toggle');
+  const panel=g('dev-panel');
+  if(DEV_MODE){btn?.classList.add('active');panel?.classList.add('on');}
+  else{btn?.classList.remove('active');panel?.classList.remove('on');}
+}
+function toggleDevMode(){
+  DEV_MODE=!DEV_MODE;
+  localStorage.setItem('purrfect_dev_mode',DEV_MODE?'1':'0');
+  applyDevModeUI();
+}
+function openConfigSheet(){
+  const sheetUrl=SHEET_BASE_URL.replace('?output=csv','');
+  window.open(sheetUrl,'_blank');
 }
 
 // Title-screen reload button
@@ -2244,11 +2272,13 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
   // ── Step queue — each step waits for user to click Next ──
   const stepExplain=document.createElement('div');
   stepExplain.style.cssText='position:fixed;bottom:calc(12% + 60px);left:50%;transform:translateX(-50%);z-index:403;text-align:center;font-family:\'Fredoka One\',cursive;font-size:14px;color:rgba(255,255,255,.8);max-width:340px;width:90%;background:rgba(26,34,54,.88);border-radius:14px;padding:10px 18px;';
+  if(!DEV_MODE)stepExplain.style.display='none';
   seq.appendChild(stepExplain);
 
   const nextBtn=document.createElement('button');
   nextBtn.style.cssText='position:fixed;bottom:12%;left:50%;transform:translateX(-50%);z-index:404;padding:12px 36px;border:none;cursor:pointer;background:#fff;color:var(--tx);font-family:\'Fredoka One\',cursive;font-size:16px;border-radius:50px;box-shadow:0 4px 0 rgba(0,0,0,.2);';
   nextBtn.textContent='Next →';
+  if(!DEV_MODE)nextBtn.style.display='none';
   seq.appendChild(nextBtn);
 
   const steps=[];
@@ -2358,17 +2388,17 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
     if(stepIdx>=steps.length){endScoreSequence(total);return;}
     const step=steps[stepIdx];
     stepExplain.textContent=step.explain;
-    // small delay so animation settles before next action
     setTimeout(()=>step.run(),80);
-    nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
-    if(step.isLast){
-      // auto-advance after a moment, or wait for click
-      nextBtn.onclick=()=>endScoreSequence(total);
-    } else {
-      nextBtn.onclick=runNextStep;
+    if(DEV_MODE){
+      nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
+      nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
+    }else{
+      // Auto-advance — give the last step extra time for its wave animation
+      const delay=step.isLast?1800:750;
+      if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
+      else setTimeout(runNextStep,delay);
     }
   }
-  // show first explanation immediately, then wait for clicks
   runNextStep();
 }
 
