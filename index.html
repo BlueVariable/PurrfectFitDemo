@@ -712,6 +712,11 @@ const CSHAPES={
 //  GOOGLE SHEETS CONFIG — loaded at runtime
 // ══════════════════════════════════════════════════════
 const SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?output=csv';
+const CONFIG_CACHE_KEY = 'purrfect_config_v1';
+const SHEET_NAMES = ['General Config','Rounds Config','Cat Types','Treats','Cat Shapes','Decks Config'];
+function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
+function saveConfigCache(raw){try{localStorage.setItem(CONFIG_CACHE_KEY,JSON.stringify({hash:_cfgHash(raw),data:raw}));}catch(e){}}
+function loadConfigCache(){try{const d=localStorage.getItem(CONFIG_CACHE_KEY);return d?JSON.parse(d):null;}catch(e){return null;}}
 
 // These will be populated by loadConfig()
 let TDEFS = [];
@@ -792,35 +797,39 @@ async function fetchSheet(name){
   return parseCSV(text);
 }
 
-function setLoadStatus(msg){
-  const el=g('load-status');if(el)el.textContent=msg;
+// Fetch all sheets as raw CSV text (for caching / change detection)
+async function fetchAllSheetsRaw(onStatus){
+  const raw={};
+  for(const name of SHEET_NAMES){
+    if(onStatus)onStatus('loading '+name+'...');
+    const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name);
+    try{
+      const res=await fetch(url);
+      if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
+      raw[name]=await res.text();
+    }catch(e){
+      if(name==='Cat Shapes'){raw[name]='';}else throw e;
+    }
+  }
+  return raw;
 }
 
-// Core data fetcher — shared by initial load and reload
-async function loadConfigData(onStatus){
-  const status=onStatus||setLoadStatus;
-  status('loading general config...');
-  const genRows=await fetchSheet('General Config');
+// Parse raw CSV map and apply to globals
+function applyConfigFromRaw(raw){
+  const genRows=parseCSV(raw['General Config']||'');
   genRows.forEach(r=>{CFG[r['Setting']]=isNaN(r['Value'])?r['Value']:Number(r['Value']);});
 
-  status('loading rounds...');
-  const rndRows=await fetchSheet('Rounds Config');
+  const rndRows=parseCSV(raw['Rounds Config']||'');
   RCFG=rndRows.map(r=>{
-    // Support both "Board Size" (square) and separate "Board Rows"/"Board Cols"
     const bsr=Number(r['Board Rows']||r['Board Size']||4);
     const bsc=Number(r['Board Cols']||r['Board Size']||4);
     return{tgt:Number(r['Target Score']),bsr,bsc,earn:Number(r['Earn (coins)']),h:Number(r['Hands per Round'])};
   });
 
-  status('loading cat types...');
-  const catRows=await fetchSheet('Cat Types');
-  catRows.forEach(r=>{
-    COLS[r['Type']]=r['Color (hex)'];
-    EMS[r['Type']] =r['Emoji'];
-  });
+  const catRows=parseCSV(raw['Cat Types']||'');
+  catRows.forEach(r=>{COLS[r['Type']]=r['Color (hex)'];EMS[r['Type']]=r['Emoji'];});
 
-  status('loading treats...');
-  const treatRows=await fetchSheet('Treats');
+  const treatRows=parseCSV(raw['Treats']||'');
   TDEFS=treatRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>{
     const id=String(r['ID']||'').trim();
     const ef=String(r['Effect']||r['Effect '||'']||'').trim();
@@ -839,21 +848,19 @@ async function loadConfigData(onStatus){
     };
   });
 
-  status('loading cat shapes...');
-  try{
-    const shapeRows=await fetchSheet('Cat Shapes');
-    shapeRows.filter(r=>r['Shape Name']&&String(r['Shape Name']).trim()).forEach(r=>{
-      const name=String(r['Shape Name']).trim();
-      const gridStr=String(r['Grid (rows, comma-sep)']||'').trim();
-      if(!gridStr)return;
-      // Parse grid: rows separated by |, cells by comma
-      const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
-      if(grid.length&&grid[0].length)CSHAPES[name]=grid;
-    });
-  }catch(e){console.warn('Cat Shapes sheet not found, using defaults:',e.message);}
+  if(raw['Cat Shapes']){
+    try{
+      parseCSV(raw['Cat Shapes']).filter(r=>r['Shape Name']&&String(r['Shape Name']).trim()).forEach(r=>{
+        const name=String(r['Shape Name']).trim();
+        const gridStr=String(r['Grid (rows, comma-sep)']||'').trim();
+        if(!gridStr)return;
+        const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
+        if(grid.length&&grid[0].length)CSHAPES[name]=grid;
+      });
+    }catch(e){console.warn('Cat Shapes parse failed:',e.message);}
+  }
 
-  status('loading decks...');
-  const deckRows=await fetchSheet('Decks Config');
+  const deckRows=parseCSV(raw['Decks Config']||'');
   DECKS={};
   deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
     const id=String(r['Deck ID']).trim();
@@ -863,15 +870,57 @@ async function loadConfigData(onStatus){
     const em=String(r['Emoji']||'🐱');
     const desc=String(r['Description']||'');
     DECKS[id]={ty,sh};
-    // Update DECK_META live from sheet
     DECK_META[id]={name,em,desc};
   });
 }
 
+function setLoadStatus(msg){
+  const el=g('load-status');if(el)el.textContent=msg;
+}
+
+// Core data fetcher — shared by initial load and reload
+async function loadConfigData(onStatus){
+  const status=onStatus||setLoadStatus;
+  const raw=await fetchAllSheetsRaw(status);
+  applyConfigFromRaw(raw);
+  return raw;
+}
+
+// Silent background fetch to detect sheet changes after a cached boot
+async function _bgCheckConfig(){
+  try{
+    const raw=await fetchAllSheetsRaw();
+    const cached=loadConfigCache();
+    const newHash=_cfgHash(raw);
+    if(!cached||cached.hash!==newHash){
+      applyConfigFromRaw(raw);
+      saveConfigCache(raw);
+      initDeckCarousel();
+      const btn=g('btn-reload-cfg');
+      if(btn){btn.textContent='↺ Updated';btn.style.color='var(--gr)';setTimeout(()=>{btn.textContent='↺ Reload Config';btn.style.color='';},3000);}
+    }
+  }catch(e){/* silent — background check failure is non-critical */}
+}
+
 // Initial boot load
 async function loadConfig(){
+  // Fast path: use localStorage cache, then background-check for changes
+  const cached=loadConfigCache();
+  if(cached&&cached.data){
+    try{
+      applyConfigFromRaw(cached.data);
+      setLoadStatus('ready!');
+      await new Promise(res=>setTimeout(res,100));
+      show('s-title');
+      initDeckCarousel();
+      _bgCheckConfig();
+      return;
+    }catch(e){/* fall through to full load */}
+  }
+  // No cache — full network load
   try{
-    await loadConfigData();
+    const raw=await loadConfigData();
+    saveConfigCache(raw);
     setLoadStatus('ready!');
     await new Promise(res=>setTimeout(res,300));
     show('s-title');
@@ -892,13 +941,22 @@ async function loadConfig(){
 async function reloadConfig(){
   const btn=g('btn-reload-cfg');
   const statusEl=g('reload-status');
-  if(btn){btn.textContent='↺ Reloading...';btn.disabled=true;}
+  if(btn){btn.textContent='↺ Checking...';btn.disabled=true;}
   if(statusEl){statusEl.style.display='block';statusEl.style.color='rgba(255,255,255,.5)';statusEl.textContent='fetching sheets...';}
   try{
-    await loadConfigData(msg=>{if(statusEl)statusEl.textContent=msg;});
-    if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
-    if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
-    initDeckCarousel();
+    const raw=await fetchAllSheetsRaw(msg=>{if(statusEl)statusEl.textContent=msg;});
+    const cached=loadConfigCache();
+    const newHash=_cfgHash(raw);
+    if(cached&&cached.hash===newHash){
+      if(btn){btn.textContent='✓ Up to date';btn.style.color='var(--gr)';}
+      if(statusEl)statusEl.textContent='No changes detected in sheets.';
+    }else{
+      applyConfigFromRaw(raw);
+      saveConfigCache(raw);
+      if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
+      if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
+      initDeckCarousel();
+    }
     setTimeout(()=>{
       if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
       if(statusEl)statusEl.style.display='none';
