@@ -975,7 +975,10 @@ function newGame(deckId){
 function mk2d(r,c,init){return Array.from({length:r},()=>Array.from({length:c},init));}
 
 function mkDeck(){
-  const cfg=DECKS[G.deckId];G.deck=[];
+  let cfg=DECKS[G.deckId];
+  if(!cfg){console.warn('Deck not found:',G.deckId,'. Loading fallback config.');loadFallbackConfig();cfg=DECKS[G.deckId]||DECKS[Object.keys(DECKS)[0]];}
+  if(!cfg){console.error('No deck config available');return;}
+  G.deck=[];
   // Filter out 1x1 shapes for cats
   const validShapes=Object.entries(CSHAPES).filter(([k,v])=>{
     const total=v.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0);return total>1;
@@ -1418,6 +1421,7 @@ function initDeckCarousel(){
   if(!carousel)return;
   // Rebuild DECK_ORDER from loaded DECKS
   DECK_ORDER=Object.keys(DECKS);
+  if(!DECK_ORDER.length){loadFallbackConfig();DECK_ORDER=Object.keys(DECKS);}
   if(!DECK_ORDER.length)DECK_ORDER=['classic'];
   // Rebuild carousel cards from DECKS
   carousel.innerHTML='';
