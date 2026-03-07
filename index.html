@@ -737,7 +737,7 @@ const CSHAPES={
 // ══════════════════════════════════════════════════════
 //  GOOGLE SHEETS CONFIG — loaded at runtime
 // ══════════════════════════════════════════════════════
-const SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?output=csv';
+const SHEET_BASE_URL = 'https://docs.google.com/spreadsheets/d/1qEr42p9HsQFPrBip1TqYB2DBehKPgyT_e0CwmNP_Cd4/gviz/tq?tqx=out:csv';
 const CONFIG_CACHE_KEY = 'purrfect_config_v1';
 const SHEET_NAMES = ['General Config','Rounds Config','Cat Types','Treats','Cat Shapes','Decks Config'];
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -829,7 +829,7 @@ async function fetchAllSheetsRaw(onStatus){
   const raw={};
   for(const name of SHEET_NAMES){
     if(onStatus)onStatus('loading '+name+'...');
-    const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name)+'&_='+Date.now();
+    const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name)+'&ts='+Date.now();
     try{
       const res=await fetch(url,{cache:'no-store'});
       if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
@@ -879,7 +879,7 @@ function applyConfigFromRaw(raw){
     try{
       parseCSV(raw['Cat Shapes']).filter(r=>r['Shape Name']&&String(r['Shape Name']).trim()).forEach(r=>{
         const name=String(r['Shape Name']).trim();
-        const gridStr=String(r['Grid (rows, comma-sep)']||'').trim();
+        const gridStr=String(r['Grid']||'').trim();
         if(!gridStr)return;
         const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
         if(grid.length&&grid[0].length)CSHAPES[name]=grid;
