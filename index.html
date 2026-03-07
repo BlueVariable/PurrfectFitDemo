@@ -873,6 +873,7 @@ function applyConfigFromRaw(raw){
         if(grid.length&&grid[0].length)CSHAPES[name]=grid;
       });
     }catch(e){console.warn('Cat Shapes parse failed:',e.message);}
+    console.log('[Config] CSHAPES loaded:', Object.keys(CSHAPES));
   }
 
   const deckRows=parseCSV(raw['Decks Config']||'');
@@ -881,8 +882,8 @@ function applyConfigFromRaw(raw){
   DECKS={};
   deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
     const id=String(r['Deck ID']).trim();
-    const ty=String(r['Cat Types (pool)']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
-    const sh=String(r['Shapes (pool, 30 cards cycling)']||'straight').split(',').map(s=>s.trim()).filter(Boolean);
+    const ty=String(r['Cat Types']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
+    const sh=String(r['Shapes']||'straight').split(',').map(s=>s.trim()).filter(Boolean);
     const name=String(r['Deck Name']||r['Name']||id);
     const em=String(r['Emoji']||'🐱');
     const desc=String(r['Description']||'');
