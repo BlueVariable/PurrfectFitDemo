@@ -988,18 +988,11 @@ async function reloadConfig(){
   if(statusEl){statusEl.style.display='block';statusEl.style.color='rgba(255,255,255,.5)';statusEl.textContent='fetching sheets...';}
   try{
     const raw=await fetchAllSheetsRaw(msg=>{if(statusEl)statusEl.textContent=msg;});
-    const cached=loadConfigCache();
-    const newHash=_cfgHash(raw);
-    if(cached&&cached.hash===newHash){
-      if(btn){btn.textContent='✓ Up to date';btn.style.color='var(--gr)';}
-      if(statusEl)statusEl.textContent='No changes detected in sheets.';
-    }else{
-      applyConfigFromRaw(raw);
-      saveConfigCache(raw);
-      if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
-      if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
-      initDeckCarousel();
-    }
+    applyConfigFromRaw(raw);
+    saveConfigCache(raw);
+    if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
+    if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
+    initDeckCarousel();
     setTimeout(()=>{
       if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
       if(statusEl)statusEl.style.display='none';
