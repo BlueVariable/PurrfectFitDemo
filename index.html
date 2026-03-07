@@ -1042,7 +1042,8 @@ function mk2d(r,c,init){return Array.from({length:r},()=>Array.from({length:c},i
 function mkDeck(){
   let cfg=DECKS[G.deckId];
   if(!cfg){console.error('Deck not found:',G.deckId);return;}
-  if(!cfg){console.error('No deck config available');return;}
+  console.log('[mkDeck] deckId:',G.deckId,'ty:',cfg.ty,'sh:',cfg.sh);
+  console.log('[mkDeck] COLS:',JSON.stringify(COLS),'EMS:',JSON.stringify(EMS));
   G.deck=[];
   // Filter out 1x1 shapes for cats
   const validShapes=Object.entries(CSHAPES).filter(([k,v])=>{
