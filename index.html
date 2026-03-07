@@ -888,6 +888,8 @@ function applyConfigFromRaw(raw){
   }
 
   const deckRows=parseCSV(raw['Decks Config']||'');
+  console.log('[Config] Decks Config raw CSV:', raw['Decks Config']?.slice(0,500));
+  console.log('[Config] Deck rows parsed:', deckRows.length, deckRows.map(r=>r['Deck ID']));
   DECKS={};
   deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
     const id=String(r['Deck ID']).trim();
@@ -899,6 +901,7 @@ function applyConfigFromRaw(raw){
     DECKS[id]={ty,sh};
     DECK_META[id]={name,em,desc};
   });
+  console.log('[Config] DECKS loaded:', Object.keys(DECKS));
 }
 
 function setLoadStatus(msg){
