@@ -759,13 +759,7 @@ let DECKS = {};
 let RCFG  = [];
 let CFG   = {};
 let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
-// Deck display metadata — seeded with defaults, overwritten by sheet on load
-const DECK_META={
-  classic:{name:'Cheddar & Pepper',em:'🟠⬛',desc:'Balanced orange & black'},
-  orange: {name:'Orange Gang',     em:'🟠🟠',desc:'All orange, big type synergy'},
-  wild:   {name:'Wildcat Chaos',   em:'🌈😺',desc:'All types, wild combos'},
-  big:    {name:'Chonk Squad',     em:'📦🐾',desc:'Big shapes, max cells'},
-}; // general config: hand_count, discard_count, deck_card_count, etc.
+const DECK_META={};
 
 function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
 
@@ -970,7 +964,6 @@ async function loadConfig(){
       errEl.innerHTML=`<strong>Failed to load config</strong><br>${err.message}<br><br>Check that your Google Sheet is published to web (File → Share → Publish to web → CSV).`;
     }
     setLoadStatus('error — see below');
-    setTimeout(()=>{loadFallbackConfig();show('s-title');initDeckCarousel();applyDevModeUI();},3000);
   }
 }
 
@@ -1018,32 +1011,6 @@ async function reloadConfig(){
 const RARITY_COLORS={common:'#a0b8e0',rare:'#60a0f0',epic:'#9060c8',legendary:'#e04040'};
 function rarCol(rar){return RARITY_COLORS[rar?.toLowerCase()]||'#a0b8e0';}
 
-function loadFallbackConfig(){
-  // Embedded fallback so game works even if sheets are unreachable
-  COLS={orange:'#e8875a',black:'#2a2a3a',white:'#b0b8d0',grey:'#6878a0',tabby:'#a07040'};
-  EMS ={orange:'🟠',black:'⬛',white:'⬜',grey:'🩶',tabby:'🐾'};
-  CFG={hand_count:7,discard_count:3,deck_card_count:30,starting_cash:5,reroll_cost:1,base_score_per_cell:10,board_fill_bonus:5,backpack_rows:4,backpack_cols:4};
-  RCFG=[{tgt:180,bsr:4,bsc:4,earn:4,h:3},{tgt:450,bsr:4,bsc:4,earn:6,h:3},{tgt:950,bsr:5,bsc:5,earn:9,h:3},{tgt:2000,bsr:5,bsc:5,earn:13,h:3},{tgt:4200,bsr:6,bsc:6,earn:17,h:3},{tgt:8500,bsr:6,bsc:6,earn:22,h:3},{tgt:17000,bsr:7,bsc:7,earn:28,h:3}];
-  TDEFS=[
-    {id:'milk',nm:'WARM MILK',em:'🥛',rar:'common',col:'#a0b8e0',phase:'add',bpS:[[1]],ef:'+8 to ALL cats',req:'',pr:1,sp:0,fl:'"one treat keeps the bites away"',fn:(b,cats)=>allAdd(cats,8)},
-    {id:'catnip',nm:'CATNIP',em:'🌿',rar:'common',col:'#72b860',phase:'add',bpS:[[1]],ef:'+12 to cats in same ROW',req:'',pr:2,sp:1,fl:'"eat. sleep. catnip. repeat."',fn:(b,c,t,p)=>rowAdd(b,p,12)},
-    {id:'feather',nm:'FEATHER',em:'🪶',rar:'common',col:'#c090d0',phase:'add',bpS:[[1]],ef:'+10 to cats in same COL',req:'',pr:2,sp:1,fl:'"light as a whisker"',fn:(b,c,t,p)=>colAdd(b,p,10)},
-    {id:'bcat',nm:'BLACK CAT',em:'🐱',rar:'rare',col:'#485068',phase:'add',bpS:[[1,1]],ef:'+25 to SURROUNDING cats',req:'',pr:4,sp:2,fl:'"devil advocate"',fn:(b,c,t,p)=>surrAdd(b,p,25)},
-    {id:'fish',nm:'SARDINE TIN',em:'🐟',rar:'rare',col:'#60a0f0',phase:'add',bpS:[[1,1]],ef:'+20 per cat in column',req:'',pr:4,sp:2,fl:'"something smells fishy..."',fn:(b,c,t,p)=>colAdd(b,p,20)},
-    {id:'yarn',nm:'YARN BALL',em:'🧶',rar:'rare',col:'#50a8f0',phase:'mul',bpS:[[1],[1]],ef:'×2 L/J/T/curl/chonk cats',req:'',pr:5,sp:2,fl:'"bag full of purr-fection"',fn:(b,cats)=>shapeMul(cats,['L','J','T','curl','chonk'],2)},
-    {id:'tuna',nm:'TUNA CAN',em:'🥫',rar:'rare',col:'#e87850',phase:'mul',bpS:[[1],[1]],ef:'×2 all ORANGE cats',req:'NEEDS ORANGE',pr:5,sp:2,fl:'"the forbidden can"',fn:(b,cats,ts,p,cs)=>{const gids=Object.keys(cs).filter(gid=>{const grp=cats.find(c=>c.gid===gid);return grp&&grp.type==='orange';});return{gids,m:2};}},
-    {id:'laser',nm:'LASER POINTER',em:'🔴',rar:'epic',col:'#f0c820',phase:'mul',bpS:[[1,1,1]],ef:'×3 cats in same COLUMN',req:'',pr:7,sp:3,fl:'"the red dot never lies"',fn:(b,cats,t,p,cs)=>colMul(b,cats,p,3)},
-    {id:'nap',nm:'POWER NAP',em:'😴',rar:'epic',col:'#9060c8',phase:'mul',bpS:[[1,1],[1,0]],ef:'×2 ALL cats',req:'NO OTHER TREAT',pr:8,sp:4,fl:'"never stop napping"',fn:(b,cats,ts,p,cs)=>ts.length<=1?allMulCS(cats,cs,2):{gids:[],m:1}},
-    {id:'frenzy',nm:'FRENZY BALL',em:'🔮',rar:'legendary',col:'#a060e0',phase:'mul',bpS:[[1,1],[1,1]],ef:'×3 surrounding cats',req:'ALL SAME TYPE',pr:10,sp:5,fl:'"purrfect for world domination"',fn:(b,cats,ts,p,cs)=>{if([...new Set(cats.map(c=>c.type))].length>1)return{gids:[],m:1};return surrMulCS(b,cats,p,3,cs);}},
-    {id:'catnado',nm:'CATNADO',em:'🌪️',rar:'legendary',col:'#e04040',phase:'mul',bpS:[[1,1],[1,1]],ef:'×2 ALL cats',req:'',pr:10,sp:5,fl:'"nothing can stop it now"',fn:(b,cats,ts,p,cs)=>allMulCS(cats,cs,2)},
-  ];
-  DECKS={
-    classic:{ty:['orange','orange','orange','black','black','black','white','grey'],sh:['straight','L','T','Z','sq','duo','trio','J','curl','corner','straight','L','T','chonk','straight','J','duo','trio','Z','S','fat','stair','L','T','straight','duo','trio','corner','curl','chonk']},
-    orange:{ty:['orange'],sh:['straight','L','T','Z','sq','duo','trio','J','curl','corner','straight','L','T','chonk','fat','stair','cross','straight','L','T','duo','trio','Z','S','chonk','curl','corner','L','T','straight']},
-    wild:{ty:['orange','black','white','grey','tabby'],sh:['straight','L','T','Z','sq','duo','trio','J','S','curl','corner','fat','cross','chonk','stair','straight','L','T','Z','duo','trio','curl','corner','chonk','fat','cross','stair','L','T']},
-    big:{ty:['orange','black','grey','tabby'],sh:['L','L','J','J','T','T','fat','fat','chonk','chonk','cross','cross','straight','straight','curl','curl','Z','S','L','J','fat','chonk','T','cross','L','J','fat','chonk','T','straight']},
-  };
-}
 
 // ══════════════════════════════════════════════════════
 //  STATE
@@ -1086,7 +1053,7 @@ function mk2d(r,c,init){return Array.from({length:r},()=>Array.from({length:c},i
 
 function mkDeck(){
   let cfg=DECKS[G.deckId];
-  if(!cfg){console.warn('Deck not found:',G.deckId,'. Loading fallback config.');loadFallbackConfig();cfg=DECKS[G.deckId]||DECKS[Object.keys(DECKS)[0]];}
+  if(!cfg){console.error('Deck not found:',G.deckId);return;}
   if(!cfg){console.error('No deck config available');return;}
   G.deck=[];
   // Filter out 1x1 shapes for cats
@@ -1649,7 +1616,7 @@ function initDeckCarousel(){
   if(!carousel)return;
   // Rebuild DECK_ORDER from loaded DECKS
   DECK_ORDER=Object.keys(DECKS);
-  if(!DECK_ORDER.length){loadFallbackConfig();DECK_ORDER=Object.keys(DECKS);}
+  if(!DECK_ORDER.length){console.error('No decks loaded from sheet');return;}
   if(!DECK_ORDER.length)DECK_ORDER=['classic'];
   // Rebuild carousel cards from DECKS
   carousel.innerHTML='';
