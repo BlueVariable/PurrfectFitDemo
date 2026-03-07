@@ -829,9 +829,9 @@ async function fetchAllSheetsRaw(onStatus){
   const raw={};
   for(const name of SHEET_NAMES){
     if(onStatus)onStatus('loading '+name+'...');
-    const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name);
+    const url=SHEET_BASE_URL+'&sheet='+encodeURIComponent(name)+'&_='+Date.now();
     try{
-      const res=await fetch(url);
+      const res=await fetch(url,{cache:'no-store'});
       if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
       raw[name]=await res.text();
     }catch(e){
