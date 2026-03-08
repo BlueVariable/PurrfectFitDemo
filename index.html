@@ -97,8 +97,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
 @keyframes scoreFlash{0%,100%{transform:scale(1)}40%{transform:scale(1.08);filter:brightness(1.3);}}
 .score-card-lit{animation:scoreFlash .4s ease;outline:3px solid var(--or);outline-offset:2px;border-radius:12px;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-@keyframes dealIn{0%{transform:translateY(28px) scale(.85);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
-.cslot.deal{animation:dealIn .28s cubic-bezier(.175,.885,.32,1.275) both;}
 .bbtns{display:flex;gap:8px;align-items:center;}
 .board-treats{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;}
 .bt-pill{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,.18);border-radius:20px;padding:2px 8px 2px 4px;font-size:10px;font-weight:800;color:#fff;border:1.5px solid rgba(255,255,255,.25);cursor:default;position:relative;}
@@ -497,7 +495,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
 <div id="ghost"><div id="gh-grid" class="gh-grid"></div></div>
 <div id="board-tip" style="position:fixed;display:none;z-index:9990;pointer-events:none;background:rgba(20,28,52,.94);color:#fff;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:700;max-width:180px;border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 14px rgba(0,0,0,.4);line-height:1.5;"></div>
 <div id="ihud">
-  <div class="ik">R</div><span>or</span><div class="ik">RMB</div><span>Rotate</span>
+  <button class="ik" onclick="rotate()" style="cursor:pointer;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);color:#fff;font-family:'Fredoka One',cursive;font-size:11px;border-radius:5px;padding:2px 7px;">↻ Rotate</button>
   <div class="isep">|</div>
   <div class="ik">Click</div><span>Place</span>
   <div class="isep">|</div>
@@ -1877,9 +1875,7 @@ function renderHand(){
   G.hand.forEach((cat,i)=>{
     const isHeld=H.kind==='cat'&&H.handIdx===i;
     const d=document.createElement('div');
-    const isNew=G.newCardIndices&&G.newCardIndices.has(i);
-    d.className='cslot'+(isHeld?' held':'')+(isNew?' deal':'');
-    if(isNew) d.style.animationDelay=(i*0.045)+'s';
+    d.className='cslot'+(isHeld?' held':'');
     d.innerHTML=shpHTML(cat.cells,cat.col,9)+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
@@ -1978,10 +1974,12 @@ function renderBP(){
         const grp=G.bpGroups.find(g=>g.gid===gid);
         if(!grp)return;
         e.stopPropagation();
+        e.preventDefault();
         const t=e.touches[0];
         const startX=t.clientX,startY=t.clientY;
         let tdragging=false;
         const onTMove=(me)=>{
+          me.preventDefault();
           if(tdragging)return;
           const mt=me.touches[0];
           if(Math.abs(mt.clientX-startX)>5||Math.abs(mt.clientY-startY)>5){
@@ -2009,7 +2007,7 @@ function renderBP(){
         };
         document.addEventListener('touchmove',onTMove,{passive:false});
         document.addEventListener('touchend',onTEnd);
-      },{passive:true});
+      },{passive:false});
     }
     div.addEventListener('mouseenter',(e)=>{H._lastBpR=r;H._lastBpC=c;delete H._lastBoardR;onBPEnter(r,c);showBPTip(e,r,c);});
     div.addEventListener('mousemove',(e)=>moveBPTip(e));
