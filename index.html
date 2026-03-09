@@ -867,10 +867,12 @@ function applyConfigFromRaw(raw){
     const rar=String(r['Rarity']||'common').trim().toLowerCase();
     const buyRaw=r['Buy Price']||r['Buy Price ']||r['Price']||1;
     const sellRaw=r['Sell Price']||r['Sell Price ']||r['Sell']||0;
+    const buyPr=Number(buyRaw)||1;
+    const sellPr=CFG.sell_price_coef?Math.round(buyPr*CFG.sell_price_coef):(Number(sellRaw)||0);
     return{
       id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
       bpS, ef, req:String(r['Requirement']||r['Req']||'').trim(),
-      pr:Number(buyRaw)||1, sp:Number(sellRaw)||0,
+      pr:buyPr, sp:sellPr,
       fl:String(r['Flavor']||r['Flavour']||''),
       fn:buildTreatFn(id,ef,phase),
     };
@@ -1158,10 +1160,7 @@ function pickupTreat(){
 
 function dropHeld(){
   if(!H.kind)return;
-  // cat from board: was removed from board+cats and pushed to hand on pickup.
-  // On cancel we leave it in hand — it's playable there. Nothing to undo.
-  if(H.kind==='treat'&&H.source==='bp'){
-    // treat was removed from BP on pickup — return it
+  if(H.kind==='treat'&&(H.source==='bp'||H.source==='board')){
     bpAutoPlace(H.data);
   }
   H=resetH();
@@ -1491,16 +1490,18 @@ function onBoardClick(r,c){
     const bd=G.board[r][c];
     if(bd.filled&&bd.kind==='cat'){pickupCatFromBoard(r,c);return;}
     if(bd.filled&&bd.kind==='treat'){
-      // pick up treat back to BP — clear all cells of this treat's gid
+      // pick up treat for drag — clear board cells, hold in H
       const gid=bd.gid;
       const ti=G.treats.findIndex(t=>t.gid===gid);
       if(ti>=0){
-        bpAutoPlace(G.treats[ti].tdef);
-        G.treats[ti].cells.forEach(([tr,tc])=>{
-          G.board[tr][tc]=emptyCell();
-        });
+        const treatGroup=G.treats[ti];
+        treatGroup.cells.forEach(([tr,tc])=>{G.board[tr][tc]=emptyCell();});
         G.treats.splice(ti,1);
-        renderAll();
+        const tdef=treatGroup.tdef;
+        H={kind:'treat',source:'board',data:tdef,cells:tdef.bpS,rot:0,
+           color:tdef.col,em:tdef.em,handIdx:null,boardGid:gid,bpGid:null,
+           grabDr:Math.floor(tdef.bpS.length/2),grabDc:Math.floor(tdef.bpS[0].length/2),dragging:false};
+        updateGhost();showHUD();clrBoardPrev();renderAll();
       }
       return;
     }
@@ -1902,6 +1903,8 @@ function renderBoard(){
           badge.textContent='!';
           div.appendChild(badge);
         }
+        // mousedown on treat: start drag immediately
+        div.addEventListener('mousedown',(e)=>{if(e.button!==0||H.kind)return;e.stopPropagation();onBoardClick(r,c);});
       }
     }
     div.addEventListener('mouseenter',(e)=>{H._lastBoardR=r;H._lastBoardC=c;delete H._lastBpR;onBoardEnter(r,c);showBoardTip(e,r,c);});
@@ -2118,34 +2121,29 @@ function doDiscard(){
 function doFit(){
   if(!G.cats.length)return;
 
-  // ── Phase 0: base scores (cells × 10) ──
+  // cats start at 0 — treats are the sole score source
   const catScores={};
-  const basePerCell=CFG.base_score_per_cell||10;
-  G.cats.forEach(grp=>{catScores[grp.gid]=grp.cells.length*basePerCell;});
+  G.cats.forEach(grp=>{catScores[grp.gid]=0;});
 
-  const sorted=[...G.treats].sort((a,b)=>a.cells[0][0]-b.cells[0][0]);
-  const addTreats=sorted.filter(t=>t.tdef.phase==='add');
-  const mulTreats=sorted.filter(t=>t.tdef.phase==='mul');
-
-  // ── Phase A: +Add treats boost catScores directly ──
-  const addResults=addTreats.map(t=>{
-    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells[0],catScores)||{bonus:0,desc:''};
-    // distribute add bonus into affected groups
-    applyAddResult(t,res,catScores);
-    return{treat:t,result:res,phase:'add'};
+  // sort treats top-to-bottom (higher on board = smaller row = applied first)
+  const sorted=[...G.treats].sort((a,b)=>{
+    const minA=Math.min(...a.cells.map(([r])=>r));
+    const minB=Math.min(...b.cells.map(([r])=>r));
+    return minA-minB;
   });
 
-  // ── Phase B: ×Mul treats multiply current catScores ──
-  const mulResults=mulTreats.map(t=>{
-    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells[0],catScores)||{gids:[],m:1};
-    applyMulResult(t,res,catScores);
-    return{treat:t,result:res,phase:'mul'};
+  // apply treats in sorted order — pass all treat cells (not just first)
+  const treatResults=sorted.map(t=>{
+    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells,catScores)||{};
+    if(t.tdef.phase==='add') applyAddResult(t,res,catScores);
+    else applyMulResult(t,res,catScores);
+    return{treat:t,result:res,phase:t.tdef.phase};
   });
 
-  // ── Phase C: sum cat scores ──
+  // sum finalized cat scores
   const catTotal=Object.values(catScores).reduce((a,b)=>a+b,0);
 
-  // ── Phase D: board filled bonus (all cells × 5) ──
+  // board fill bonus
   const filledCells=G.board.flat().filter(c=>c.filled).length;
   const totalBoardCells=G.bsr*G.bsc;
   const boardFull=filledCells===totalBoardCells;
@@ -2154,39 +2152,39 @@ function doFit(){
   const total=catTotal+boardBonus;
   G.lastScore=total;
 
-  // snapshot cats before clearing (animation still needs them)
   const catsSnapshot=[...G.cats];
 
-  // Return treats to BP, clear board cells
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
     bpAutoPlace(bt.tdef);
   });
   G.treats=[];
 
-  // Launch animation
-  runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,total,catsSnapshot);
+  runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,catsSnapshot);
 }
 
-// Distribute an add-treat's bonus into catScores
+// Distribute add bonus: flat +amt per affected cat group
 function applyAddResult(t,res,catScores){
   if(!res||!res.bonus)return;
   const ef=t.tdef.ef;
-  const amt=extractNum(ef); // per-cell amount from effect string
-  const [tRow,tCol]=t.cells[0];
+  const amt=extractNum(ef);
+  const treatCells=t.cells;
+  const [tRow,tCol]=treatCells[0];
   const affected=[];
   G.cats.forEach(grp=>{
     let hit=false;
     if(ef.includes('ALL')) hit=true;
     else if(ef.includes('ROW')) hit=grp.cells.some(([r])=>r===tRow);
     else if(ef.includes('COL')) hit=grp.cells.some(([,c])=>c===tCol);
-    else if(ef.includes('SURR')||ef.includes('surrounding')) hit=grp.cells.some(([r,c])=>Math.abs(r-tRow)<=1&&Math.abs(c-tCol)<=1);
+    else if(ef.includes('SURR')||ef.includes('surrounding')){
+      // check against ALL treat cells (full shape)
+      hit=treatCells.some(([tr,tc])=>grp.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
+    }
     else hit=true;
-    if(hit) affected.push({gid:grp.gid, cells:grp.cells.length});
+    if(hit) affected.push(grp.gid);
   });
-  if(!affected.length)return;
-  // Each affected group gets amt × its own cell count (matches how the fn computed total bonus)
-  affected.forEach(({gid,cells})=>{if(catScores[gid]!==undefined)catScores[gid]+=amt*cells;});
+  // flat +amt per affected cat group (not per cell)
+  affected.forEach(gid=>{if(catScores[gid]!==undefined)catScores[gid]+=amt;});
 }
 
 // Apply a mul-treat's multiplier to specific catScores
@@ -2201,7 +2199,7 @@ function applyMulResult(t,res,catScores){
   }
 }
 
-function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,total,catsSnapshot){
+function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,catsSnapshot){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.add('active');
@@ -2214,22 +2212,21 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
   const labelH=Math.max(20,Math.min(30,cellW*.45));
   const labelFS=Math.max(9,Math.min(14,cellW*.22));
 
-  // dim overlay
   const dim=document.createElement('div');
   dim.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:-1;';
   seq.appendChild(dim);
 
-  // grpMap mirrors catScores for display — starts at base, updated per phase
+  // grpMap — cats start at 0; scores build up through treats
   const grpMap={};
   catsSnapshot.forEach(grp=>{
-    grpMap[grp.gid]={cells:grp.cells,score:grp.cells.length*(CFG.base_score_per_cell||10),els:[]};
+    grpMap[grp.gid]={cells:grp.cells,score:0,els:[]};
   });
 
   const updateLabels=(highlightGids=[],color)=>{
     Object.entries(grpMap).forEach(([gid,info])=>{
-      const perCell=Math.round(info.score/info.cells.length);
-      info.els.forEach(lbl=>{
-        lbl.textContent='+'+perCell;
+      const sc=info.score;
+      info.els.forEach((lbl,i)=>{
+        if(sc>0){lbl.textContent='+'+sc;lbl.classList.add('show');}
         if(highlightGids.includes(gid)){
           lbl.style.background=color||'rgba(245,166,35,.85)';
           lbl.classList.add('boosted');
@@ -2239,7 +2236,7 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
     });
   };
 
-  // place cell labels over board
+  // place cell labels (start hidden — appear when cats first get score)
   catsSnapshot.forEach(grp=>{
     grp.cells.forEach(([r,c],ci)=>{
       const lbl=document.createElement('div');
@@ -2250,14 +2247,13 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
       lbl.style.left=(rect.left+(rect.width-labelW)/2)+'px';
       lbl.style.top=(rect.top+(rect.height-labelH)/2)+'px';
       lbl.style.width=labelW+'px';lbl.style.height=labelH+'px';lbl.style.fontSize=labelFS+'px';
-      lbl.textContent='+'+(CFG.base_score_per_cell||10);
+      lbl.textContent='';
       lbl.dataset.gid=grp.gid;
       seq.appendChild(lbl);
       grpMap[grp.gid].els.push(lbl);
     });
   });
 
-  // Score counter — animates g-score on left panel
   const scoreEl=g('g-score');
   const scoreCard=scoreEl?.closest('.card');
   const baseScoreBeforeHand=G.score;
@@ -2268,20 +2264,19 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
     if(_counterIv){clearInterval(_counterIv);_counterIv=null;}
     const start=displayedScore,diff=targetScore-start;
     if(diff<=0){scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();displayedScore=targetScore;return;}
-    const steps=Math.min(30,Math.ceil(duration/16));let step=0;
+    const steps2=Math.min(30,Math.ceil(duration/16));let step=0;
     if(scoreCard){scoreCard.classList.remove('score-card-lit');void scoreCard.offsetWidth;scoreCard.classList.add('score-card-lit');}
     _counterIv=setInterval(()=>{
-      step++;displayedScore=Math.round(start+diff*(step/steps));
+      step++;displayedScore=Math.round(start+diff*(step/steps2));
       if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+displayedScore).toLocaleString();
-      if(step>=steps){clearInterval(_counterIv);_counterIv=null;displayedScore=targetScore;if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();}
-    },Math.ceil(duration/steps));
+      if(step>=steps2){clearInterval(_counterIv);_counterIv=null;displayedScore=targetScore;if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();}
+    },Math.ceil(duration/steps2));
   }
 
   const logDiv=document.createElement('div');logDiv.className='seq-log';seq.appendChild(logDiv);
   const banner=document.createElement('div');banner.className='score-total-banner';
   banner.textContent='+'+total.toLocaleString();seq.appendChild(banner);
 
-  // ── Step queue — each step waits for user to click Next ──
   const stepExplain=document.createElement('div');
   stepExplain.style.cssText='position:fixed;bottom:calc(12% + 60px);left:50%;transform:translateX(-50%);z-index:403;text-align:center;font-family:\'Fredoka One\',cursive;font-size:14px;color:rgba(255,255,255,.8);max-width:340px;width:90%;background:rgba(26,34,54,.88);border-radius:14px;padding:10px 18px;';
   if(!DEV_MODE)stepExplain.style.display='none';
@@ -2295,95 +2290,77 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
 
   const steps=[];
 
-  // Step 1: base
-  const totalBaseCells=catsSnapshot.reduce((s,g)=>s+g.cells.length,0);
-  const baseTotal=totalBaseCells*(CFG.base_score_per_cell||10);
-  steps.push({
-    explain:`🐾 Base score: each cat cell is worth ${CFG.base_score_per_cell||10} pts. You have ${totalBaseCells} cells.`,
-    run(){
-      Object.values(grpMap).forEach(info=>info.els.forEach(el=>el.classList.add('show')));
-      addLogLine(logDiv,`🐾 Base: ${totalBaseCells} × ${CFG.base_score_per_cell||10} = ${baseTotal.toLocaleString()}`);
-      animateCounter(baseTotal,500);
-    }
-  });
-
-  // Step 2: +Add treats
-  addResults.forEach(({treat,result})=>{
-    if(!result||result.bonus===0)return;
+  // One step per treat (in top-to-bottom order, as computed in doFit)
+  treatResults.forEach(({treat,result,phase})=>{
+    const hasEffect=phase==='add'?(result&&result.bonus>0):(result&&result.gids&&result.gids.length&&result.m>1);
+    if(!hasEffect)return;
     steps.push({
-      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}" — adds +${result.bonus} pts to affected cats.`,
+      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}"`,
       run(){
         flashTreat(seq,boardEl,treat,G.bsc);
-        const ef=treat.tdef.ef;const[tRow,tCol]=treat.cells[0];
-        const aff=[];
-        Object.entries(grpMap).forEach(([gid,info])=>{
-          let hit=false;
-          if(ef.includes('ALL'))hit=true;
-          else if(ef.includes('ROW'))hit=info.cells.some(([r])=>r===tRow);
-          else if(ef.includes('COL'))hit=info.cells.some(([,c])=>c===tCol);
-          else if(ef.includes('SURR')||ef.includes('surrounding'))hit=info.cells.some(([r,c])=>Math.abs(r-tRow)<=1&&Math.abs(c-tCol)<=1);
-          else hit=true;
-          if(hit)aff.push(gid);
-        });
-        // Each group gets amt × its own cell count
-        const _amt=extractNum(treat.tdef.ef);
-        aff.forEach(gid=>{
-          if(grpMap[gid]) grpMap[gid].score+=_amt*grpMap[gid].cells.length;
-        });
-        updateLabels(aff,'rgba(100,210,90,.85)');
-        addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
-        animateCounter(displayedScore+result.bonus,350);
+        const ef=treat.tdef.ef;
+        const treatCells=treat.cells;
+        const [tRow,tCol]=treatCells[0];
+        if(phase==='add'){
+          const aff=[];
+          const amt=extractNum(ef);
+          Object.entries(grpMap).forEach(([gid,info])=>{
+            let hit=false;
+            if(ef.includes('ALL'))hit=true;
+            else if(ef.includes('ROW'))hit=info.cells.some(([r])=>r===tRow);
+            else if(ef.includes('COL'))hit=info.cells.some(([,c])=>c===tCol);
+            else if(ef.includes('SURR')||ef.includes('surrounding')){
+              hit=treatCells.some(([tr,tc])=>info.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
+            }
+            else hit=true;
+            if(hit)aff.push(gid);
+          });
+          aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
+          updateLabels(aff,'rgba(100,210,90,.85)');
+          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
+          animateCounter(displayedScore+result.bonus,350);
+        } else {
+          // mul
+          let mulBonus=0;
+          result.gids.forEach(gid=>{
+            if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.m);mulBonus+=grpMap[gid].score-prev;}
+          });
+          updateLabels(result.gids,'rgba(240,120,40,.9)');
+          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m} (+${mulBonus})`);
+          animateCounter(displayedScore+mulBonus,350);
+        }
       }
     });
   });
 
-  // Step 3: ×Mul treats
-  mulResults.forEach(({treat,result})=>{
-    if(!result||!result.gids||!result.gids.length||result.m<=1)return;
-    steps.push({
-      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}" — multiplies affected cats' current score by ×${result.m}.`,
-      run(){
-        flashTreat(seq,boardEl,treat,G.bsc);
-        let mulBonus=0;
-        result.gids.forEach(gid=>{
-          if(grpMap[gid]){
-            const prev=grpMap[gid].score;
-            grpMap[gid].score=Math.round(prev*result.m);
-            mulBonus+=grpMap[gid].score-prev;
-          }
-        });
-        updateLabels(result.gids,'rgba(240,120,40,.9)');
-        addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m} (+${mulBonus})`);
-        animateCounter(displayedScore+mulBonus,350);
-      }
-    });
-  });
-
-  // Step 4: board bonus
   if(boardBonus>0){
     steps.push({
-      explain:`✨ Board Filled Bonus! Every cell is occupied — ${G.bsr*G.bsc} cells × ${CFG.board_fill_bonus||5} = +${boardBonus} pts!`,
+      explain:`✨ Board Filled Bonus! ${G.bsr*G.bsc} × ${CFG.board_fill_bonus||5} = +${boardBonus}`,
       run(){
-        addLogLine(logDiv,`✨ Board Filled! ${G.bsr*G.bsc} × ${CFG.board_fill_bonus||5} = +${boardBonus}`);
+        addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
         animateCounter(displayedScore+boardBonus,400);
       }
     });
   }
 
-  // Step 5: final tally
+  // Final: sum all cat scores
   steps.push({
-    explain:`🏆 Final tally! All cat scores are summed${boardBonus>0?' (including board bonus)':''} = +${total.toLocaleString()} pts this hand.`,
+    explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
     run(){
+      // show labels for all cats that have score
       updateLabels([]);
       const allCells=[];
       catsSnapshot.forEach(grp=>{
         grp.cells.forEach(([r,c],ci)=>{
           if(grpMap[grp.gid]&&grpMap[grp.gid].els[ci])
-            allCells.push({r,c,el:grpMap[grp.gid].els[ci]});
+            allCells.push({r,c,el:grpMap[grp.gid].els[ci],sc:grpMap[grp.gid].score});
         });
       });
       allCells.sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c);
-      allCells.forEach((item,i)=>setTimeout(()=>{item.el.classList.add('boosted');setTimeout(()=>item.el.classList.remove('boosted'),400);},i*60));
+      allCells.forEach((item,i)=>setTimeout(()=>{
+        if(item.sc>0){item.el.classList.add('show');}
+        item.el.classList.add('boosted');setTimeout(()=>item.el.classList.remove('boosted'),400);
+      },i*60));
       setTimeout(()=>{
         animateCounter(total,400);
         addLogLine(logDiv,`🏆 Total: +${total.toLocaleString()}`);
@@ -2405,7 +2382,6 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
       nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
       nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
     }else{
-      // Auto-advance — give the last step extra time for its wave animation
       const delay=step.isLast?1800:750;
       if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
       else setTimeout(runNextStep,delay);
@@ -2637,21 +2613,21 @@ function renderShopBPList(){
 function renderTreatsRow(){
   const row=g('treats-row');if(!row)return;
   row.innerHTML='';
-  // pick a flavor quote from the treats shown
-  const flavors=shopPool.filter(t=>t.fl).map(t=>t.fl);
+  // only show items not yet purchased, sorted: affordable first
+  const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
+  const available=shopPool.filter(td=>!shopBoughtIds.has(td.id)).sort((a,b)=>{
+    const canA=G.cash>=a.pr;
+    const canB=G.cash>=b.pr;
+    const canSellA=G.cash+totalSellable>=a.pr;
+    const canSellB=G.cash+totalSellable>=b.pr;
+    if(canA!==canB) return canA?-1:1;
+    if(canSellA!==canSellB) return canSellA?-1:1;
+    return 0;
+  });
+  const flavors=available.filter(t=>t.fl).map(t=>t.fl);
   const flavorEl=g('treats-flavor');
   if(flavorEl) flavorEl.textContent=flavors[0]||'';
-
-  // Show sold-out placeholder for bought treats
-  shopPool.filter(td=>shopBoughtIds.has(td.id)).forEach(td=>{
-    const card=document.createElement('div');
-    card.className='tc tc-dis';
-    card.style.background='rgba(255,255,255,.3)';
-    card.style.opacity='0.35';
-    card.innerHTML=`<div class="tc-em">${td.em}</div><div class="tc-info"><div class="tc-nm">${td.nm}</div><div style="font-family:'Fredoka One',cursive;font-size:11px;color:#888;">SOLD OUT</div></div>`;
-    row.appendChild(card);
-  });
-  shopPool.filter(td=>!shopBoughtIds.has(td.id)).forEach(td=>{
+  available.forEach(td=>{
     const broke=G.cash<td.pr;
     const noSpc=!bpCanFit(td.bpS);
     const dis=broke||noSpc;
@@ -2705,7 +2681,6 @@ function shopPickupTreat(td){
 
 function shopDropOnBP(r,c){
   if(H.kind==='treat'){
-    // rearrange existing BP treat — apply grab offset
     const or=r-H.grabDr, oc=c-H.grabDc;
     if(!bpCanAt(H.cells,or,oc))return;
     bpPlaceAt(H.data,H.cells,or,oc);
@@ -2717,10 +2692,11 @@ function shopDropOnBP(r,c){
   if(H.kind!=='shop-treat')return;
   const td=H.data;
   if(G.cash<td.pr){dropHeld();return;}
-  if(!bpCanAt(H.cells,r,c)){dropHeld();return;}
-  // commit purchase
+  // apply grab offset (same as rearrange)
+  const or=r-H.grabDr, oc=c-H.grabDc;
+  if(!bpCanAt(H.cells,or,oc)){dropHeld();return;}
   G.cash-=td.pr;
-  bpPlaceAt(td,H.cells,r,c);
+  bpPlaceAt(td,H.cells,or,oc);
   shopBoughtIds.add(td.id);
   H=resetH();
   updateGhost();hideHUD();
@@ -2733,50 +2709,60 @@ function shopDropOnBP(r,c){
 //  Mul-treats return {gids:[], m:N} — engine multiplies those catScores by m
 // ══════════════════════════════════════════════════════
 
-// ── Add helpers ──
-function surrAdd(b,pos,amt){
-  const[tr,tc]=pos;
+// ── Add helpers — bonus is +amt per affected cat GROUP (flat, not per cell) ──
+function surrAdd(b,cells,amt){
+  // cells = array of [r,c] for all treat cells
+  const allTCells=Array.isArray(cells[0])?cells:[cells];
   const adjGids=new Set();
-  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-    if(!dr&&!dc)continue;
-    const rr=tr+dr,cc=tc+dc;
-    if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
-      adjGids.add(b[rr][cc].gid);
-  }
-  const n=G.cats.filter(g=>adjGids.has(g.gid)).reduce((s,g)=>s+g.cells.length,0);
-  return{bonus:n*amt,desc:`+${amt}×${n} cells in adj cats = +${n*amt}`};
+  allTCells.forEach(([tr,tc])=>{
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc)continue;
+      const rr=tr+dr,cc=tc+dc;
+      if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
+        adjGids.add(b[rr][cc].gid);
+    }
+  });
+  const n=adjGids.size;
+  return{bonus:n*amt,desc:`+${amt}×${n} adj cats`};
 }
-function rowAdd(b,pos,amt){
-  const[r]=pos;let n=0;for(let c=0;c<G.bsc;c++) if(b[r][c].kind==='cat')n++;
-  return{bonus:n*amt,desc:`+${amt}×${n} in row = +${n*amt}`};
+function rowAdd(b,cells,amt){
+  const r=Array.isArray(cells[0])?cells[0][0]:cells[0];
+  const affGids=new Set();
+  for(let c=0;c<G.bsc;c++) if(b[r][c].kind==='cat'&&b[r][c].gid) affGids.add(b[r][c].gid);
+  const n=affGids.size;
+  return{bonus:n*amt,desc:`+${amt}×${n} cats in row`};
 }
-function colAdd(b,pos,amt){
-  const[,c]=pos;let n=0;for(let rr=0;rr<G.bsr;rr++) if(b[rr][c].kind==='cat')n++;
-  return{bonus:n*amt,desc:`+${amt}×${n} in col = +${n*amt}`};
+function colAdd(b,cells,amt){
+  const col=Array.isArray(cells[0])?cells[0][1]:cells[1];
+  const affGids=new Set();
+  for(let rr=0;rr<G.bsr;rr++) if(b[rr][col].kind==='cat'&&b[rr][col].gid) affGids.add(b[rr][col].gid);
+  const n=affGids.size;
+  return{bonus:n*amt,desc:`+${amt}×${n} cats in col`};
 }
 function allAdd(cats,amt){
-  const n=cats.reduce((s,c)=>s+c.cells.length,0);
-  return{bonus:n*amt,desc:`+${amt}×${n} all cats = +${n*amt}`};
+  return{bonus:cats.length*amt,desc:`+${amt}×${cats.length} cats`};
 }
 
 // ── Mul helpers — return {gids, m} so engine applies to real catScores ──
 function allMulCS(cats,cs,m){
   return{gids:cats.map(c=>c.gid),m};
 }
-function colMul(b,cats,pos,m){
-  const[,c]=pos;
-  const gids=cats.filter(grp=>grp.cells.some(([,cc])=>cc===c)).map(grp=>grp.gid);
+function colMul(b,cats,cells,m){
+  const col=Array.isArray(cells[0])?cells[0][1]:cells[1];
+  const gids=cats.filter(grp=>grp.cells.some(([,cc])=>cc===col)).map(grp=>grp.gid);
   return{gids,m};
 }
-function surrMulCS(b,cats,pos,m,cs){
-  const[tr,tc]=pos;
+function surrMulCS(b,cats,cells,m,cs){
+  const allTCells=Array.isArray(cells[0])?cells:[cells];
   const adjGids=new Set();
-  for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
-    if(!dr&&!dc)continue;
-    const rr=tr+dr,cc=tc+dc;
-    if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
-      adjGids.add(b[rr][cc].gid);
-  }
+  allTCells.forEach(([tr,tc])=>{
+    for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){
+      if(!dr&&!dc)continue;
+      const rr=tr+dr,cc=tc+dc;
+      if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc&&b[rr][cc].kind==='cat'&&b[rr][cc].gid)
+        adjGids.add(b[rr][cc].gid);
+    }
+  });
   return{gids:[...adjGids],m};
 }
 function shapeMul(cats,shapes,m){
