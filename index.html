@@ -480,6 +480,22 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
 }
 .btn-dev-float:hover{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.65);}
 .btn-dev-float.active{border-color:rgba(245,166,35,.6);color:rgba(245,166,35,.9);background:rgba(245,166,35,.12);}
+
+/* ── TRASH CAN DROP ZONE ── */
+.trash-zone{position:relative;display:flex;align-items:center;justify-content:center;
+  width:52px;height:52px;border-radius:14px;
+  background:rgba(255,255,255,.18);border:2px dashed rgba(255,255,255,.35);
+  cursor:default;transition:all .18s;font-size:28px;flex-shrink:0;}
+.trash-zone.drag-active{background:rgba(224,72,72,.38);border-color:#e04848;border-style:solid;transform:scale(1.1);}
+.trash-zone.no-disc{opacity:.32;}
+.trash-badge{
+  position:absolute;top:-9px;right:-9px;
+  background:var(--re);color:#fff;
+  font-family:'Fredoka One',cursive;font-size:12px;
+  border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(255,255,255,.7);
+  box-shadow:0 2px 5px rgba(0,0,0,.35);}
 </style>
 </head>
 <body>
@@ -584,7 +600,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
 <div id="s-game" class="scr">
   <div class="lc">
     <div class="tline">"plan. place. purr-fect your score!"</div>
-    <div class="card"><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div></div>
+    <div class="card"><div style="font-family:'Fredoka One',cursive;font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Round <span id="g-round-top">1</span></div><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div></div>
     <div class="card" style="padding:6px 13px;"><div class="lb">Earn</div><div class="earn-b">🪙 <span id="g-earn">3</span></div></div>
     <div class="card">
       <div class="lb">Scored So Far</div>
@@ -607,12 +623,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;
     </div>
     <div class="hand" id="hand"></div>
     <div class="deck-row">
-      <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
-      <div class="dinfo-s"><span class="dlb2">ROUND</span><span class="bv2 co" id="g-round">1</span></div>
+      <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck" style="font-size:26px;">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
       <div class="dinfo-s"><span class="dlb2" id="g-bsize">4×4</span></div>
-      <div class="discard-inline">
-        <div class="dpips" id="dpips"></div>
-        <button class="btn-disc" id="btn-disc" onclick="doDiscard()" disabled>TOSS</button>
+      <div class="trash-zone no-disc" id="trash-drop">
+        <div class="trash-badge" id="trash-badge">3</div>
+        🗑️
       </div>
     </div>
   </div>
@@ -1088,7 +1103,8 @@ function pickupCat(idx){
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
      grabDr:Math.floor(_cells0.length/2),grabDc:Math.floor(_cells0[0].length/2),dragging:false};
   updateGhost();showHUD();renderHand();renderBP();
-  g('btn-disc').disabled=G.disc<=0;
+  const _tb=g('trash-badge');if(_tb)_tb.textContent=G.disc;
+  const _te=g('trash-drop');if(_te)_te.classList.toggle('no-disc',G.disc<=0);
 }
 
 function pickupCatWithGrab(idx,grabDr,grabDc){
@@ -1103,7 +1119,8 @@ function pickupCatWithGrab(idx,grabDr,grabDc){
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
      grabDr:cDr,grabDc:cDc,dragging:true};
   updateGhost();showHUD();renderHand();renderBP();
-  g('btn-disc').disabled=G.disc<=0;
+  const _tb2=g('trash-badge');if(_tb2)_tb2.textContent=G.disc;
+  const _te2=g('trash-drop');if(_te2)_te2.classList.toggle('no-disc',G.disc<=0);
 }
 
 function pickupCatFromBoard(r,c){
@@ -1149,7 +1166,7 @@ function dropHeld(){
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
-  g('btn-disc').disabled=true;
+  const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}
 }
 
 function rotate(){
@@ -1194,6 +1211,19 @@ document.addEventListener('mouseup',e=>{
     }
     // If inside, the shopBPEnter+shopDropOnBP click handler handles it
     return;
+  }
+
+  // Cat dragged to trash can — discard
+  if(H.kind==='cat'){
+    const trashEl=g('trash-drop');
+    if(trashEl&&G.disc>0){
+      const tr=trashEl.getBoundingClientRect();
+      if(e.clientX>=tr.left&&e.clientX<=tr.right&&e.clientY>=tr.top&&e.clientY<=tr.bottom){
+        trashEl._hover=false;trashEl.classList.remove('drag-active');
+        doDiscard();return;
+      }
+    }
+    trashEl&&(trashEl._hover=false,trashEl.classList.remove('drag-active'));
   }
 
   // Game treat dragged from BP — drop on board cell under mouse
@@ -1272,6 +1302,14 @@ document.addEventListener('mousemove',e=>{
   gh.style.display='block';
   gh.style.left=e.clientX+'px';
   gh.style.top=e.clientY+'px';
+  // trash can hover highlight
+  const trashEl=g('trash-drop');
+  if(trashEl&&H.kind==='cat'&&G.disc>0){
+    const tr=trashEl.getBoundingClientRect();
+    const over=e.clientX>=tr.left&&e.clientX<=tr.right&&e.clientY>=tr.top&&e.clientY<=tr.bottom;
+    trashEl._hover=over;
+    trashEl.classList.toggle('drag-active',over);
+  }
 });
 
 // ghost follows touch + simulate hover over board/bp cells
@@ -1373,6 +1411,15 @@ function handleTouchDrop(cx,cy){
     return;
   }
   if(H.kind==='cat'){
+    // Check trash drop first
+    const trashEl=g('trash-drop');
+    if(trashEl&&G.disc>0){
+      const tr=trashEl.getBoundingClientRect();
+      if(cx>=tr.left&&cx<=tr.right&&cy>=tr.top&&cy<=tr.bottom){
+        trashEl._hover=false;trashEl.classList.remove('drag-active');
+        doDiscard();return;
+      }
+    }
     const boardEl=g('board');
     if(boardEl){
       const cells=boardEl.querySelectorAll('.cell');
@@ -1758,11 +1805,15 @@ function renderStats(){
   g('g-hands').textContent=G.hands;
   g('g-last').textContent=G.lastScore;
   g('g-deck').textContent=G.deck.length;
-  g('g-round').textContent=G.round;
+  if(g('g-round-top'))g('g-round-top').textContent=G.round;
   g('g-bsize').textContent=`${G.bsr}×${G.bsc} board`;
-  const pips=g('dpips');pips.innerHTML='';
-  for(let i=0;i<(CFG.discard_count||3);i++){const p=document.createElement('div');p.className='dp'+(i>=G.disc?' used':'');pips.appendChild(p);}
-  g('btn-disc').disabled=H.kind!=='cat'||G.disc<=0;
+  const trashBadge=g('trash-badge');
+  if(trashBadge) trashBadge.textContent=G.disc;
+  const trashEl=g('trash-drop');
+  if(trashEl){
+    trashEl.classList.toggle('no-disc',G.disc<=0);
+    trashEl.classList.toggle('drag-active',H.kind==='cat'&&G.disc>0&&!!trashEl._hover);
+  }
 }
 
 function treatReqFails(td){
@@ -2101,7 +2152,7 @@ function doFit(){
   const boardBonus=boardFull?totalBoardCells*(CFG.board_fill_bonus||5):0;
 
   const total=catTotal+boardBonus;
-  G.score+=total; G.lastScore=total;
+  G.lastScore=total;
 
   // snapshot cats before clearing (animation still needs them)
   const catsSnapshot=[...G.cats];
@@ -2209,7 +2260,7 @@ function runScoreSequence(catScores,addResults,mulResults,boardBonus,boardFull,t
   // Score counter — animates g-score on left panel
   const scoreEl=g('g-score');
   const scoreCard=scoreEl?.closest('.card');
-  const baseScoreBeforeHand=G.score-total;
+  const baseScoreBeforeHand=G.score;
   let displayedScore=0;
   let _counterIv=null;
   function animateCounter(targetScore,duration){
@@ -2390,6 +2441,7 @@ function endScoreSequence(total){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.remove('active');
+  G.score+=total;
   // Sync score display
   const scoreEl=g('g-score');
   if(scoreEl) scoreEl.textContent=G.score.toLocaleString();
