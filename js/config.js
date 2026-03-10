@@ -12,12 +12,12 @@ const CSHAPES={};
 // ══════════════════════════════════════════════════════
 const CONFIG_CACHE_KEY = 'purrfect_config_v1';
 const SHEET_URLS = {
-  'General Config': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1778744904&single=true&output=csv',
-  'Rounds Config':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1133060391&single=true&output=csv',
+  'General': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1778744904&single=true&output=csv',
+  'Rounds':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1133060391&single=true&output=csv',
   'Treats':         'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1829591761&single=true&output=csv',
-  'Cat Types':      'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1088427227&single=true&output=csv',
-  'Cat Shapes':     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1916856622&single=true&output=csv',
-  'Decks Config':   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2016141493&single=true&output=csv',
+  'Cats':      'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1088427227&single=true&output=csv',
+  'Shapes':     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1916856622&single=true&output=csv',
+  'Decks':   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2016141493&single=true&output=csv',
 };
 const SHEET_NAMES = Object.keys(SHEET_URLS);
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -109,7 +109,7 @@ async function fetchAllSheetsRaw(onStatus){
       if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
       raw[name]=await res.text();
     }catch(e){
-      if(name==='Cat Shapes'){raw[name]='';}else throw e;
+      if(name==='Shapes'){raw[name]='';}else throw e;
     }
   }
   return raw;
@@ -117,25 +117,25 @@ async function fetchAllSheetsRaw(onStatus){
 
 // Parse raw CSV map and apply to globals
 function applyConfigFromRaw(raw){
-  const genRows=parseCSV(raw['General Config']||'');
+  const genRows=parseCSV(raw['General']||'');
   genRows.forEach(r=>{CFG[r['Setting']]=isNaN(r['Value'])?r['Value']:Number(r['Value']);});
 
-  const rndRows=parseCSV(raw['Rounds Config']||'');
+  const rndRows=parseCSV(raw['Rounds']||'');
   RCFG=rndRows.map(r=>{
     const bsr=Number(r['Board Rows']||r['Board Size']||4);
     const bsc=Number(r['Board Cols']||r['Board Size']||4);
-    return{tgt:Number(r['Target Score']),bsr,bsc,earn:Number(r['Earn (coins)']),h:Number(r['Hands per Round'])};
+    return{tgt:Number(r['Target Score']),bsr,bsc,earn:Number(r['Earn']),h:Number(r['Hands per Round'])};
   });
 
-  const catRows=parseCSV(raw['Cat Types']||'');
-  catRows.forEach(r=>{COLS[r['Type']]=r['Color (hex)'];EMS[r['Type']]=r['Emoji'];});
+  const catRows=parseCSV(raw['Cats']||'');
+  catRows.forEach(r=>{COLS[r['Type']]=r['Color'];EMS[r['Type']]=r['Emoji'];});
 
   const treatRows=parseCSV(raw['Treats']||'');
   TDEFS=treatRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>{
     const id=String(r['ID']||'').trim();
     const ef=String(r['Effect']||r['Effect '||'']||'').trim();
     const phase=String(r['Phase']||'add').trim().toLowerCase();
-    const bpRaw=r['BP Shape']||r['BP Shape ']||'1×1';
+    const bpRaw=r['Shape ID']||r['Shape ID ']||'1×1';
     const bpS=parseBpShape(bpRaw);
     const rar=String(r['Rarity']||'common').trim().toLowerCase();
     const buyRaw=r['Buy Price']||r['Buy Price ']||r['Price']||1;
@@ -151,10 +151,10 @@ function applyConfigFromRaw(raw){
     };
   });
 
-  if(raw['Cat Shapes']){
+  if(raw['Shapes']){
     try{
-      parseCSV(raw['Cat Shapes']).filter(r=>r['Shape Name']&&String(r['Shape Name']).trim()).forEach(r=>{
-        const name=String(r['Shape Name']).trim();
+      parseCSV(raw['Shapes']).filter(r=>r['Shape ID']&&String(r['Shape ID']).trim()).forEach(r=>{
+        const name=String(r['Shape ID']).trim();
         const gridStr=String(r['Grid']||'').trim();
         if(!gridStr)return;
         const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
@@ -164,13 +164,13 @@ function applyConfigFromRaw(raw){
     console.log('[Config] CSHAPES loaded:', Object.keys(CSHAPES));
   }
 
-  const deckRows=parseCSV(raw['Decks Config']||'');
-  console.log('[Config] Decks Config raw CSV:', raw['Decks Config']?.slice(0,500));
+  const deckRows=parseCSV(raw['Decks']||'');
+  console.log('[Config] Decks raw CSV:', raw['Decks']?.slice(0,500));
   console.log('[Config] Deck rows parsed:', deckRows.length, deckRows.map(r=>r['Deck ID']));
   DECKS={};
   deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
     const id=String(r['Deck ID']).trim();
-    const ty=String(r['Cat Types']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
+    const ty=String(r['Cats']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
     const sh=String(r['Shapes']||'straight').split(',').map(s=>s.trim()).filter(Boolean);
     const name=String(r['Deck Name']||r['Name']||id);
     const em=String(r['Emoji']||'🐱');

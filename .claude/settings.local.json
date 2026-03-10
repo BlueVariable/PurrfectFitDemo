@@ -6,7 +6,8 @@
       "WebFetch(domain:doc-04-68-sheets.googleusercontent.com)",
       "Read(//c/Users/laurus/**)",
       "Read(//c/Users/laurus/laurus/**)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git:*)"
     ]
   }
 }
