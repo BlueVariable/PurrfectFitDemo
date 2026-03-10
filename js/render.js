@@ -195,15 +195,7 @@ function renderStats(){
 }
 
 function treatReqFails(td){
-  // Check if this treat's requirement is not met given current board state
-  if(!td.req)return false;
-  if(td.req==='NO OTHER TREAT') return G.treats.length>1;
-  if(td.req==='NEEDS ORANGE') return !G.cats.some(c=>c.type==='orange');
-  if(td.req==='ALL SAME TYPE'){
-    const types=[...new Set(G.cats.map(c=>c.type))];
-    return types.length>1;
-  }
-  return false;
+  return requirementFails(td.req);
 }
 
 function showBoardTip(e,r,c){
