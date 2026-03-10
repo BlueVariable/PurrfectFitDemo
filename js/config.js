@@ -130,13 +130,27 @@ function applyConfigFromRaw(raw){
   const catRows=parseCSV(raw['Cats']||'');
   catRows.forEach(r=>{COLS[r['Type']]=r['Color'];EMS[r['Type']]=r['Emoji'];});
 
+  // Parse Shapes first so treat bpS can resolve shape IDs
+  if(raw['Shapes']){
+    try{
+      parseCSV(raw['Shapes']).filter(r=>r['Shape ID']&&String(r['Shape ID']).trim()).forEach(r=>{
+        const name=String(r['Shape ID']).trim();
+        const gridStr=String(r['Grid']||'').trim();
+        if(!gridStr)return;
+        const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
+        if(grid.length&&grid[0].length)CSHAPES[name]=grid;
+      });
+    }catch(e){console.warn('Cat Shapes parse failed:',e.message);}
+    console.log('[Config] CSHAPES loaded:', Object.keys(CSHAPES));
+  }
+
   const treatRows=parseCSV(raw['Treats']||'');
   TDEFS=treatRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>{
     const id=String(r['ID']||'').trim();
     const ef=String(r['Effect']||r['Effect '||'']||'').trim();
     const phase=String(r['Phase']||'add').trim().toLowerCase();
-    const bpRaw=r['Shape ID']||r['Shape ID ']||'1×1';
-    const bpS=parseBpShape(bpRaw);
+    const bpRaw=String(r['Shape ID']||r['Shape ID ']||'1×1').trim();
+    const bpS=CSHAPES[bpRaw]||parseBpShape(bpRaw);
     const rar=String(r['Rarity']||'common').trim().toLowerCase();
     const buyRaw=r['Buy Price']||r['Buy Price ']||r['Price']||1;
     const sellRaw=r['Sell Price']||r['Sell Price ']||r['Sell']||0;
@@ -150,19 +164,6 @@ function applyConfigFromRaw(raw){
       fn:buildTreatFn(id,ef,phase),
     };
   });
-
-  if(raw['Shapes']){
-    try{
-      parseCSV(raw['Shapes']).filter(r=>r['Shape ID']&&String(r['Shape ID']).trim()).forEach(r=>{
-        const name=String(r['Shape ID']).trim();
-        const gridStr=String(r['Grid']||'').trim();
-        if(!gridStr)return;
-        const grid=gridStr.split('|').map(row=>row.trim().split(',').map(v=>Number(v.trim())||0));
-        if(grid.length&&grid[0].length)CSHAPES[name]=grid;
-      });
-    }catch(e){console.warn('Cat Shapes parse failed:',e.message);}
-    console.log('[Config] CSHAPES loaded:', Object.keys(CSHAPES));
-  }
 
   const deckRows=parseCSV(raw['Decks']||'');
   console.log('[Config] Decks raw CSV:', raw['Decks']?.slice(0,500));
