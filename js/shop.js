@@ -8,6 +8,15 @@ let shopBoughtIds=new Set(); // treats bought this shop visit
 const REROLL_COST_DEFAULT=1;
 function getRerollCost(){return CFG.reroll_cost||REROLL_COST_DEFAULT;}
 
+function generateShopPool(){
+  const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
+  const canAfford=TDEFS.filter(td=>G.cash>=td.pr);
+  const canAffordWithSelling=TDEFS.filter(td=>G.cash<td.pr&&G.cash+totalSellable>=td.pr);
+  const expensive=TDEFS.filter(td=>G.cash+totalSellable<td.pr);
+  sfl(canAfford);sfl(canAffordWithSelling);sfl(expensive);
+  return [...canAfford,...canAffordWithSelling,...expensive].slice(0,3);
+}
+
 function openShop(){
   const isFirst=G.round===1&&!G.visitedShop;
   G.visitedShop=true;
@@ -15,8 +24,7 @@ function openShop(){
   shopBoughtIds=new Set();
   g('shop-sub').textContent=isFirst?'"stock up before the round!"':'"back for more treats!"';
   g('shop-cash').textContent=G.cash;
-  const pool=[...TDEFS];sfl(pool);
-  shopPool=pool.slice(0,3);
+  shopPool=generateShopPool();
   renderShopFull();
   show('s-shop');
 }
@@ -34,8 +42,7 @@ function leaveShop(){
 function rerollTreats(){
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
-  const pool=[...TDEFS];sfl(pool);
-  shopPool=pool.slice(0,3);
+  shopPool=generateShopPool();
   renderShopFull();
 }
 
