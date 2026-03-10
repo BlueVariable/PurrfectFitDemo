@@ -38,6 +38,9 @@ function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
 
 // ── treat fn lookup — maps sheet effect strings to engine functions ──
 function buildTreatFn(id, ef, phase){
+  // Registry-first: named treats define their own factory
+  if(TREAT_REGISTRY[id]) return TREAT_REGISTRY[id].buildFn(ef, phase);
+
   // add-phase fns
   if(phase==='add'){
     if(ef.includes('ALL'))      return (b,cats)=>allAdd(cats, extractNum(ef));
@@ -48,9 +51,6 @@ function buildTreatFn(id, ef, phase){
   }
   // mul-phase fns
   const m = extractMul(ef);
-  if(id==='tuna')   return (b,cats,ts,p,cs)=>{const gids=Object.keys(cs).filter(gid=>{const grp=cats.find(c=>c.gid===gid);return grp&&grp.type==='orange';});return{gids,m};};
-  if(id==='nap')    return (b,cats,ts,p,cs)=>ts.length<=1?allMulCS(cats,cs,m):{gids:[],m:1};
-  if(id==='frenzy') return (b,cats,ts,p,cs)=>{if([...new Set(cats.map(c=>c.type))].length>1)return{gids:[],m:1};return surrMulCS(b,cats,p,m,cs);};
   if(ef.includes('COL')) return (b,cats,t,p,cs)=>colMul(b,cats,p,m);
   if(ef.includes('/')){
     // parse shape list from effect like "×2 L/J/T/curl/chonk cats"
