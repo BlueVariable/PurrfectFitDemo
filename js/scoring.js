@@ -5,9 +5,9 @@
 function doFit(){
   if(!G.cats.length)return;
 
-  // cats start at 0 — treats are the sole score source
+  // cats start at 10 per cell
   const catScores={};
-  G.cats.forEach(grp=>{catScores[grp.gid]=0;});
+  G.cats.forEach(grp=>{catScores[grp.gid]=grp.cells.length*10;});
 
   // sort treats top-to-bottom (higher on board = smaller row = applied first)
   const sorted=[...G.treats].sort((a,b)=>{
@@ -100,10 +100,10 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
   dim.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:-1;';
   seq.appendChild(dim);
 
-  // grpMap — cats start at 0; scores build up through treats
+  // grpMap — cats start at 10 per cell; treats modify from base
   const grpMap={};
   catsSnapshot.forEach(grp=>{
-    grpMap[grp.gid]={cells:grp.cells,score:0,els:[]};
+    grpMap[grp.gid]={cells:grp.cells,score:grp.cells.length*10,els:[]};
   });
 
   const updateLabels=(highlightGids=[],color)=>{
@@ -120,7 +120,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
     });
   };
 
-  // place cell labels (start hidden — appear when cats first get score)
+  // place cell labels (start hidden — appear in base step)
   catsSnapshot.forEach(grp=>{
     grp.cells.forEach(([r,c],ci)=>{
       const lbl=document.createElement('div');
@@ -174,7 +174,15 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
 
   const steps=[];
 
-  // One step per treat (in top-to-bottom order, as computed in doFit)
+  // Step 1: show base scores (10 per cell) — counter stays at 0
+  steps.push({
+    explain:`🐱 Base score: 10 pts per cell`,
+    run(){
+      updateLabels([]);
+    }
+  });
+
+  // One step per treat (top-to-bottom, as sorted in doFit) — labels update, counter stays at 0
   treatResults.forEach(({treat,result,phase})=>{
     const hasEffect=phase==='add'?(result&&result.bonus>0):(result&&result.gids&&result.gids.length&&result.m>1);
     if(!hasEffect)return;
@@ -202,55 +210,62 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
           aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
           updateLabels(aff,'rgba(100,210,90,.85)');
           addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
-          animateCounter(displayedScore+result.bonus,350);
         } else {
-          // mul
-          let mulBonus=0;
+          // mul — multiply from current score (which includes the 10/cell base)
           result.gids.forEach(gid=>{
-            if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.m);mulBonus+=grpMap[gid].score-prev;}
+            if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.m);}
           });
           updateLabels(result.gids,'rgba(240,120,40,.9)');
-          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m} (+${mulBonus})`);
-          animateCounter(displayedScore+mulBonus,350);
+          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m}`);
         }
       }
     });
   });
 
-  if(boardBonus>0){
-    steps.push({
-      explain:`✨ Board Filled Bonus! ${G.bsr*G.bsc} × ${CFG.board_fill_bonus||5} = +${boardBonus}`,
-      run(){
-        addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
-        animateCounter(displayedScore+boardBonus,400);
-      }
-    });
-  }
-
-  // Final: sum all cat scores
+  // Final step: sum cats top-to-bottom into counter, then board bonus, then banner
+  const sortedCatGroups=[...catsSnapshot].sort((a,b)=>{
+    const minA=Math.min(...a.cells.map(([r])=>r));
+    const minB=Math.min(...b.cells.map(([r])=>r));
+    return minA-minB;
+  });
+  const finalEndDelay=sortedCatGroups.length*350+(boardBonus>0?450:0)+800;
   steps.push({
     explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
+    endDelay:finalEndDelay,
     run(){
-      // show labels for all cats that have score
-      updateLabels([]);
-      const allCells=[];
-      catsSnapshot.forEach(grp=>{
-        grp.cells.forEach(([r,c],ci)=>{
-          if(grpMap[grp.gid]&&grpMap[grp.gid].els[ci])
-            allCells.push({r,c,el:grpMap[grp.gid].els[ci],sc:grpMap[grp.gid].score});
-        });
+      let running=0;
+      let delay=0;
+      sortedCatGroups.forEach(grp=>{
+        const info=grpMap[grp.gid];
+        if(!info)return;
+        const target=running+info.score;
+        const capturedTarget=target;
+        const capturedDelay=delay;
+        const capturedInfo=info;
+        running=target;
+        setTimeout(()=>{
+          capturedInfo.els.forEach(lbl=>{
+            lbl.classList.add('boosted');
+            setTimeout(()=>lbl.classList.remove('boosted'),400);
+          });
+          animateCounter(capturedTarget,280);
+          addLogLine(logDiv,`🐱 +${capturedInfo.score}`);
+        },capturedDelay);
+        delay+=350;
       });
-      allCells.sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c);
-      allCells.forEach((item,i)=>setTimeout(()=>{
-        if(item.sc>0){item.el.classList.add('show');}
-        item.el.classList.add('boosted');setTimeout(()=>item.el.classList.remove('boosted'),400);
-      },i*60));
+      if(boardBonus>0){
+        const bonusTarget=running+boardBonus;
+        setTimeout(()=>{
+          addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
+          animateCounter(bonusTarget,400);
+        },delay);
+        delay+=450;
+      }
       setTimeout(()=>{
-        animateCounter(total,400);
         addLogLine(logDiv,`🏆 Total: +${total.toLocaleString()}`);
         banner.textContent='+'+total.toLocaleString();
         banner.classList.add('show');
-      },allCells.length*60+150);
+      },delay+150);
     },
     isLast:true
   });
@@ -266,7 +281,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
       nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
       nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
     }else{
-      const delay=step.isLast?1800:750;
+      const delay=step.isLast?(step.endDelay||1800):750;
       if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
       else setTimeout(runNextStep,delay);
     }
