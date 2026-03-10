@@ -120,22 +120,27 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
     });
   };
 
-  // place cell labels (start hidden — appear in base step)
+  // place ONE centered label per group (centered on bounding box of group cells)
   catsSnapshot.forEach(grp=>{
-    grp.cells.forEach(([r,c],ci)=>{
-      const lbl=document.createElement('div');
-      lbl.className='score-cell-label';
-      const cellEl=boardEl.children[r*G.bsc+c];
-      if(!cellEl)return;
-      const rect=cellEl.getBoundingClientRect();
-      lbl.style.left=(rect.left+(rect.width-labelW)/2)+'px';
-      lbl.style.top=(rect.top+(rect.height-labelH)/2)+'px';
-      lbl.style.width=labelW+'px';lbl.style.height=labelH+'px';lbl.style.fontSize=labelFS+'px';
-      lbl.textContent='';
-      lbl.dataset.gid=grp.gid;
-      seq.appendChild(lbl);
-      grpMap[grp.gid].els.push(lbl);
-    });
+    const rs=grp.cells.map(([r])=>r), cs=grp.cells.map(([,c])=>c);
+    const minR=Math.min(...rs), maxR=Math.max(...rs);
+    const minC=Math.min(...cs), maxC=Math.max(...cs);
+    const tlEl=boardEl.children[minR*G.bsc+minC];
+    const brEl=boardEl.children[maxR*G.bsc+maxC];
+    if(!tlEl||!brEl)return;
+    const tlRect=tlEl.getBoundingClientRect();
+    const brRect=brEl.getBoundingClientRect();
+    const centerX=(tlRect.left+brRect.right)/2;
+    const centerY=(tlRect.top+brRect.bottom)/2;
+    const lbl=document.createElement('div');
+    lbl.className='score-cell-label';
+    lbl.style.left=(centerX-labelW/2)+'px';
+    lbl.style.top=(centerY-labelH/2)+'px';
+    lbl.style.width=labelW+'px';lbl.style.height=labelH+'px';lbl.style.fontSize=labelFS+'px';
+    lbl.textContent='';
+    lbl.dataset.gid=grp.gid;
+    seq.appendChild(lbl);
+    grpMap[grp.gid].els=[lbl];
   });
 
   const scoreEl=g('g-score');
@@ -228,7 +233,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
     const minB=Math.min(...b.cells.map(([r])=>r));
     return minA-minB;
   });
-  const finalEndDelay=sortedCatGroups.length*350+(boardBonus>0?450:0)+800;
+  const finalEndDelay=sortedCatGroups.length*500+(boardBonus>0?450:0)+750;
   steps.push({
     explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
     endDelay:finalEndDelay,
@@ -240,18 +245,16 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
         if(!info)return;
         const target=running+info.score;
         const capturedTarget=target;
-        const capturedDelay=delay;
         const capturedInfo=info;
         running=target;
         setTimeout(()=>{
-          capturedInfo.els.forEach(lbl=>{
-            lbl.classList.add('boosted');
-            setTimeout(()=>lbl.classList.remove('boosted'),400);
-          });
+          flashTreat(seq,boardEl,{cells:grp.cells},G.bsc);
+          const lbl=capturedInfo.els[0];
+          if(lbl){lbl.classList.add('boosted');setTimeout(()=>lbl.classList.remove('boosted'),500);}
           animateCounter(capturedTarget,280);
           addLogLine(logDiv,`🐱 +${capturedInfo.score}`);
-        },capturedDelay);
-        delay+=350;
+        },delay);
+        delay+=500;
       });
       if(boardBonus>0){
         const bonusTarget=running+boardBonus;
