@@ -28,43 +28,49 @@
 </div>
 
 <!-- LOADING SCREEN -->
-<div id="s-loading" class="scr on" style="flex-direction:column;align-items:center;justify-content:center;gap:18px;">
-  <div style="font-size:56px;animation:bounce 1.2s ease-in-out infinite;">🐱</div>
-  <div style="font-family:'Fredoka One',cursive;font-size:22px;color:#2D1B69;letter-spacing:2px;">Loading config...</div>
-  <div id="load-status" style="font-size:12px;color:rgba(45,27,105,.6);font-style:italic;">fetching sheets</div>
-  <div id="load-error" style="display:none;background:rgba(220,72,72,.2);border:1px solid var(--re);border-radius:12px;padding:12px 20px;font-size:12px;color:#ffaaaa;text-align:center;max-width:360px;"></div>
+<div id="s-loading" class="scr on" style="flex-direction:column;align-items:center;justify-content:center;gap:8px;">
+  <div class="loading-card">
+    <div style="font-size:56px;animation:bounce 1.2s ease-in-out infinite;">🐱</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:22px;color:#1a1a2a;letter-spacing:2px;">Loading config...</div>
+    <div id="load-status" style="font-size:12px;color:#1a1a2a;font-style:italic;">fetching sheets</div>
+    <div id="load-error" style="display:none;background:rgba(220,72,72,.2);border:1px solid var(--re);border-radius:12px;padding:12px 20px;font-size:12px;color:#ffaaaa;text-align:center;max-width:360px;"></div>
+  </div>
 </div>
 <!-- TITLE -->
 <div id="s-title" class="scr">
-  <div style="text-align:center;margin-bottom:4px;">
-    <div class="t-em">🐱</div>
-    <div class="t-nm">Purrfect Fit</div>
-    <div class="t-tg">plan · place · purr-fect your score!</div>
-  </div>
-  <div class="deck-sec">
-    <div class="deck-lbl">SELECT YOUR DECK</div>
-    <div class="deck-carousel-wrap">
-      <button class="dk-arr" id="dk-arr-l" onclick="deckNav(-1)" disabled>&#9664;</button>
-      <div class="deck-carousel" id="deck-carousel">
-        <div class="dk sel" data-deck="classic"><div class="de">🟠⬛</div><div class="dn">Cheddar &amp; Pepper</div><div class="dd">Balanced orange &amp; black</div><button class="dk-preview-btn" onclick="openDeckPreview('classic')">👁 Preview Deck</button></div>
-        <div class="dk" data-deck="orange"><div class="de">🟠🟠</div><div class="dn">Orange Gang</div><div class="dd">All orange, big type synergy</div><button class="dk-preview-btn" onclick="openDeckPreview('orange')">👁 Preview Deck</button></div>
-        <div class="dk" data-deck="wild"><div class="de">🌈😺</div><div class="dn">Wildcat Chaos</div><div class="dd">All types, wild combos</div><button class="dk-preview-btn" onclick="openDeckPreview('wild')">👁 Preview Deck</button></div>
-        <div class="dk" data-deck="big"><div class="de">📦🐾</div><div class="dn">Chonk Squad</div><div class="dd">Big shapes, max cells</div><button class="dk-preview-btn" onclick="openDeckPreview('big')">👁 Preview Deck</button></div>
+  <div class="title-mascot"><div class="title-mascot-box">📦</div></div>
+  <div class="title-card">
+    <div style="text-align:center;margin-bottom:4px;">
+      <div class="t-em">🐱</div>
+      <div class="t-nm"><span>PURRFECT </span><span class="t-nm-fit">FIT</span></div>
+      <div class="t-tg">plan · place · purr-fect your score!</div>
+    </div>
+    <div class="deck-sec">
+      <div class="deck-lbl">SELECT YOUR DECK</div>
+      <div class="deck-carousel-wrap">
+        <button class="dk-arr" id="dk-arr-l" onclick="deckNav(-1)" disabled>&#9664;</button>
+        <div class="deck-carousel" id="deck-carousel">
+          <div class="dk sel" data-deck="classic"><div class="de">🟠⬛</div><div class="dn">Cheddar &amp; Pepper</div><div class="dd">Balanced orange &amp; black</div><button class="dk-preview-btn" onclick="openDeckPreview('classic')">👁 Preview Deck</button></div>
+          <div class="dk" data-deck="orange"><div class="de">🟠🟠</div><div class="dn">Orange Gang</div><div class="dd">All orange, big type synergy</div><button class="dk-preview-btn" onclick="openDeckPreview('orange')">👁 Preview Deck</button></div>
+          <div class="dk" data-deck="wild"><div class="de">🌈😺</div><div class="dn">Wildcat Chaos</div><div class="dd">All types, wild combos</div><button class="dk-preview-btn" onclick="openDeckPreview('wild')">👁 Preview Deck</button></div>
+          <div class="dk" data-deck="big"><div class="de">📦🐾</div><div class="dn">Chonk Squad</div><div class="dd">Big shapes, max cells</div><button class="dk-preview-btn" onclick="openDeckPreview('big')">👁 Preview Deck</button></div>
+        </div>
+        <button class="dk-arr" id="dk-arr-r" onclick="deckNav(1)">&#9654;</button>
       </div>
-      <button class="dk-arr" id="dk-arr-r" onclick="deckNav(1)">&#9654;</button>
-    </div>
-    <div class="deck-dots" id="deck-dots"></div>
-    <button id="btn-continue" class="btn-play btn-cont" onclick="continueGame()" style="display:none;margin-bottom:6px;">▶ Continue Game</button>
-    <button class="btn-play" onclick="startGame()">🐾 New Game</button>
-    <div style="display:flex;justify-content:center;margin-top:6px;">
-      <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
-    </div>
-    <div class="dev-panel" id="dev-panel">
-      <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
-      <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-4px;"></div>
-      <button class="btn-reload-cfg" onclick="openConfigSheet()">📋 Config Sheet</button>
+      <div class="deck-dots" id="deck-dots"></div>
+      <button id="btn-continue" class="btn-play btn-cont" onclick="continueGame()" style="display:none;margin-bottom:6px;">▶ Continue Game</button>
+      <button class="btn-play" onclick="startGame()">🐾 New Game</button>
+      <div style="display:flex;justify-content:center;margin-top:6px;">
+        <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
+      </div>
+      <div class="dev-panel" id="dev-panel">
+        <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
+        <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-4px;"></div>
+        <button class="btn-reload-cfg" onclick="openConfigSheet()">📋 Config Sheet</button>
+      </div>
     </div>
   </div>
+  <div class="title-sticky">🗺️<br>WORLD<br>DOMINATION<br>PLAN<div class="title-sticky-sub">step 1: be cute</div></div>
 </div>
 
 <!-- ROUNDS SCREEN -->
@@ -107,53 +113,66 @@
 
 <!-- GAME -->
 <div id="s-game" class="scr">
-  <div class="lc">
-    <div class="tline">"plan. place. purr-fect your score!"</div>
-    <div class="card"><div style="font-family:'Fredoka One',cursive;font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Round <span id="g-round-top">1</span></div><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div></div>
-    <div class="card" style="padding:6px 13px;"><div class="lb">Earn</div><div class="earn-b">🪙 <span id="g-earn">3</span></div></div>
-    <div class="card">
-      <div class="lb">Scored So Far</div>
-      <div class="bv or" id="g-score">0</div>
-      <div class="pr">
-        <div class="pl pl-or"><div class="pt">HANDS</div><div class="pv" id="g-hands">4</div></div>
-        <div class="pl pl-gr"><div class="pt">LAST</div><div class="pv" id="g-last">0</div></div>
+  <div id="g-topbar">
+    <div class="gtb-left">
+      <div class="gtb-round-pill" id="g-topbar-round">Round 1</div>
+    </div>
+    <div class="gtb-center">
+      <div class="gtb-title">PURRFECT FIT</div>
+    </div>
+    <div class="gtb-right">
+      <div class="gtb-cash" id="g-topbar-cash"><span class="gtb-coin">🪙</span><span>0</span></div>
+    </div>
+  </div>
+  <div id="g-main">
+    <div class="lc">
+      <div class="tline">"plan. place. purr-fect your score!"</div>
+      <div class="card"><div style="font-family:'Fredoka One',cursive;font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Round <span id="g-round-top">1</span></div><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div></div>
+      <div class="card" style="padding:6px 13px;"><div class="lb">Earn</div><div class="earn-b">🪙 <span id="g-earn">3</span></div></div>
+      <div class="card">
+        <div class="lb">Scored So Far</div>
+        <div class="bv or" id="g-score">0</div>
+        <div class="pr">
+          <div class="pl pl-or"><div class="pt">HANDS</div><div class="pv" id="g-hands">4</div></div>
+          <div class="pl pl-gr"><div class="pt">LAST</div><div class="pv" id="g-last">0</div></div>
+        </div>
+      </div>
+
+      <div class="pfbox">📦</div>
+      <button class="btn-menu-exit" onclick="exitToMenu()">← Menu</button>
+    </div>
+
+    <div class="cc">
+      <div class="bwrap"><div class="board" id="board"></div></div>
+      <div class="bbtns">
+        <button class="btn-clr" onclick="clearBoard()">CLEAR</button>
+        <button class="btn-fit" id="btn-fit" onclick="doFit()" disabled>FIT!</button>
+      </div>
+      <div class="hand" id="hand"></div>
+      <div class="deck-row">
+        <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck" style="font-size:26px;">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
+        <div class="dinfo-s"><span class="dlb2" id="g-bsize">4×4</span></div>
+        <div class="trash-zone no-disc" id="trash-drop">
+          <div class="trash-badge" id="trash-badge">3</div>
+          🗑️
+        </div>
       </div>
     </div>
 
-    <div class="pfbox">📦</div>
-    <button class="btn-menu-exit" onclick="exitToMenu()">← Menu</button>
-  </div>
-
-  <div class="cc">
-    <div class="bwrap"><div class="board" id="board"></div></div>
-    <div class="bbtns">
-      <button class="btn-clr" onclick="clearBoard()">CLEAR</button>
-      <button class="btn-fit" id="btn-fit" onclick="doFit()" disabled>FIT!</button>
-    </div>
-    <div class="hand" id="hand"></div>
-    <div class="deck-row">
-      <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck" style="font-size:26px;">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
-      <div class="dinfo-s"><span class="dlb2" id="g-bsize">4×4</span></div>
-      <div class="trash-zone no-disc" id="trash-drop">
-        <div class="trash-badge" id="trash-badge">3</div>
-        🗑️
+    <div class="rc">
+      <div class="bpcard">
+        <div class="bphdr">BACKPACK</div>
+        <div class="bpgw"><div class="bpg" id="bpg"></div></div>
+        <div class="bpcap">"bag full of purr-fection"</div>
       </div>
-    </div>
-  </div>
-
-  <div class="rc">
-    <div class="bpcard">
-      <div class="bphdr">BACKPACK</div>
-      <div class="bpgw"><div class="bpg" id="bpg"></div></div>
-      <div class="bpcap">"bag full of purr-fection"</div>
-    </div>
-    <div class="ttp" id="ttp">
-      <div class="ttn" id="ttn"></div>
-      <div class="tte" id="tte"></div>
-      <div class="ttr" id="ttr"></div>
-      <div class="ttf" id="ttf"></div>
-      <div class="ttsell">
-        <button class="btn-place" id="btn-place" onclick="pickupTreat()">Place on board</button>
+      <div class="ttp" id="ttp">
+        <div class="ttn" id="ttn"></div>
+        <div class="tte" id="tte"></div>
+        <div class="ttr" id="ttr"></div>
+        <div class="ttf" id="ttf"></div>
+        <div class="ttsell">
+          <button class="btn-place" id="btn-place" onclick="pickupTreat()">Place on board</button>
+        </div>
       </div>
     </div>
   </div>
