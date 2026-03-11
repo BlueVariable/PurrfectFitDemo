@@ -192,6 +192,8 @@ function renderStats(){
     trashEl.classList.toggle('no-disc',G.disc<=0);
     trashEl.classList.toggle('drag-active',H.kind==='cat'&&G.disc>0&&!!trashEl._hover);
   }
+  if (g('g-topbar-round')) g('g-topbar-round').textContent = 'Round ' + G.round;
+  if (g('g-topbar-cash'))  g('g-topbar-cash').querySelector('span:last-child').textContent = G.cash;
 }
 
 function treatReqFails(td){
