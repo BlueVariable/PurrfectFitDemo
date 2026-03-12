@@ -5,6 +5,6 @@
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['yarn'] = {
   buildFn(ef, phase) {
-    return (b, cats) => shapeMul(cats, ['L'], extractMul(ef));
+    return (b, cats) => shapeMul(cats, ['L', 'J'], extractMul(ef));
   },
 };

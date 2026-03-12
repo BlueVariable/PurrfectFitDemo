@@ -8,7 +8,10 @@
       "Read(//c/Users/laurus/laurus/**)",
       "Bash(mkdir:*)",
       "Bash(git:*)",
-      "Bash(wc -l /c/Users/laurus/laurus/Projects/PurrfectFitDemo/js/*.js)"
+      "Bash(wc -l /c/Users/laurus/laurus/Projects/PurrfectFitDemo/js/*.js)",
+      "WebSearch",
+      "Bash(claude mcp:*)",
+      "Bash(cd \"C:\\\\Users\\\\laurus\\\\laurus\\\\Projects\\\\PurrfectFitDemo\" && rm js/treats/tuna.js)"
     ]
   }
 }
