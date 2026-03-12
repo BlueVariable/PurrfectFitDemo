@@ -44,7 +44,7 @@ function doFit(){
 
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
-    bpAutoPlace(bt.tdef);
+    G.usedTreats.push(bt.tdef);
   });
   G.treats=[];
 
@@ -382,6 +382,9 @@ function roundWin(){
 }
 function goShop(){
   g('ov-win').classList.add('off');
+  // restore treats used this round back to backpack
+  (G.usedTreats||[]).forEach(tdef=>bpAutoPlace(tdef));
+  G.usedTreats=[];
   // advance round
   G.round++;
   const c=rcfg(G.round);
