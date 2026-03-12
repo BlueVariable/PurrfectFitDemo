@@ -10,9 +10,10 @@ function getRerollCost(){return CFG.reroll_cost||REROLL_COST_DEFAULT;}
 
 function generateShopPool(){
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
-  const canAfford=TDEFS.filter(td=>G.cash>=td.pr);
-  const canAffordWithSelling=TDEFS.filter(td=>G.cash<td.pr&&G.cash+totalSellable>=td.pr);
-  const expensive=TDEFS.filter(td=>G.cash+totalSellable<td.pr);
+  const available=TDEFS.filter(td=>!G.purchasedTreatIds.has(td.id));
+  const canAfford=available.filter(td=>G.cash>=td.pr);
+  const canAffordWithSelling=available.filter(td=>G.cash<td.pr&&G.cash+totalSellable>=td.pr);
+  const expensive=available.filter(td=>G.cash+totalSellable<td.pr);
   sfl(canAfford);sfl(canAffordWithSelling);sfl(expensive);
   return [...canAfford,...canAffordWithSelling,...expensive].slice(0,3);
 }
@@ -250,6 +251,7 @@ function shopDropOnBP(r,c){
   G.cash-=td.pr;
   bpPlaceAt(td,H.cells,or,oc);
   shopBoughtIds.add(td.id);
+  G.purchasedTreatIds.add(td.id);
   H=resetH();
   updateGhost();hideHUD();
   renderShopFull();

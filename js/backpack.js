@@ -64,6 +64,7 @@ function sellTreatFromShop(gid){
   // Only callable from shop screen
   const grp=G.bpGroups.find(g=>g.gid===gid);if(!grp)return;
   G.cash+=grp.tdef.sp;
+  G.purchasedTreatIds.delete(grp.tdef.id);
   removeBpGid(gid);
   renderAll(); // update backpack display
   renderShopFull(); // refresh shop listing
