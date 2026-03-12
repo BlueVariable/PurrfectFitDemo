@@ -53,7 +53,14 @@ function doFit(){
 
 // Distribute add bonus: flat +amt per affected cat group
 function applyAddResult(t,res,catScores){
-  if(!res||!res.bonus)return;
+  if(!res)return;
+  if(res.bonusMap){
+    Object.entries(res.bonusMap).forEach(([gid,amt])=>{
+      if(catScores[gid]!==undefined)catScores[gid]+=amt;
+    });
+    return;
+  }
+  if(!res.bonus)return;
   const ef=t.tdef.ef;
   const amt=extractNum(ef);
   const treatCells=t.cells;
@@ -91,6 +98,8 @@ function applyXResult(t,res,catScores){
   if(!res||res.skip)return;
   if(res.subPhase==='add') applyAddResult({tdef:res.copiedFrom,cells:res.laserCells},res.result,catScores);
   else if(res.subPhase==='mul') applyMulResult(t,res.result,catScores);
+  else if(res.subPhase==='mirror'){/* already applied in fn */}
+  else if(res.luckyGid){/* already applied in fn */}
   // jumping_ball and brownies apply effects as side effects in their fn; nothing to do here
 }
 
@@ -200,7 +209,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
 
   // One step per treat (top-to-bottom, as sorted in doFit) — labels update, counter stays at 0
   treatResults.forEach(({treat,result,phase})=>{
-    const hasEffect=phase==='add'?(result&&result.bonus>0):phase==='x'?(result&&!result.skip):(result&&result.gids&&result.gids.length&&result.m>1);
+    const hasEffect=phase==='add'?(result&&(result.bonus>0||result.bonusMap)):phase==='x'?(result&&!result.skip):(result&&result.gids&&result.gids.length&&result.m>1);
     if(!hasEffect)return;
     steps.push({
       explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}"`,
@@ -210,6 +219,15 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
         const treatCells=treat.cells;
         const [tRow,tCol]=treatCells[0];
         if(phase==='add'){
+          if(result.bonusMap){
+            const aff=[];
+            Object.entries(result.bonusMap).forEach(([gid,amt])=>{
+              if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
+            });
+            const total=Object.values(result.bonusMap).reduce((a,b)=>a+b,0);
+            updateLabels(aff,'rgba(100,210,90,.85)');
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${total}`);
+          } else {
           const aff=[];
           const amt=extractNum(ef);
           Object.entries(grpMap).forEach(([gid,info])=>{
@@ -226,6 +244,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
           aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
           updateLabels(aff,'rgba(100,210,90,.85)');
           addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
+          }
         } else if(phase==='mul'){
           // mul — multiply from current score (which includes the 10/cell base)
           result.gids.forEach(gid=>{
@@ -262,6 +281,18 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: disabled req for ${result.disabledTreat.em} ${result.disabledTreat.nm}`);
           } else if(result.addedCatEm!==undefined){
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: added ${result.addedCatEm} ${result.addedCatName} to deck`);
+          } else if(result.subPhase==='mirror'){
+            const aff=[];
+            Object.entries(result.bonusMap||{}).forEach(([gid,amt])=>{
+              if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
+            });
+            updateLabels(aff,'rgba(100,210,90,.85)');
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: mirrored +${result.totalBonus||0}`);
+          } else if(result.luckyGid){
+            if(grpMap[result.luckyGid])grpMap[result.luckyGid].score=Math.round(grpMap[result.luckyGid].score*4);
+            (result.halvedGids||[]).forEach(gid=>{if(grpMap[gid])grpMap[gid].score=Math.round(grpMap[gid].score*0.5);});
+            updateLabels([result.luckyGid],'rgba(255,215,0,.9)');
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×4 lucky cat, ×½ others`);
           }
         }
       }

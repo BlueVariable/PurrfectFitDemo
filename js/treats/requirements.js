@@ -12,6 +12,7 @@ const REQUIREMENT_FNS = {
     const types = [...new Set(G.cats.map(c => c.type))];
     return types.length > 1;
   },
+  'BOARD FULL': () => G.board.flat().filter(c=>c.filled).length < G.bsr*G.bsc,
 };
 
 function requirementFails(req) {
