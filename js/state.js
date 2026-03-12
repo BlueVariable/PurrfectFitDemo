@@ -31,7 +31,7 @@ function newGame(deckId){
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],
-    lastScore:0,selBpGid:null,firstShop:true,visitedShop:false,shopVisitedThisRound:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
+    lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
   };
   mkDeck();dealHand();
 }
