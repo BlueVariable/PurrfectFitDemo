@@ -38,27 +38,9 @@ function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
 
 // ── treat fn lookup — maps sheet effect strings to engine functions ──
 function buildTreatFn(id, ef, phase){
-  // Registry-first: named treats define their own factory
   if(TREAT_REGISTRY[id]) return TREAT_REGISTRY[id].buildFn(ef, phase);
-
-  // add-phase fns
-  if(phase==='add'){
-    if(ef.includes('ALL'))      return (b,cats)=>allAdd(cats, extractNum(ef));
-    if(ef.includes('ROW'))      return (b,c,t,p)=>rowAdd(b,p, extractNum(ef));
-    if(ef.includes('COL'))      return (b,c,t,p)=>colAdd(b,p, extractNum(ef));
-    if(ef.includes('SURR'))     return (b,c,t,p)=>surrAdd(b,p, extractNum(ef));
-    return (b,cats)=>allAdd(cats, extractNum(ef));
-  }
-  // mul-phase fns
-  const m = extractMul(ef);
-  if(ef.includes('COL')) return (b,cats,t,p,cs)=>colMul(b,cats,p,m);
-  if(ef.includes('/')){
-    // parse shape list from effect like "×2 L/J/T/curl/chonk cats"
-    const shapeMatch=ef.match(/([A-Za-z][A-Za-z0-9]*(?:\/[A-Za-z][A-Za-z0-9]*)+)/);
-    const shapes=shapeMatch?shapeMatch[1].split('/'):['L','J','T','curl','chonk'];
-    return (b,cats)=>shapeMul(cats,shapes,m);
-  }
-  return (b,cats,ts,p,cs)=>allMulCS(cats,cs,m);
+  console.warn(`No registry entry for treat: ${id}`);
+  return ()=>({});
 }
 function extractNum(ef){const m=ef.match(/[+](\d+)/);return m?parseInt(m[1]):0;}
 function extractMul(ef){const m=ef.match(/[×x](\d+)/);return m?parseInt(m[1]):2;}

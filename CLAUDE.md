@@ -4,24 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running the Application
 
-No build step required. Open `purrfect-fit-demo.html` directly in a modern browser. There are no npm packages, build tools, or dependencies.
+No build step required. Open `index.html` directly in a modern browser. There are no npm packages, build tools, or dependencies.
 
-Configuration is loaded at runtime from a Google Apps Script endpoint (Google Sheets). A "↺ Reload Config" button on the title screen re-fetches it. Hardcoded fallback config kicks in automatically if the fetch fails.
+Configuration is loaded at runtime from published Google Sheets CSV URLs (see `js/config.js` → `SHEET_URLS`). A "↺ Reload Config" button on the title screen re-fetches it.
 
 ## Architecture
 
-The entire game lives in a single file: `purrfect-fit-demo.html` (~2,500 lines). It is structured with clearly marked sections using `// ════` headers:
+The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`:
 
-- **GOOGLE SHEETS CONFIG** — Loads and parses all game data from 6 Sheets tabs into global constants (`CFG`, `RCFG`, `COLS`, `EMS`, `TDEFS`, `CSHAPES`, `DECKS`)
-- **STATE** — Global mutable state in two objects: `G` (game state) and `H` (held/dragging state)
-- **HELD MECHANICS** — Mouse/touch drag-and-drop logic for picking up and rotating cats and treats
-- **BOARD INTERACTION** — Placement validation (`boardCanPlace`) and committing pieces
-- **BACKPACK INTERACTION** — Inventory grid management
-- **RENDER** — All DOM updates (`renderAll`, `renderBoard`, `renderHand`, `renderBP`, `renderShopFull`)
-- **SCORING** — Animated score sequence with four phases: base → add treats → mul treats → board fill bonus
-- **SHOP** — Treat purchasing and reroll logic
-- **TREAT EFFECTS** — `buildTreatFn(id, ef, phase)` parses effect strings from config into executable functions
-- **UTILS** — `rotC` (shape rotation), `sfl` (shuffle), `mkDeck`, `dealHand`
+| File | Responsibility |
+|------|---------------|
+| `js/utils.js` | `rotC` (shape rotation), `sfl` (shuffle), `mkDeck`, `dealHand`, helpers |
+| `js/treat-effects.js` | Add/mul helper functions (`surrAdd`, `rowAdd`, `colAdd`, `allAdd`, `allMulCS`, `colMul`, `surrMulCS`, `shapeMul`) |
+| `js/treats/registry.js` | `TREAT_REGISTRY = {}` — named treats register here |
+| `js/treats/requirements.js` | `REQUIREMENT_FNS` map + `requirementFails(req)` |
+| `js/treats/<id>.js` | One file per treat with custom logic (see Treat System below) |
+| `js/config.js` | Fetches Google Sheets CSVs, parses into globals (`CFG`, `RCFG`, `COLS`, `EMS`, `TDEFS`, `CSHAPES`, `DECKS`), calls `buildTreatFn` |
+| `js/state.js` | Global mutable state `G` and `H` |
+| `js/board.js` | Placement validation (`boardCanPlace`) and committing pieces |
+| `js/backpack.js` | Inventory grid management |
+| `js/held.js` | Mouse/touch drag-and-drop logic |
+| `js/render.js` | All DOM updates (`renderAll`, `renderBoard`, `renderHand`, `renderBP`, `renderShopFull`) |
+| `js/scoring.js` | `doFit()`, `runScoreSequence()`, `endScoreSequence()` — four phases: base → add treats → mul treats → board fill bonus |
+| `js/shop.js` | Treat purchasing and reroll logic |
+
+Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → state → board → backpack → held → render → scoring → shop.
 
 ## Key Data Structures
 
@@ -41,6 +48,8 @@ grabDr/grabDc (grab offset within shape), dragging
 
 **Board cell:** `{ filled, col, kind, em, gid, shape, type }`
 
+**TDEF (treat definition):** `{ id, nm, em, rar, col, phase, bpS, ef, req, pr, sp, fl, fn }`
+
 ## Screen Flow
 
 `s-loading` → `s-title` (deck select) → `s-rounds` (round info + shop) → `s-game` (gameplay) → `s-shop` (between rounds)
@@ -51,10 +60,40 @@ Screens are `display:none` by default and made visible with class `.on`.
 
 `doFit()` triggers the score sequence → `runScoreSequence()` animates phases → `endScoreSequence()` checks win/loss → `roundWin()` or next hand dealt via `dealHand()`.
 
+## Treat System
+
+Every treat in the sheet has its own file at `js/treats/<id>.js`. Each file registers into `TREAT_REGISTRY`:
+
+```js
+TREAT_REGISTRY['id'] = {
+  buildFn(ef, phase) {
+    // return a function (b, cats, ts, p, cs) => { bonus, desc } or { gids, m }
+  }
+};
+```
+
+`buildTreatFn(id, ef, phase)` in `config.js` checks the registry first; falls back to generic pattern matching only for treats without a registry entry.
+
+Add-phase functions return `{ bonus, desc }`. Mul-phase functions return `{ gids: [...], m: N }`.
+
+### All treats (from Google Sheet)
+
+| ID | Name | Phase | Effect | Requirement |
+|----|------|-------|--------|-------------|
+| milk | WARM MILK | add | +8 to ALL cats | — |
+| catnip | CATNIP | add | +25 to cats in same ROW | — |
+| feather | FEATHER | add | +25 to cats in same COL | — |
+| box | BOX | add | +25 to SURROUNDING cats | — |
+| sardine_tin | SARDINE TIN | add | (special) | — |
+| yarn | YARN BALL | mul | ×2 L shaped cats | — |
+| laser | LASER POINTER | x | copies ability of one other random treat | — |
+| jumping_ball | JUMPING BALL | x | disable one random treat's requirement | — |
+| brownies | BROWNIES | x | add duplicate of one random surrounding cat to deck | — |
+| nap | POWER NAP | mul | ×2 ALL cats | NO OTHER TREAT |
+| frenzy | FRENZY BALL | mul | ×3 SURROUNDING cats | ALL SAME TYPE |
+| catnado | CATNADO | mul | ×2 ALL cats | ALL SAME TYPE |
+| tuna_can | TUNA CAN | mul | ×2 all ORANGE cats | — |
+
 ## Configuration Data Source
 
-`purrfect_config.xlsx` is a reference/editing artifact. The live data source is Google Sheets, fetched via:
-```
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/...'
-```
-To change game balance, edit the Google Sheet and reload config in-browser (or update the hardcoded fallback around line 898).
+Live data is fetched from published Google Sheets CSV endpoints defined in `SHEET_URLS` in `js/config.js`. Tabs: General, Rounds, Treats, Cats, Shapes, Decks.
