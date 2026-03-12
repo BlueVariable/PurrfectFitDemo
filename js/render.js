@@ -114,46 +114,21 @@ function exitToMenu(){
   updateContinueBtn();
 }
 function openRounds(){
-  G.shopVisitedThisRound=false;
-  // Clear any stale warned flag
-  const _pb=document.querySelector('.rds-btn-play');
-  if(_pb) delete _pb.dataset.warned;
+  shopBoughtIds=new Set();
+  g('shop-sub').textContent=G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
+  G.visitedShop=true;
+  shopPool=generateShopPool();
+  renderShopFull();
   renderRoundsTrack();
   g('rds-play-num').textContent=G.round;
-  g('rds-cash').textContent=G.cash;
-  const hints=['"every round is a new chance to purr-fect your strategy"',
-    '"the board grows, but so does your wisdom"','"treats make everything better"',
-    '"a cat in the right place scores every time"'];
-  g('rds-hint').textContent=hints[(G.round-1)%hints.length];
   show('s-rounds');
 }
-function openShopFromRounds(){openShop();}
 function startRound(){
-  // Warn player if they haven't visited the shop yet
-  if(!G.shopVisitedThisRound&&G.round>=1){
-    showShopWarning();
-    // allow second click to bypass
-    const btn=document.querySelector('.rds-btn-play');
-    if(btn&&!btn.dataset.warned){btn.dataset.warned='1';return;}
+  if(H.kind==='shop-treat'){
+    H=resetH();
+    updateGhost();hideHUD();
   }
-  G.firstShop=false;
-  const btn=document.querySelector('.rds-btn-play');
-  if(btn) delete btn.dataset.warned;
   show('s-game');renderAll();
-}
-function showShopWarning(){
-  const shopBtn=document.querySelector('.rds-btn-shop');
-  if(!shopBtn)return;
-  const tip=document.createElement('div');
-  tip.className='shop-warn-tip';
-  tip.textContent='CHECK OUT THE GOODS! 🏪';
-  document.body.appendChild(tip);
-  const rect=shopBtn.getBoundingClientRect();
-  tip.style.left=rect.left+(rect.width/2)+'px';
-  tip.style.top=(rect.top-42)+'px';
-  tip.style.transform='translateX(-50%)';
-  setTimeout(()=>tip.classList.add('show'),10);
-  setTimeout(()=>{tip.classList.remove('show');setTimeout(()=>tip.remove(),300);},2200);
 }
 function renderRoundsTrack(){
   // Pip track
