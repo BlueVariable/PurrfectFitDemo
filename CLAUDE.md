@@ -97,3 +97,26 @@ Add-phase functions return `{ bonus, desc }`. Mul-phase functions return `{ gids
 ## Configuration Data Source
 
 Live data is fetched from published Google Sheets CSV endpoints defined in `SHEET_URLS` in `js/config.js`. Tabs: General, Rounds, Treats, Cats, Shapes, Decks.
+
+## Sheet Snapshots & Change Detection Workflow
+
+Snapshots of all six sheets are saved locally in `sheets/` (one CSV per tab):
+
+```
+sheets/General.csv
+sheets/Rounds.csv
+sheets/Treats.csv
+sheets/Cats.csv
+sheets/Shapes.csv
+sheets/Decks.csv
+```
+
+**When the user says they added or changed a treat (or any sheet data):**
+
+1. Re-fetch all six sheets via the `SHEET_URLS` in `js/config.js` (follow the 307 redirects).
+2. Diff the new CSV against the saved snapshot to identify exactly what changed.
+3. Implement the required code changes (new treat file, updated registry entry, etc.).
+4. Overwrite the snapshot files with the new CSV content so they stay current.
+5. Commit and push.
+
+This keeps `sheets/` as the source of truth for "last known sheet state" so diffs are always accurate.

@@ -1,0 +1,14 @@
+ID,Name,Emoji,Rarity,Phase,Shape ID,Effect,Requirement,Buy Price,Description
+milk,WARM MILK,🥛,common,add,uno,+8 to ALL cats,,1,one treat keeps the bites away
+catnip,CATNIP,🌿,common,add,uno,+25 to cats in same ROW,,2,eat. sleep. catnip. repeat.
+feather,FEATHER,🪶,common,add,uno,+25 to cats in same COL,,2,light as a whisker
+box,BOX,🐱,common,add,duo,+25 to SURROUNDING cats,,4,devil advocate
+sardine_tin,SARDINE TIN,🐟,common,add,duo,,,4,something smells fishy...
+yarn,YARN BALL,🧶,rare,mul,duo,×2 L shaped cats,,5,bag full of purr-fection
+laser,LASER POINTER,🔴,epic,x,trio,copies the ability of one other random treat,,7,the red dot never lies
+jumping_ball,JUMPING BALL,,epic,x,straight,disable one random treat's requirement,,7,
+brownies,BROWNIES,🍫,epic,x,corner,add a duplicate of one random surrounding cat to deck,,7,tbd
+nap,POWER NAP,😴,epic,mul,chonk,×2 ALL cats,NO OTHER TREAT,8,never stop napping
+frenzy,FRENZY BALL,🔮,legendary,mul,chonk,×3 SURROUNDING cats,ALL SAME TYPE,10,purrfect for world domination
+catnado,CATNADO,🌪️,legendary,mul,chonk,×2 ALL cats,ALL SAME TYPE,10,nothing can stop it now
+tuna_can,TUNA CAN,🥫,legendary,mul,duo,×2 all ORANGE cats,,10,the forbidden can
