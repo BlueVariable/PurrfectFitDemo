@@ -11,7 +11,8 @@
       "Bash(wc -l /c/Users/laurus/laurus/Projects/PurrfectFitDemo/js/*.js)",
       "WebSearch",
       "Bash(claude mcp:*)",
-      "Bash(cd \"C:\\\\Users\\\\laurus\\\\laurus\\\\Projects\\\\PurrfectFitDemo\" && rm js/treats/tuna.js)"
+      "Bash(cd \"C:\\\\Users\\\\laurus\\\\laurus\\\\Projects\\\\PurrfectFitDemo\" && rm js/treats/tuna.js)",
+      "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh --project-dir \"C:/Users/laurus/laurus/Projects/PurrfectFitDemo\" 2>&1)"
     ]
   }
 }

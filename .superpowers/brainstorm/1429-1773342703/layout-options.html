@@ -1,0 +1,286 @@
+<style>
+  body { background: #1a1a2e; color: #e0e0ff; font-family: 'Segoe UI', sans-serif; }
+  h2 { color: #ffd700; text-align: center; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #aaa; margin-bottom: 24px; }
+
+  .cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+  .card {
+    background: #16213e;
+    border: 2px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    width: 340px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: #ffd700; }
+  .card.selected { border-color: #ffd700; background: #1a2a4e; }
+  .card h3 { color: #ffd700; margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+  .card p { color: #aaa; font-size: 12px; margin: 0 0 12px; }
+
+  /* Mini mockup styles */
+  .mini { background: #0f0f1a; border-radius: 8px; padding: 10px; font-size: 10px; }
+
+  /* Option A: Expanded rounds */
+  .a-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .a-topbar { background: #222; border-radius: 4px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; color: #aaa; font-size: 9px; }
+  .a-pips { display: flex; gap: 4px; justify-content: center; padding: 4px 0; }
+  .a-pip { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+  .a-pip.done { background: #ffd700; }
+  .a-pip.cur { background: #ff9900; border: 2px solid #ffd700; }
+  .a-round-card { background: #16213e; border: 1px solid #ffd700; border-radius: 6px; padding: 6px; text-align: center; }
+  .a-round-card .rn { color: #ffd700; font-size: 18px; font-weight: bold; }
+  .a-round-card .stats { display: flex; gap: 8px; justify-content: center; font-size: 9px; color: #aaa; margin-top: 4px; }
+  .a-divider { border-top: 1px dashed #333; margin: 4px 0; }
+  .a-shop-area { background: #111; border-radius: 4px; padding: 6px; }
+  .a-shop-hdr { color: #ffd700; font-size: 9px; text-align: center; margin-bottom: 6px; letter-spacing: 1px; }
+  .a-bp-row { display: flex; gap: 4px; margin-bottom: 6px; }
+  .a-bp-grid { display: grid; grid-template-columns: repeat(5, 10px); grid-template-rows: repeat(2, 10px); gap: 1px; }
+  .a-bp-cell { width: 10px; height: 10px; background: #2a2a3a; border-radius: 1px; }
+  .a-bp-cell.filled { background: #4a9eff; }
+  .a-bp-list { flex: 1; font-size: 8px; color: #aaa; display: flex; flex-direction: column; gap: 2px; }
+  .a-treat-row { display: flex; gap: 4px; }
+  .a-treat-card { flex: 1; background: #1a1a2e; border: 1px solid #4a9eff; border-radius: 3px; padding: 4px; text-align: center; font-size: 9px; }
+  .a-treat-card .te { font-size: 14px; }
+  .a-treat-card .tn { color: #e0e0ff; font-size: 7px; margin-top: 2px; }
+  .a-treat-card .tp { color: #ffd700; font-size: 7px; }
+  .a-actions { display: flex; gap: 6px; align-items: center; }
+  .a-play-btn { flex: 1; background: #ffd700; color: #000; border: none; border-radius: 4px; padding: 5px; font-size: 9px; font-weight: bold; cursor: pointer; text-align: center; }
+  .a-cash { background: #222; border-radius: 3px; padding: 3px 6px; font-size: 9px; color: #ffd700; }
+
+  /* Option B: Shop with round bar */
+  .b-wrap { display: flex; gap: 6px; }
+  .b-left { width: 70px; background: #0d1117; border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+  .b-left .bl { font-size: 7px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .b-left .bv { font-size: 11px; color: #ffd700; font-weight: bold; }
+  .b-left-divider { border-top: 1px solid #333; width: 100%; }
+  .b-play-btn { background: #ffd700; color: #000; border-radius: 3px; padding: 3px 6px; font-size: 8px; font-weight: bold; width: 100%; text-align: center; }
+  .b-pips-v { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .b-pip { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+  .b-pip.done { background: #ffd700; }
+  .b-pip.cur { background: #ff9900; }
+  .b-main { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .b-shop-hdr { color: #ffd700; font-size: 10px; text-align: center; }
+  .b-center { display: flex; gap: 5px; }
+  .b-bp { background: #111; border-radius: 4px; padding: 5px; }
+  .b-bp-grid { display: grid; grid-template-columns: repeat(5, 9px); gap: 1px; }
+  .b-bp-c { width: 9px; height: 9px; background: #2a2a3a; border-radius: 1px; }
+  .b-bp-c.f { background: #4a9eff; }
+  .b-inv { flex: 1; font-size: 7px; color: #aaa; }
+  .b-treats { display: flex; gap: 3px; }
+  .b-tc { flex: 1; background: #1a1a2e; border: 1px solid #4a9eff; border-radius: 3px; padding: 3px; text-align: center; }
+  .b-tc .te { font-size: 12px; }
+  .b-tc .tn { font-size: 6px; color: #e0e0ff; }
+  .b-tc .tp { font-size: 6px; color: #ffd700; }
+
+  /* Option C: Two columns */
+  .c-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .c-topbar { background: #222; border-radius: 4px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #aaa; }
+  .c-body { display: flex; gap: 6px; }
+  .c-left { width: 120px; display: flex; flex-direction: column; gap: 5px; }
+  .c-pips { display: flex; gap: 3px; justify-content: center; }
+  .c-pip { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+  .c-pip.done { background: #ffd700; }
+  .c-pip.cur { background: #ff9900; border: 1px solid #ffd700; }
+  .c-round-card { background: #16213e; border: 1px solid #ffd700; border-radius: 6px; padding: 8px; text-align: center; flex: 1; }
+  .c-round-card .rn { color: #ffd700; font-size: 20px; font-weight: bold; line-height: 1; }
+  .c-round-card .rl { color: #888; font-size: 7px; text-transform: uppercase; }
+  .c-stats { display: flex; flex-direction: column; gap: 3px; margin-top: 5px; }
+  .c-stat { display: flex; justify-content: space-between; font-size: 8px; }
+  .c-stat .cl { color: #888; }
+  .c-stat .cv { color: #e0e0ff; }
+  .c-cash { display: flex; justify-content: space-between; align-items: center; font-size: 9px; background: #111; border-radius: 3px; padding: 3px 6px; }
+  .c-cash-v { color: #ffd700; }
+  .c-play-btn { background: #ffd700; color: #000; border-radius: 4px; padding: 5px; font-size: 9px; font-weight: bold; text-align: center; }
+  .c-right { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+  .c-shop-hdr { background: #4a9eff22; border: 1px solid #4a9eff44; border-radius: 4px; padding: 3px 6px; font-size: 9px; color: #4a9eff; text-align: center; }
+  .c-mid { display: flex; gap: 5px; }
+  .c-bp { background: #111; border-radius: 4px; padding: 5px; }
+  .c-bp-grid { display: grid; grid-template-columns: repeat(5, 9px); gap: 1px; }
+  .c-bp-c { width: 9px; height: 9px; background: #2a2a3a; border-radius: 1px; }
+  .c-bp-c.f { background: #4a9eff; }
+  .c-inv { flex: 1; font-size: 7px; color: #aaa; display: flex; flex-direction: column; gap: 2px; }
+  .c-inv-item { display: flex; justify-content: space-between; }
+  .c-treats { display: flex; gap: 3px; }
+  .c-tc { flex: 1; background: #1a1a2e; border: 1px solid #4a9eff; border-radius: 3px; padding: 3px; text-align: center; }
+  .c-tc .te { font-size: 12px; }
+  .c-tc .tn { font-size: 6px; color: #e0e0ff; }
+  .c-tc .tp { font-size: 6px; color: #ffd700; }
+  .c-reroll { font-size: 7px; color: #aaa; text-align: right; }
+
+  .card-image { margin-bottom: 10px; }
+</style>
+
+<h2>Merging the Rounds & Shop Screens</h2>
+<p class="subtitle">Three layout approaches — click to select your preference</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Expanded Rounds Screen</h3>
+      <p>Keep the rounds screen, embed the shop below the round card. One tall vertical layout.</p>
+      <div class="card-image">
+        <div class="mini a-wrap">
+          <div class="a-topbar"><span>← Menu</span><span>PURRFECT FIT</span><span></span></div>
+          <div class="a-pips">
+            <div class="a-pip done"></div><div class="a-pip done"></div>
+            <div class="a-pip cur"></div><div class="a-pip"></div><div class="a-pip"></div>
+          </div>
+          <div class="a-round-card">
+            <div style="font-size:8px;color:#888;">ROUND</div>
+            <div class="rn">3</div>
+            <div class="stats"><span>🎯 240</span><span>💰 +$5</span><span>📐 5×5</span></div>
+          </div>
+          <div class="a-divider"></div>
+          <div class="a-shop-area">
+            <div class="a-shop-hdr">🏪 PET STORE</div>
+            <div class="a-bp-row">
+              <div class="a-bp-grid">
+                <div class="a-bp-cell filled"></div><div class="a-bp-cell filled"></div><div class="a-bp-cell"></div><div class="a-bp-cell"></div><div class="a-bp-cell"></div>
+                <div class="a-bp-cell"></div><div class="a-bp-cell"></div><div class="a-bp-cell"></div><div class="a-bp-cell"></div><div class="a-bp-cell"></div>
+              </div>
+              <div class="a-bp-list">
+                <div>🐟 Sardine Tin</div>
+                <div>🧶 Yarn Ball</div>
+              </div>
+            </div>
+            <div class="a-treat-row">
+              <div class="a-treat-card"><div class="te">🥛</div><div class="tn">WARM MILK</div><div class="tp">🪙2</div></div>
+              <div class="a-treat-card"><div class="te">🌿</div><div class="tn">CATNIP</div><div class="tp">🪙3</div></div>
+              <div class="a-treat-card"><div class="te">🪶</div><div class="tn">FEATHER</div><div class="tp">🪙3</div></div>
+            </div>
+          </div>
+          <div class="a-actions">
+            <div class="a-cash">🪙5</div>
+            <div class="a-play-btn">▶ PLAY ROUND</div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Minimal change from current layout</li><li>Familiar screen flow</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Tall/cramped on small screens</li><li>Less room for treats</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Shop + Round Sidebar</h3>
+      <p>Shop is primary. Round info lives in a compact left sidebar with the Play button.</p>
+      <div class="card-image">
+        <div class="mini b-wrap">
+          <div class="b-left">
+            <div class="bl">Round</div>
+            <div class="bv">3</div>
+            <div class="b-left-divider"></div>
+            <div class="bl">Target</div><div class="bv" style="color:#e0e0ff;font-size:10px;">240</div>
+            <div class="bl">Earn</div><div class="bv" style="color:#4aff88;font-size:10px;">+$5</div>
+            <div class="bl">Board</div><div class="bv" style="color:#e0e0ff;font-size:10px;">5×5</div>
+            <div class="b-left-divider"></div>
+            <div class="bl">Cash</div><div class="bv">🪙5</div>
+            <div class="b-left-divider"></div>
+            <div class="b-pips-v">
+              <div class="b-pip done"></div><div class="b-pip done"></div>
+              <div class="b-pip cur"></div><div class="b-pip"></div><div class="b-pip"></div>
+            </div>
+            <div class="b-left-divider"></div>
+            <div class="b-play-btn">▶ PLAY</div>
+          </div>
+          <div class="b-main">
+            <div class="b-shop-hdr">🏪 PET STORE</div>
+            <div class="b-center">
+              <div class="b-bp">
+                <div style="font-size:7px;color:#888;margin-bottom:3px;">BACKPACK</div>
+                <div class="b-bp-grid">
+                  <div class="b-bp-c f"></div><div class="b-bp-c f"></div><div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div>
+                  <div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div>
+                  <div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div><div class="b-bp-c"></div>
+                </div>
+              </div>
+              <div class="b-inv">
+                <div style="color:#888;margin-bottom:2px;">IN BACKPACK</div>
+                <div>🐟 Sardine Tin</div>
+                <div>🧶 Yarn Ball</div>
+              </div>
+            </div>
+            <div class="b-treats">
+              <div class="b-tc"><div class="te">🥛</div><div class="tn">WARM MILK</div><div class="tp">🪙2</div></div>
+              <div class="b-tc"><div class="te">🌿</div><div class="tn">CATNIP</div><div class="tp">🪙3</div></div>
+              <div class="b-tc"><div class="te">🪶</div><div class="tn">FEATHER</div><div class="tp">🪙3</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Shop gets more space</li><li>Play button always visible</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Round info feels secondary</li><li>Bigger layout change</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Equal Split (Recommended)</h3>
+      <p>Round card on left, shop on right. Both feel first-class. Clean two-column layout.</p>
+      <div class="card-image">
+        <div class="mini c-wrap">
+          <div class="c-topbar"><span>← Menu</span><span style="color:#ffd700;">PURRFECT FIT</span><span>🪙5</span></div>
+          <div class="c-body">
+            <div class="c-left">
+              <div class="c-pips">
+                <div class="c-pip done"></div><div class="c-pip done"></div>
+                <div class="c-pip cur"></div><div class="c-pip"></div><div class="c-pip"></div>
+              </div>
+              <div class="c-round-card">
+                <div class="rl">ROUND</div>
+                <div class="rn">3</div>
+                <div class="c-stats">
+                  <div class="c-stat"><span class="cl">Target</span><span class="cv">240</span></div>
+                  <div class="c-stat"><span class="cl">Earn</span><span class="cv" style="color:#4aff88;">+$5</span></div>
+                  <div class="c-stat"><span class="cl">Board</span><span class="cv">5×5</span></div>
+                </div>
+              </div>
+              <div class="c-play-btn">▶ PLAY ROUND</div>
+            </div>
+            <div class="c-right">
+              <div class="c-shop-hdr">🏪 PET STORE</div>
+              <div class="c-mid">
+                <div class="c-bp">
+                  <div style="font-size:7px;color:#888;margin-bottom:2px;">BACKPACK</div>
+                  <div class="c-bp-grid">
+                    <div class="c-bp-c f"></div><div class="c-bp-c f"></div><div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div>
+                    <div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div>
+                    <div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div><div class="c-bp-c"></div>
+                  </div>
+                </div>
+                <div class="c-inv">
+                  <div style="color:#888;">IN BACKPACK</div>
+                  <div class="c-inv-item"><span>🐟 Sardine Tin</span><span style="color:#ff6666;">Sell</span></div>
+                  <div class="c-inv-item"><span>🧶 Yarn Ball</span><span style="color:#ff6666;">Sell</span></div>
+                </div>
+              </div>
+              <div class="c-treats">
+                <div class="c-tc"><div class="te">🥛</div><div class="tn">WARM MILK</div><div class="tp">🪙2</div></div>
+                <div class="c-tc"><div class="te">🌿</div><div class="tn">CATNIP</div><div class="tp">🪙3</div></div>
+                <div class="c-tc"><div class="te">🪶</div><div class="tn">FEATHER</div><div class="tp">🪙3</div></div>
+              </div>
+              <div class="c-reroll">↺ Reroll $1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul><li>Balanced — round info &amp; shop both visible</li><li>Natural left-to-right flow</li><li>Closest to current shop layout</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Removes the "enter shop" moment</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
