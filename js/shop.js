@@ -18,28 +18,6 @@ function generateShopPool(){
   return [...canAfford,...canAffordWithSelling,...expensive].slice(0,3);
 }
 
-function openShop(){
-  const isFirst=G.round===1&&!G.visitedShop;
-  G.visitedShop=true;
-  G.shopVisitedThisRound=true;
-  shopBoughtIds=new Set();
-  g('shop-sub').textContent=isFirst?'"stock up before the round!"':'"back for more treats!"';
-  g('shop-cash').textContent=G.cash;
-  shopPool=generateShopPool();
-  renderShopFull();
-  show('s-shop');
-}
-
-function leaveShop(){
-  // commit any pending shop treats (already in bpGroups — they were placed during drag)
-  // cancel any held shop treat
-  if(H.kind==='shop-treat'){
-    H=resetH();
-    updateGhost();hideHUD();
-  }
-  openRounds();
-}
-
 function rerollTreats(){
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
