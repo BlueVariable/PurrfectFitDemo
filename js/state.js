@@ -24,6 +24,9 @@ function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.chan
 let H=resetH();
 
 function newGame(deckId){
+  // Restore cat_phone if it was transformed in a previous game
+  const cp=TDEFS.find(td=>td.id==='cat_phone');
+  if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
   G={
     round:1,score:0,tgt:c.tgt,bsr:c.bsr,bsc:c.bsc,earn:c.earn,hands:c.h,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
