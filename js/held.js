@@ -72,6 +72,7 @@ function dropHeld(){
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
+  if(g('shop-bpg'))renderShopFull();
   const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}
 }
 
@@ -134,16 +135,18 @@ document.addEventListener('mouseup',e=>{
 
   // Game treat dragged from BP — drop on board cell under mouse
   if(H.kind==='treat'){
-    // If dropped on shop BP grid, shopDropOnBP handles it
+    // If dropped on shop BP grid, shopDropOnBP cell handler may have already placed it.
+    // If H was reset, we won't reach here. Otherwise (gap/failed placement), return to BP.
     const shopBpEl=g('shop-bpg');
     if(shopBpEl){
       const sr=shopBpEl.getBoundingClientRect();
       if(e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom){
-        return; // shopDropOnBP cell mouseup will handle
+        if(!H.kind)return; // shopDropOnBP already handled it
+        bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderShopFull();return;
       }
     }
     const boardEl=g('board');
-    if(!boardEl){bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();return;}
+    if(!boardEl){bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();if(g('shop-bpg'))renderShopFull();return;}
     const boardRect=boardEl.getBoundingClientRect();
     const inside=e.clientX>=boardRect.left&&e.clientX<=boardRect.right&&e.clientY>=boardRect.top&&e.clientY<=boardRect.bottom;
     if(inside){
@@ -183,13 +186,15 @@ document.addEventListener('mouseup',e=>{
           // Otherwise (gap between cells or placement failed), return treat to BP.
           bpAutoPlace(H.data);
           H=resetH();
-          updateGhost();hideHUD();clrBoardPrev();renderBP();return;
+          updateGhost();hideHUD();clrBoardPrev();renderBP();
+          if(g('shop-bpg'))renderShopFull();return;
         }
       }
       // Outside board + not on BP — return to BP
       bpAutoPlace(H.data);
       H=resetH();
       updateGhost();hideHUD();renderBP();clrBoardPrev();
+      if(g('shop-bpg'))renderShopFull();
     }
   }
 });
@@ -316,6 +321,7 @@ function handleTouchDrop(cx,cy){
     }
     // Fall back: return treat to BP
     bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();clrBoardPrev();
+    if(g('shop-bpg'))renderShopFull();
     return;
   }
   if(H.kind==='cat'){
