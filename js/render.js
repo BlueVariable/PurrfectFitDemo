@@ -151,6 +151,41 @@ function renderRoundsTrack(){
 }
 function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();}
 
+function checkBoardFull(){
+  const filled=G.board.flat().filter(c=>c.filled).length;
+  if(filled<G.bsr*G.bsc)return;
+  // Ripple glow across board cells
+  const boardEl=g('board');
+  const cells=boardEl.querySelectorAll('.cell');
+  cells.forEach((cell,idx)=>{
+    const r=Math.floor(idx/G.bsc),c=idx%G.bsc;
+    const dist=Math.sqrt(Math.pow(r-G.bsr/2,2)+Math.pow(c-G.bsc/2,2));
+    setTimeout(()=>cell.classList.add('board-full-glow'),dist*60);
+  });
+  // Sparkles burst from board center
+  const boardRect=boardEl.getBoundingClientRect();
+  const cx=boardRect.left+boardRect.width/2,cy=boardRect.top+boardRect.height/2;
+  for(let i=0;i<18;i++){
+    const spark=document.createElement('div');
+    spark.className='purrfect-sparkle';
+    const angle=Math.random()*Math.PI*2;
+    const radius=40+Math.random()*80;
+    spark.style.left=(cx+Math.cos(angle)*radius)+'px';
+    spark.style.top=(cy+Math.sin(angle)*radius)+'px';
+    spark.style.animationDelay=(Math.random()*0.4)+'s';
+    spark.style.width=(4+Math.random()*8)+'px';
+    spark.style.height=spark.style.width;
+    document.body.appendChild(spark);
+    setTimeout(()=>spark.remove(),1400);
+  }
+  // Floating text
+  const ov=document.createElement('div');
+  ov.className='purrfect-fit-overlay';
+  ov.innerHTML='<div class="purrfect-fit-text">PURRFECT FIT!</div>';
+  document.body.appendChild(ov);
+  setTimeout(()=>ov.remove(),2500);
+}
+
 function renderStats(){
   g('g-tgt').textContent=G.tgt.toLocaleString();
   g('g-earn').textContent=G.earn;
