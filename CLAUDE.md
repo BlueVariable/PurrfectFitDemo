@@ -92,18 +92,18 @@ Add-phase functions return `{ bonus, desc }` or `{ bonusMap }`. Mul-phase functi
 | window_perch | WINDOW PERCH | add | +50 to cats on EDGES | — | — |
 | rainbow_bowl | RAINBOW BOWL | add | +25 per UNIQUE cat type | — | — |
 | sardine_tin | SARDINE TIN | x | destroy one random surrounding cat from deck | — | — |
-| wild_dice | (unnamed) | mul | x3 one random cat | — | — |
+| wild_dice | WILD DICE | mul | x3 one random cat | — | — |
 | laser | LASER POINTER | x | copies ability of one other random treat | — | — |
 | jumping_ball | JUMPING BALL | x | disable one random treat's requirement | — | — |
 | brownies | BROWNIES | x | add duplicate of one random surrounding cat to deck | — | — |
 | treat_pile | TREAT PILE | add | +20 per TREAT | — | — |
 | lucky_paw | LUCKY PAW | x | ×4 one random cat ×½ others | — | — |
 | nap | POWER NAP | mul | ×2 ALL cats | — | NO OTHER TREAT |
-| cathouse | CATHOUSE | mul | (cleared) | — | — |
+| cathouse | CATHOUSE | add | +10 to SURROUNDING cats | +10 per play | — |
 | frenzy | FRENZY BALL | mul | ×3 SURROUNDING cats | — | ALL SAME TYPE |
 | catnado | CATNADO | mul | ×1.5 ALL cats | +0.1 per play | — |
 | tuna_can | TUNA CAN | mul | ×2 all ORANGE cats | — | — |
-| shadow_feast | (unnamed) | mul | ×2 all BLACK cats | — | — |
+| shadow_feast | SHADOW FEAST | mul | ×2 all BLACK cats | — | — |
 | mirror | MIRROR | x | apply all ADD treats again | — | — |
 | all_or_nothing | ALL OR NOTHING | mul | ×5 ALL cats | — | BOARD FULL |
 | cat_phone | CAT PHONE | x | overwrite self with random backpack treat ability | — | — |

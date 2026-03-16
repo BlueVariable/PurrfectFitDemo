@@ -11,18 +11,18 @@ corner_napper,CORNER NAPPER,😴,rare,mul,duo,x3 cats on CORNER,,,5,best spots a
 window_perch,WINDOW PERCH,🪟,rare,add,duo,+50 to cats on EDGES,,,6,the world is a bird feeder
 rainbow_bowl,RAINBOW BOWL,🌈,rare,add,duo,+25 per UNIQUE cat type,,,6,a cat for every color
 sardine_tin,SARDINE TIN,🐟,epic,x,duo,destroy one random surrounding cat from deck,,,4,something smells fishy...
-,,,epic,mul,corner,x3 one random cat,,,7,
+wild_dice,WILD DICE,🎲,epic,mul,corner,x3 one random cat,,,7,roll the bones
 laser,LASER POINTER,🔴,epic,x,trio,copies the ability of one other random treat,,,7,the red dot never lies
 jumping_ball,JUMPING BALL,,epic,x,straight,disable one random treat's requirement,,,7,
 brownies,BROWNIES,🍫,epic,x,corner,add a duplicate of one random surrounding cat to deck,,,7,tbd
 treat_pile,TREAT PILE,🍬,epic,add,uno,+20 per TREAT,,,7,more is more
 lucky_paw,LUCKY PAW,🍀,epic,x,uno,×4 one random cat ×½ others,,,7,fortune favors the bold
 nap,POWER NAP,😴,epic,mul,chonk,×2 ALL cats,,NO OTHER TREAT,8,never stop napping
-cathouse,CATHOUSE,🏠,epic,mul,duo,,,,8,neighbourhood watch
+cathouse,CATHOUSE,🏠,epic,add,duo,+10 to SURROUNDING cats,Increases by 10 every time played,,8,neighbourhood watch
 frenzy,FRENZY BALL,🔮,legendary,mul,chonk,×3 SURROUNDING cats,,ALL SAME TYPE,10,purrfect for world domination
 catnado,CATNADO,🌪️,legendary,mul,chonk,×1.5 ALL cats,Increases by 0.1 every time played ,,10,nothing can stop it now
 tuna_can,TUNA CAN,🥫,legendary,mul,duo,×2 all ORANGE cats,,,10,the forbidden can
-,,,legendary,mul,duo,×2 all BLACK cats,,,10,
+shadow_feast,SHADOW FEAST,🌑,legendary,mul,duo,×2 all BLACK cats,,,10,darkness is delicious
 mirror,MIRROR,🪞,legendary,x,duo,apply all ADD treats again,,,10,twice as nice
 all_or_nothing,ALL OR NOTHING,⚡,legendary,mul,chonk,×5 ALL cats,,BOARD FULL,10,go big or go home
 cat_phone,CAT PHONE,📞,legendary,x,trio,overwrite the self ability with one random ability from backpack,,,15,calling in reinforcements
