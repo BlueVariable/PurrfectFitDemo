@@ -179,9 +179,11 @@ document.addEventListener('mouseup',e=>{
         const bpRect=bpGridEl.getBoundingClientRect();
         const onBP=e.clientX>=bpRect.left&&e.clientX<=bpRect.right&&e.clientY>=bpRect.top&&e.clientY<=bpRect.bottom;
         if(onBP){
-          // onBPMouseUp on the cell will handle placement, just clear ghost
+          // If onBPMouseUp already placed the treat, H was reset and we never reach here.
+          // Otherwise (gap between cells or placement failed), return treat to BP.
+          bpAutoPlace(H.data);
           H=resetH();
-          updateGhost();hideHUD();clrBoardPrev();return;
+          updateGhost();hideHUD();clrBoardPrev();renderBP();return;
         }
       }
       // Outside board + not on BP — return to BP
