@@ -107,6 +107,9 @@ Add-phase functions return `{ bonus, desc }` or `{ bonusMap }`. Mul-phase functi
 | mirror | MIRROR | x | apply all ADD treats again | — | — |
 | all_or_nothing | ALL OR NOTHING | mul | ×5 ALL cats | — | BOARD FULL |
 | cat_phone | CAT PHONE | x | overwrite self with random backpack treat ability | — | — |
+| cat_nap_stack | CAT NAP STACK | mul | ×1.5 per TREAT on board | — | — |
+| siamese_twins | SIAMESE TWINS | x | change one random cat type to match adjacent cat | — | — |
+| personal_space | PERSONAL SPACE | add | +15 per EMPTY cell | — | — |
 
 ## Configuration Data Source
 
