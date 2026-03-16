@@ -75,56 +75,57 @@
 
 <!-- ROUNDS / SHOP (combined) -->
 <div id="s-rounds" class="scr">
-  <!-- LEFT: round info -->
-  <div class="sp-left">
-    <div class="sp-topbar">
-      <button class="sp-back" onclick="exitToMenu()">← Menu</button>
-      <div class="rds-title">PURRFECT FIT</div>
-      <div class="sp-mon">
-        <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="shop-cash">0</span></span>
-      </div>
-    </div>
-    <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
-    <div class="rds-pip-row" id="rds-pips"></div>
-    <div class="rds-round-card">
-      <div class="rds-rc-label">ROUND</div>
-      <div class="rds-rc-num" id="rds-play-num">1</div>
-      <div class="rds-rc-stats">
-        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-tgt">180</div><div class="rds-rc-sl">Target</div></div>
-        <div class="rds-rc-div"></div>
-        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-earn">+$4</div><div class="rds-rc-sl">Earn</div></div>
-        <div class="rds-rc-div"></div>
-        <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-board">4×4</div><div class="rds-rc-sl">Board</div></div>
-      </div>
-    </div>
-    <button class="rds-btn-play" onclick="startRound()">▶ PLAY ROUND</button>
-    <div class="rds-hint" id="rds-hint"></div>
-  </div>
-
-  <!-- CENTER: backpack -->
-  <div class="sp-center">
-    <div class="sp-bp-card">
-      <div class="sp-bp-hdr">BACKPACK</div>
-      <div class="sp-bp-gw"><div class="sp-bpg" id="shop-bpg"></div></div>
-      <div class="sp-bp-cap">"bag full of purr-fection"</div>
-    </div>
-    <div class="sp-bp-inv">
-      <div class="sp-bp-inv-hdr">— IN BACKPACK —</div>
-      <div class="sp-inv-list" id="shop-bp-list"></div>
+  <div class="sp-topbar">
+    <button class="sp-back" onclick="exitToMenu()">← Menu</button>
+    <div class="rds-title">PURRFECT FIT</div>
+    <div class="sp-mon">
+      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="shop-cash">0</span></span>
     </div>
   </div>
 
-  <!-- RIGHT: treat sections -->
-  <div class="sp-right">
-    <div class="treat-section blue" id="treats-section">
-      <div class="treat-sec-hdr">
-        <span class="treat-sec-lbl">TREATS</span>
-        <button class="treat-reroll" id="treats-reroll" onclick="rerollTreats()">↺ REROLL <span id="reroll-cost">$1</span></button>
+  <div class="sp-body">
+    <!-- LEFT: round info -->
+    <div class="sp-left">
+      <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
+      <div class="rds-pip-row" id="rds-pips"></div>
+      <div class="rds-round-card">
+        <div class="rds-rc-label">ROUND</div>
+        <div class="rds-rc-num" id="rds-play-num">1</div>
+        <div class="rds-rc-stats">
+          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-tgt">180</div><div class="rds-rc-sl">Target</div></div>
+          <div class="rds-rc-div"></div>
+          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-earn">+$4</div><div class="rds-rc-sl">Earn</div></div>
+          <div class="rds-rc-div"></div>
+          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-board">4×4</div><div class="rds-rc-sl">Board</div></div>
+        </div>
       </div>
-      <div class="treat-sec-body">
-        <div class="treat-row" id="treats-row"></div>
+      <button class="rds-btn-play" onclick="startRound()">▶ PLAY ROUND</button>
+      <div class="rds-hint" id="rds-hint"></div>
+    </div>
+
+    <!-- RIGHT: shop (backpack + treats) -->
+    <div class="sp-right">
+      <div class="sp-center">
+        <div class="sp-bp-card">
+          <div class="sp-bp-hdr">BACKPACK</div>
+          <div class="sp-bp-gw"><div class="sp-bpg" id="shop-bpg"></div></div>
+          <div class="sp-bp-cap">"bag full of purr-fection"</div>
+        </div>
+        <div class="sp-bp-inv">
+          <div class="sp-bp-inv-hdr">— IN BACKPACK —</div>
+          <div class="sp-inv-list" id="shop-bp-list"></div>
+        </div>
       </div>
-      <div class="treat-sec-flavor" id="treats-flavor"></div>
+      <div class="treat-section blue" id="treats-section">
+        <div class="treat-sec-hdr">
+          <span class="treat-sec-lbl">TREATS</span>
+          <button class="treat-reroll" id="treats-reroll" onclick="rerollTreats()">↺ REROLL <span id="reroll-cost">$1</span></button>
+        </div>
+        <div class="treat-sec-body">
+          <div class="treat-row" id="treats-row"></div>
+        </div>
+        <div class="treat-sec-flavor" id="treats-flavor"></div>
+      </div>
     </div>
   </div>
 </div>
