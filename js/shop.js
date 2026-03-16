@@ -39,7 +39,7 @@ function renderShopFull(){
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
 function renderShopBPGrid(){
   const grid=g('shop-bpg');if(!grid)return;
-  const cs=window._boardCellSize||42;
+  const cs=window._boardCellSize||60;
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
@@ -126,7 +126,7 @@ function renderShopBPList(){
   const el=g('shop-bp-list');if(!el)return;
   el.innerHTML='';
   if(G.bpGroups.length===0){
-    el.innerHTML='<div style="font-size:10px;color:rgba(255,255,255,.35);font-style:italic;text-align:center;padding:6px;">Backpack is empty</div>';
+    el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.35);font-style:italic;text-align:center;padding:6px;">Backpack is empty</div>';
     return;
   }
   G.bpGroups.forEach(grp=>{
@@ -167,9 +167,9 @@ function renderTreatsRow(){
 
     // backpack shape mini grid
     const cols=td.bpS[0].length;
-    let shapeHtml=`<div class="tc-shape"><div style="display:grid;grid-template-columns:repeat(${cols},16px);gap:2px;background:rgba(0,0,0,.07);padding:4px;border-radius:6px;">`;
+    let shapeHtml=`<div class="tc-shape"><div style="display:grid;grid-template-columns:repeat(${cols},40px);gap:2px;background:rgba(0,0,0,.07);padding:4px;border-radius:6px;">`;
     td.bpS.forEach(row=>row.forEach(v=>{
-      shapeHtml+=`<div style="width:16px;height:16px;border-radius:3px;background:${v?td.col+'ee':'rgba(0,0,0,.08)'};border:1px solid ${v?td.col+'88':'rgba(0,0,0,.08)'}"></div>`;
+      shapeHtml+=`<div style="width:40px;height:40px;border-radius:3px;background:${v?td.col+'ee':'rgba(0,0,0,.08)'};border:1px solid ${v?td.col+'88':'rgba(0,0,0,.08)'}"></div>`;
     }));
     shapeHtml+='</div></div>';
 

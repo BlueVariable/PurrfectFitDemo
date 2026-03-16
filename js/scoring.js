@@ -299,6 +299,8 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: added ${result.addedCatEm} ${result.addedCatName} to deck`);
           } else if(result.transformedInto){
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: transformed into ${result.transformedInto.em} ${result.transformedInto.nm}!`);
+          } else if(result.convertedGid){
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: converted ${result.oldType} → ${result.convertedEm} ${result.newType}`);
           } else if(result.destroyedCat){
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: removed ${result.destroyedCat.em} ${result.destroyedCat.name} from deck`);
           } else if(result.subPhase==='mirror'){
