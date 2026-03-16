@@ -10,6 +10,8 @@ TREAT_REGISTRY['mirror'] = {
       if (!addTreats.length) return { type: 'x', skip: true };
       const bonusMap = {};
       cats.forEach(grp => { bonusMap[grp.gid] = 0; });
+      // Save play counts so mirror re-application doesn't double-increment (e.g. cathouse)
+      const savedPlayCounts = Object.assign({}, G.treatPlayCounts);
       addTreats.forEach(at => {
         const res = at.tdef.fn(b, cats, ts, at.cells, cs);
         if (!res) return;
@@ -33,6 +35,8 @@ TREAT_REGISTRY['mirror'] = {
           });
         }
       });
+      // Restore play counts so mirror doesn't double-increment scaling treats
+      Object.assign(G.treatPlayCounts, savedPlayCounts);
       // Apply to actual catScores
       Object.entries(bonusMap).forEach(([gid, amt]) => {
         if (cs[gid] !== undefined) cs[gid] += amt;

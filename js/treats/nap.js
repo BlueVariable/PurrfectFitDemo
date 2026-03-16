@@ -6,6 +6,7 @@
 TREAT_REGISTRY['nap'] = {
   buildFn(ef, phase) {
     const m = extractMul(ef);
-    return (b, cats, ts, p, cs) => ts.length <= 1 ? allMulCS(cats, cs, m) : { gids: [], m: 1 };
+    // Requirement "NO OTHER TREAT" is enforced centrally in doFit() so jumping_ball can disable it
+    return (b, cats, ts, p, cs) => allMulCS(cats, cs, m);
   },
 };

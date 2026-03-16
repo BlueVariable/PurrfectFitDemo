@@ -20,7 +20,13 @@ function doFit(){
   });
 
   // apply treats in sorted order — pass all treat cells (not just first)
+  // Central requirement check: if a treat's req is set and fails, skip it.
+  // This allows jumping_ball (which clears tdef.req) to actually unlock treats.
   const treatResults=sorted.map(t=>{
+    if(t.tdef.req&&requirementFails(t.tdef.req)){
+      if(t.tdef.phase==='mul') return{treat:t,result:{gids:[],m:1},phase:t.tdef.phase};
+      return{treat:t,result:{},phase:t.tdef.phase};
+    }
     const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells,catScores)||{};
     if(t.tdef.phase==='add') applyAddResult(t,res,catScores);
     else if(t.tdef.phase==='mul') applyMulResult(t,res,catScores);
@@ -253,7 +259,16 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
           updateLabels(result.gids,'rgba(240,120,40,.9)');
           addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m}`);
         } else if(phase==='x'){
-          if(result.subPhase==='add'&&result.result&&result.result.bonus>0){
+          if(result.subPhase==='add'&&result.result&&(result.result.bonus>0||result.result.bonusMap)){
+            if(result.result.bonusMap){
+              const aff=[];
+              Object.entries(result.result.bonusMap).forEach(([gid,amt])=>{
+                if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
+              });
+              const total=Object.values(result.result.bonusMap).reduce((a,b)=>a+b,0);
+              updateLabels(aff,'rgba(100,210,90,.85)');
+              addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} → +${total}`);
+            } else {
             const ef=result.copiedFrom.ef;
             const amt=extractNum(ef);
             const treatCells=result.laserCells;
@@ -271,6 +286,7 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
             aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
             updateLabels(aff,'rgba(100,210,90,.85)');
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} → +${result.result.bonus}`);
+            }
           } else if(result.subPhase==='mul'&&result.result&&result.result.gids&&result.result.gids.length&&result.result.m>1){
             result.result.gids.forEach(gid=>{
               if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.result.m);}
