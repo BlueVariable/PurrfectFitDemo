@@ -37,13 +37,13 @@ const DECK_META={};
 function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
 
 // ── treat fn lookup — maps sheet effect strings to engine functions ──
-function buildTreatFn(id, ef, phase){
-  if(TREAT_REGISTRY[id]) return TREAT_REGISTRY[id].buildFn(ef, phase);
+function buildTreatFn(id, ef, phase, addEf){
+  if(TREAT_REGISTRY[id]) return TREAT_REGISTRY[id].buildFn(ef, phase, addEf);
   console.warn(`No registry entry for treat: ${id}`);
   return ()=>({});
 }
 function extractNum(ef){const m=ef.match(/[+](\d+)/);return m?parseInt(m[1]):0;}
-function extractMul(ef){const m=ef.match(/[×x](\d+)/);return m?parseInt(m[1]):2;}
+function extractMul(ef){const m=ef.match(/[×x]([\d.]+)/);return m?parseFloat(m[1]):2;}
 
 // ── BP shape parser: "1×2" → [[1,1]], "2×1" → [[1],[1]], "2×2" → [[1,1],[1,1]] ──
 function parseBpShape(s){
@@ -138,12 +138,13 @@ function applyConfigFromRaw(raw){
     const sellRaw=r['Sell Price']||r['Sell Price ']||r['Sell']||0;
     const buyPr=Number(buyRaw)||1;
     const sellPr=CFG.sell_price_coef?Math.round(buyPr*CFG.sell_price_coef):(Number(sellRaw)||0);
+    const addEf=String(r['Additional Effects']||'').trim();
     return{
       id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
-      bpS, ef, req:String(r['Requirement']||r['Req']||'').trim(),
+      bpS, ef, addEf, req:String(r['Requirement']||r['Req']||'').trim(),
       pr:buyPr, sp:sellPr,
       fl:String(r['Flavor']||r['Flavour']||''),
-      fn:buildTreatFn(id,ef,phase),
+      fn:buildTreatFn(id,ef,phase,addEf),
     };
   });
 

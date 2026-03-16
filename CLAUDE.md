@@ -72,27 +72,41 @@ TREAT_REGISTRY['id'] = {
 };
 ```
 
-`buildTreatFn(id, ef, phase)` in `config.js` checks the registry first; falls back to generic pattern matching only for treats without a registry entry.
+`buildTreatFn(id, ef, phase, addEf)` in `config.js` checks the registry first; falls back to generic pattern matching only for treats without a registry entry.
 
-Add-phase functions return `{ bonus, desc }`. Mul-phase functions return `{ gids: [...], m: N }`.
+Add-phase functions return `{ bonus, desc }` or `{ bonusMap }`. Mul-phase functions return `{ gids: [...], m: N }`.
 
 ### All treats (from Google Sheet)
 
-| ID | Name | Phase | Effect | Requirement |
-|----|------|-------|--------|-------------|
-| milk | WARM MILK | add | +8 to ALL cats | — |
-| catnip | CATNIP | add | +25 to cats in same ROW | — |
-| feather | FEATHER | add | +25 to cats in same COL | — |
-| box | BOX | add | +25 to SURROUNDING cats | — |
-| sardine_tin | SARDINE TIN | add | (special) | — |
-| yarn | YARN BALL | mul | ×2 L shaped cats | — |
-| laser | LASER POINTER | x | copies ability of one other random treat | — |
-| jumping_ball | JUMPING BALL | x | disable one random treat's requirement | — |
-| brownies | BROWNIES | x | add duplicate of one random surrounding cat to deck | — |
-| nap | POWER NAP | mul | ×2 ALL cats | NO OTHER TREAT |
-| frenzy | FRENZY BALL | mul | ×3 SURROUNDING cats | ALL SAME TYPE |
-| catnado | CATNADO | mul | ×2 ALL cats | ALL SAME TYPE |
-| tuna_can | TUNA CAN | mul | ×2 all ORANGE cats | — |
+| ID | Name | Phase | Effect | Additional Effects | Requirement |
+|----|------|-------|--------|--------------------|-------------|
+| milk | WARM MILK | add | +8 to ALL cats | — | — |
+| catnip | CATNIP | add | +25 to cats in same ROW | — | — |
+| feather | FEATHER | add | +25 to cats in same COL | — | — |
+| box | BOX | add | +25 to SURROUNDING cats | — | — |
+| scratching_post | SCRATCHING POST | add | +6 per CELL | — | — |
+| yarn | YARN BALL | mul | ×2 L shaped cats | — | — |
+| kitten_toy | KITTEN TOY | mul | ×2 DUO shaped cats | — | — |
+| cat_stretch | CAT STRETCH | mul | ×2 T-shaped cats | — | — |
+| corner_napper | CORNER NAPPER | mul | x3 cats on CORNER | — | — |
+| window_perch | WINDOW PERCH | add | +50 to cats on EDGES | — | — |
+| rainbow_bowl | RAINBOW BOWL | add | +25 per UNIQUE cat type | — | — |
+| sardine_tin | SARDINE TIN | x | destroy one random surrounding cat from deck | — | — |
+| wild_dice | (unnamed) | mul | x3 one random cat | — | — |
+| laser | LASER POINTER | x | copies ability of one other random treat | — | — |
+| jumping_ball | JUMPING BALL | x | disable one random treat's requirement | — | — |
+| brownies | BROWNIES | x | add duplicate of one random surrounding cat to deck | — | — |
+| treat_pile | TREAT PILE | add | +20 per TREAT | — | — |
+| lucky_paw | LUCKY PAW | x | ×4 one random cat ×½ others | — | — |
+| nap | POWER NAP | mul | ×2 ALL cats | — | NO OTHER TREAT |
+| cathouse | CATHOUSE | mul | (cleared) | — | — |
+| frenzy | FRENZY BALL | mul | ×3 SURROUNDING cats | — | ALL SAME TYPE |
+| catnado | CATNADO | mul | ×1.5 ALL cats | +0.1 per play | — |
+| tuna_can | TUNA CAN | mul | ×2 all ORANGE cats | — | — |
+| shadow_feast | (unnamed) | mul | ×2 all BLACK cats | — | — |
+| mirror | MIRROR | x | apply all ADD treats again | — | — |
+| all_or_nothing | ALL OR NOTHING | mul | ×5 ALL cats | — | BOARD FULL |
+| cat_phone | CAT PHONE | x | overwrite self with random backpack treat ability | — | — |
 
 ## Configuration Data Source
 

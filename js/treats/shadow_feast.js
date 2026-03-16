@@ -1,16 +1,16 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: corner_napper
-//  ×N cats touching a corner cell of the board
+//  TREAT: shadow_feast
+//  ×N all BLACK cats
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['corner_napper'] = {
+TREAT_REGISTRY['shadow_feast'] = {
   buildFn(ef, phase) {
     const m = extractMul(ef);
     return (b, cats, ts, p, cs) => {
-      const corners = [[0,0],[0,G.bsc-1],[G.bsr-1,0],[G.bsr-1,G.bsc-1]];
-      const gids = cats
-        .filter(grp => grp.cells.some(([r,c]) => corners.some(([cr,cc]) => r===cr&&c===cc)))
-        .map(grp => grp.gid);
+      const gids = Object.keys(cs).filter(gid => {
+        const grp = cats.find(c => c.gid === gid);
+        return grp && grp.type === 'black';
+      });
       return { gids, m };
     };
   },

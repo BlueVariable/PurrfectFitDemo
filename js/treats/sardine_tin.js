@@ -1,20 +1,11 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: cathouse
-//  +10 to surrounding cats, +10 per time played (persistent scaling)
+//  TREAT: sardine_tin
+//  x-phase: destroy one random surrounding cat from deck
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['cathouse'] = {
-  buildFn(ef, phase, addEf) {
-    const baseAmt = extractNum(ef);
-    let increment = 0;
-    if (addEf) {
-      const im = addEf.match(/([\d.]+)/);
-      if (im) increment = parseFloat(im[1]);
-    }
+TREAT_REGISTRY['sardine_tin'] = {
+  buildFn(ef, phase) {
     return (b, cats, ts, p, cs) => {
-      const plays = G.treatPlayCounts.cathouse || 0;
-      const amt = baseAmt + plays * increment;
-      G.treatPlayCounts.cathouse = plays + 1;
       const allTCells = Array.isArray(p[0]) ? p : [p];
       const adjGids = new Set();
       allTCells.forEach(([tr, tc]) => {
@@ -25,9 +16,15 @@ TREAT_REGISTRY['cathouse'] = {
             adjGids.add(b[rr][cc].gid);
         }
       });
-      const bonusMap = {};
-      adjGids.forEach(gid => { bonusMap[gid] = amt; });
-      return { bonusMap };
+      if (!adjGids.size) return { type: 'x', skip: true };
+      const gidArr = [...adjGids];
+      const chosenGid = gidArr[Math.floor(Math.random() * gidArr.length)];
+      const grp = cats.find(c => c.gid === chosenGid);
+      if (!grp) return { type: 'x', skip: true };
+      const matchIdx = G.deck.findIndex(card => card.type === grp.type);
+      if (matchIdx === -1) return { type: 'x', skip: true };
+      const removed = G.deck.splice(matchIdx, 1)[0];
+      return { type: 'x', destroyedCat: { em: removed.em, name: removed.name, type: removed.type } };
     };
   },
 };

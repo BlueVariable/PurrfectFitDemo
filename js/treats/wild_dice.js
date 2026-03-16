@@ -1,17 +1,15 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: corner_napper
-//  ×N cats touching a corner cell of the board
+//  TREAT: wild_dice
+//  ×N one random cat group
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['corner_napper'] = {
+TREAT_REGISTRY['wild_dice'] = {
   buildFn(ef, phase) {
     const m = extractMul(ef);
     return (b, cats, ts, p, cs) => {
-      const corners = [[0,0],[0,G.bsc-1],[G.bsr-1,0],[G.bsr-1,G.bsc-1]];
-      const gids = cats
-        .filter(grp => grp.cells.some(([r,c]) => corners.some(([cr,cc]) => r===cr&&c===cc)))
-        .map(grp => grp.gid);
-      return { gids, m };
+      if (!cats.length) return { gids: [], m: 1 };
+      const chosen = cats[Math.floor(Math.random() * cats.length)];
+      return { gids: [chosen.gid], m };
     };
   },
 };

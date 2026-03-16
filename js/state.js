@@ -30,7 +30,7 @@ function newGame(deckId){
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
-    board:[],cats:[],treats:[],usedTreats:[],
+    board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
   };
   mkDeck();dealHand();

@@ -281,6 +281,10 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: disabled req for ${result.disabledTreat.em} ${result.disabledTreat.nm}`);
           } else if(result.addedCatEm!==undefined){
             addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: added ${result.addedCatEm} ${result.addedCatName} to deck`);
+          } else if(result.transformedInto){
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: transformed into ${result.transformedInto.em} ${result.transformedInto.nm}!`);
+          } else if(result.destroyedCat){
+            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: removed ${result.destroyedCat.em} ${result.destroyedCat.name} from deck`);
           } else if(result.subPhase==='mirror'){
             const aff=[];
             Object.entries(result.bonusMap||{}).forEach(([gid,amt])=>{
