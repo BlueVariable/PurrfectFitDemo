@@ -427,12 +427,29 @@ function roundWin(){
   const bonus=G.hands; // G.hands was decremented before roundWin called, so this is hands remaining
   const total=G.earn+bonus;
   G.cash+=total;
-  g('wv-sc').textContent=G.score.toLocaleString();
-  g('wv-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} unused hands)`;
-  g('ov-win').classList.remove('off');
+  // slide cc and rc out to the right
+  const cc=document.querySelector('.cc');
+  const rc=document.querySelector('.rc');
+  if(cc)cc.classList.add('round-won');
+  if(rc)rc.classList.add('round-won');
+  // show inline win info
+  const wi=g('win-inline');
+  g('wi-sc').textContent=G.score.toLocaleString();
+  g('wi-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} unused hands)`;
+  wi.style.display='';
+  // trigger reflow so transition plays
+  void wi.offsetWidth;
+  wi.classList.add('visible');
 }
 function goShop(){
-  g('ov-win').classList.add('off');
+  // clean up inline win
+  const cc=document.querySelector('.cc');
+  const rc=document.querySelector('.rc');
+  if(cc)cc.classList.remove('round-won');
+  if(rc)rc.classList.remove('round-won');
+  const wi=g('win-inline');
+  wi.classList.remove('visible');
+  wi.style.display='none';
   // restore treats used this round back to backpack
   (G.usedTreats||[]).forEach(tdef=>bpAutoPlace(tdef));
   G.usedTreats=[];

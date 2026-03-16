@@ -39,7 +39,7 @@ function renderShopFull(){
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
 function renderShopBPGrid(){
   const grid=g('shop-bpg');if(!grid)return;
-  const cs=42;
+  const cs=window._boardCellSize||42;
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){

@@ -255,6 +255,7 @@ function renderBoard(){
   const el=g('board');
   const maxH=window.innerHeight-168,maxW=(document.querySelector('.cc')?.offsetWidth||440)-38;
   const cs=Math.min(Math.floor((maxH-14)/G.bsr)-3,Math.floor((maxW-14)/G.bsc)-3,78);
+  window._boardCellSize=cs;
   el.style.gridTemplateColumns=`repeat(${G.bsc},${cs}px)`;
   el.innerHTML='';
   for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
@@ -351,7 +352,7 @@ function renderHand(){
 
 function renderBP(){
   const grid=g('bpg');
-  const cs=46;
+  const cs=window._boardCellSize||46;
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
