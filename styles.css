@@ -31,37 +31,11 @@ body::before{display:none;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .loading-card{background:#fff;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;border-radius:16px;padding:32px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
 
-/* ════════ TITLE ════════ */
-#s-title{flex-direction:row;align-items:center;justify-content:center;gap:24px;padding:40px 24px;}
-.title-card{background:#fff;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;border-radius:16px;padding:28px 24px;max-width:460px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;}
-.title-card::before{content:'';position:absolute;inset:0;border-radius:16px;background:repeating-linear-gradient(transparent,transparent 27px,rgba(90,133,213,.12) 27px,rgba(90,133,213,.12) 28px);pointer-events:none;}
-.title-mascot{width:120px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
-.title-mascot-box{width:100px;height:100px;background:#3a5070;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:54px;border:3px solid #1a1a2a;box-shadow:3px 4px 0 #1a1a2a;}
-.title-sticky{width:140px;flex-shrink:0;background:#fdf6c3;border-radius:8px;padding:14px 12px;border:2px solid #d4b820;box-shadow:3px 3px 0 rgba(0,0,0,.18);transform:rotate(3deg);font-family:'Fredoka One',cursive;font-size:15px;color:#5a4010;line-height:1.4;text-align:center;}
-.title-sticky-sub{font-size:10px;color:#8a6820;margin-top:6px;font-weight:800;font-family:'Nunito',sans-serif;}
+/* ════════ TITLE (legacy — kept for shared classes) ════════ */
 .t-em{width:84px;height:84px;background:#3a5070;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;font-size:46px;border:3px solid #1a1a2a;box-shadow:3px 4px 0 #1a1a2a;}
 .t-nm{font-family:'Fredoka One',cursive;font-size:50px;color:#1a1a2a;}
 .t-nm-fit{color:#f5c200;-webkit-text-stroke:2px #1a1a2a;text-shadow:none;}
 .t-tg{font-size:12px;color:rgba(255,255,255,.75);font-weight:700;letter-spacing:1px;}
-.deck-sec{width:100%;max-width:460px;z-index:1;position:relative;}
-.deck-lbl{font-family:'Fredoka One',cursive;font-size:13px;color:#fff;letter-spacing:2px;text-align:center;margin-bottom:10px;}
-.deck-carousel-wrap{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:10px;}
-.deck-carousel{display:flex;gap:10px;overflow:hidden;scroll-snap-type:x mandatory;width:100%;}
-.dk{background:#fff;border-radius:12px;padding:13px 10px 10px;cursor:pointer;border:2.5px solid transparent;transition:all .14s;text-align:center;box-shadow:3px 3px 0 #1a1a2a;flex:0 0 calc(100% - 0px);scroll-snap-align:start;position:relative;margin-bottom: 5px;}
-.dk:hover{transform:translateY(-2px);}
-.dk.sel{border-color:#f5c200;}
-.dk-preview-btn{margin-top:8px;padding:4px 12px;border:none;cursor:pointer;background:rgba(58,80,112,.12);color:#3a5070;font-family:'Fredoka One',cursive;font-size:11px;border-radius:8px;display:block;width:100%;}
-.dk-preview-btn:hover{background:rgba(58,80,112,.22);}
-.dk-arr{width:34px;height:34px;border-radius:50%;border:2.5px solid #1a1a2a;background:rgba(255,255,255,.9);color:#1a1a2a;font-size:14px;cursor:pointer;flex-shrink:0;transition:all .14s;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 #1a1a2a;}
-.dk-arr:hover{background:#fff;}
-.dk-arr:disabled{opacity:.25;cursor:default;}
-.deck-dots{display:flex;gap:6px;justify-content:center;margin-bottom:10px;}
-.deck-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:all .15s;}
-.deck-dot.active{background:#fff;transform:scale(1.2);}
-
-.dk .de{font-size:22px;margin-bottom:4px;}
-.dk .dn{font-family:'Fredoka One',cursive;font-size:13px;color:#3a5070;}
-.dk .dd{font-size:10px;color:#7a8090;margin-top:2px;}
 .btn-play{width:100%;padding:13px;border:3px solid #1a1a2a;cursor:pointer;background:#5a85d5;color:#fff;font-family:'Fredoka One',cursive;font-size:20px;letter-spacing:1px;border-radius:16px;box-shadow:0 5px 0 #2a4090;transition:all .12s;}
 .btn-play:hover{transform:translateY(-2px);box-shadow:0 7px 0 #2a4090;}
 .btn-play:active{transform:translateY(2px);box-shadow:0 2px 0 #2a4090;}
@@ -565,3 +539,46 @@ body::before{display:none;}
 .win-inline-card{background:#fff;border-radius:18px;padding:32px 40px;text-align:center;max-width:390px;width:90%;border:3px solid #1a1a2a;box-shadow:5px 5px 0 #1a1a2a;}
 .win-inline-card h1{font-family:'Fredoka One',cursive;font-size:34px;color:#1a1a2a;margin-bottom:4px;}
 .win-inline-card .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
+
+/* ════════ MENU SCREEN ════════ */
+#s-menu{flex-direction:row;align-items:center;justify-content:center;padding:40px 24px;}
+.menu-card{background:#fff;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;border-radius:16px;padding:28px 24px;max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;}
+.menu-card::before{content:'';position:absolute;inset:0;border-radius:16px;background:repeating-linear-gradient(transparent,transparent 27px,rgba(90,133,213,.12) 27px,rgba(90,133,213,.12) 28px);pointer-events:none;}
+.menu-tg{font-size:13px;color:#7a8090;font-weight:700;letter-spacing:1px;}
+.menu-btns{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px;z-index:1;}
+.btn-menu-settings{width:100%;padding:11px;border:2.5px solid #1a1a2a;cursor:pointer;background:rgba(122,128,144,.15);color:#7a8090;font-family:'Fredoka One',cursive;font-size:15px;border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.1);transition:all .12s;}
+.btn-menu-settings:hover{transform:translateY(-2px);background:rgba(122,128,144,.22);}
+
+/* ════════ BRANCHES (WORLD MAP) ════════ */
+#s-branches{flex-direction:column;background:#6a7d95;overflow:hidden;}
+.br-topbar{display:flex;align-items:center;gap:10px;z-index:1;padding:14px 24px;justify-content:space-between;background:#59697d;flex-shrink:0;}
+.br-scroll{flex:1;overflow-y:auto;padding:20px 24px 40px;display:flex;flex-direction:column;gap:18px;}
+.br-continent{background:rgba(255,255,255,.08);border-radius:16px;border:2px solid rgba(255,255,255,.12);padding:16px 18px;transition:opacity .2s;}
+.br-continent.br-locked{opacity:.5;}
+.br-cont-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.br-cont-em{font-size:28px;}
+.br-cont-nm{font-family:'Fredoka One',cursive;font-size:18px;color:#fff;letter-spacing:2px;flex:1;}
+.br-cont-lock{font-family:'Fredoka One',cursive;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;}
+.br-row{display:flex;gap:12px;flex-wrap:wrap;}
+.br-card{background:#fff;border-radius:14px;border:3px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;padding:14px 12px;width:170px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:all .12s;position:relative;}
+.br-card.br-done{border-color:#5ab855;box-shadow:3px 3px 0 #3a8030;}
+.br-card.br-open{border-color:#f5c200;box-shadow:3px 3px 0 #a08000;}
+.br-card.br-shut{opacity:.5;pointer-events:none;}
+.br-status{font-size:18px;}
+.br-name{font-family:'Fredoka One',cursive;font-size:16px;color:#1a1a2a;}
+.br-deck-em{font-size:16px;line-height:1;}
+.br-deck-nm{font-size:10px;color:#7a8090;font-weight:800;}
+.br-mod{font-size:9px;color:#fff;background:#d04545;border-radius:6px;padding:2px 8px;font-weight:800;}
+.br-desc{font-size:9px;color:#7a8090;font-style:italic;line-height:1.3;}
+.br-btn{width:100%;padding:7px;border:2.5px solid #1a1a2a;cursor:pointer;font-family:'Fredoka One',cursive;font-size:12px;border-radius:10px;transition:all .12s;margin-top:4px;}
+.br-btn-play{background:#5ab855;color:#fff;box-shadow:0 3px 0 #3a8030;}
+.br-btn-play:hover{transform:translateY(-2px);box-shadow:0 5px 0 #3a8030;}
+.br-btn-replay{background:#5a85d5;color:#fff;box-shadow:0 3px 0 #2a4090;}
+.br-btn-replay:hover{transform:translateY(-2px);box-shadow:0 5px 0 #2a4090;}
+.br-btn-locked{background:rgba(0,0,0,.08);color:#b0b4bc;border-color:transparent;box-shadow:none;cursor:default;font-size:10px;}
+
+/* ── Branches: Theme Map toggle ── */
+#s-branches.theme-map{background:linear-gradient(160deg,#5a6d80 0%,#7a8d9f 40%,#6a7d95 100%);}
+#s-branches.theme-map .br-continent{background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,.04) 100%);border-color:rgba(255,255,255,.18);backdrop-filter:blur(6px);}
+#s-branches.theme-map .br-card{box-shadow:0 4px 16px rgba(0,0,0,.2),3px 3px 0 #1a1a2a;}
+#s-branches.theme-map .br-cont-em{font-size:36px;opacity:.6;}

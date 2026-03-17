@@ -3,8 +3,8 @@
 //  STATE
 // ══════════════════════════════════════════════════════
 const BPS_DEFAULT=4;
-function getBPR(){return CFG.backpack_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
-function getBPC(){return CFG.backpack_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
+function getBPR(){if(G._bpOverrideR)return G._bpOverrideR;return CFG.backpack_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
+function getBPC(){if(G._bpOverrideC)return G._bpOverrideC;return CFG.backpack_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
 let G={};
 let gameInProgress=false;
 let curDeck='classic';
@@ -35,8 +35,41 @@ function newGame(deckId){
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
+    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,
   };
   mkDeck();dealHand();
+}
+
+// Apply per-round modifiers (hands, discard). Called each round after stats reset.
+function applyModifiers(){
+  if(!G.modifiers)return;
+  const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
+  mods.forEach(mod=>{
+    if(mod==='hands-1')G.hands=Math.max(1,G.hands-1);
+    if(mod==='no-discard')G.disc=0;
+  });
+}
+// Apply one-time modifiers (backpack size, starting cash). Called only at game start.
+function applyModifiersOnce(){
+  if(!G.modifiers)return;
+  const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
+  mods.forEach(mod=>{
+    if(mod==='bp-small'){G._bpOverrideR=3;G._bpOverrideC=3;G.bp=mk2d(3,3,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
+    if(mod==='cash-2')G.cash=Math.max(1,G.cash-2);
+  });
+}
+
+function newGameFromBranch(branchId){
+  const branches=BRANCHES.length?BRANCHES:BRANCHES_FALLBACK;
+  const branch=branches.find(b=>b.id===branchId);
+  if(!branch)return;
+  newGame(branch.deck);
+  G.branchId=branchId;
+  G.modifiers=branch.mod||'';
+  applyModifiersOnce();
+  applyModifiers();
+  gameInProgress=true;
+  menuUpdateContinue();
 }
 
 function mk2d(r,c,init){return Array.from({length:r},()=>Array.from({length:c},init));}

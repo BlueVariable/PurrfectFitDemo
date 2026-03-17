@@ -36,29 +36,18 @@
     <div id="load-error" style="display:none;background:rgba(220,72,72,.2);border:1px solid var(--re);border-radius:12px;padding:12px 20px;font-size:12px;color:#ffaaaa;text-align:center;max-width:360px;"></div>
   </div>
 </div>
-<!-- TITLE -->
-<div id="s-title" class="scr">
-  <div class="title-card">
+<!-- MENU -->
+<div id="s-menu" class="scr">
+  <div class="menu-card">
     <div style="text-align:center;margin-bottom:4px;">
       <div class="t-em">🐱</div>
       <div class="t-nm"><span>PURRFECT </span><span class="t-nm-fit">FIT</span></div>
-      <div class="t-tg">plan · place · purr-fect your score!</div>
+      <div class="menu-tg">plan · place · purr-fect!</div>
     </div>
-    <div class="deck-sec">
-      <div class="deck-lbl">SELECT YOUR DECK</div>
-      <div class="deck-carousel-wrap">
-        <button class="dk-arr" id="dk-arr-l" onclick="deckNav(-1)" disabled>&#9664;</button>
-        <div class="deck-carousel" id="deck-carousel">
-          <div class="dk sel" data-deck="classic"><div class="de">🟠⬛</div><div class="dn">Cheddar &amp; Pepper</div><div class="dd">Balanced orange &amp; black</div><button class="dk-preview-btn" onclick="openDeckPreview('classic')">👁 Preview Deck</button></div>
-          <div class="dk" data-deck="orange"><div class="de">🟠🟠</div><div class="dn">Orange Gang</div><div class="dd">All orange, big type synergy</div><button class="dk-preview-btn" onclick="openDeckPreview('orange')">👁 Preview Deck</button></div>
-          <div class="dk" data-deck="wild"><div class="de">🌈😺</div><div class="dn">Wildcat Chaos</div><div class="dd">All types, wild combos</div><button class="dk-preview-btn" onclick="openDeckPreview('wild')">👁 Preview Deck</button></div>
-          <div class="dk" data-deck="big"><div class="de">📦🐾</div><div class="dn">Chonk Squad</div><div class="dd">Big shapes, max cells</div><button class="dk-preview-btn" onclick="openDeckPreview('big')">👁 Preview Deck</button></div>
-        </div>
-        <button class="dk-arr" id="dk-arr-r" onclick="deckNav(1)">&#9654;</button>
-      </div>
-      <div class="deck-dots" id="deck-dots"></div>
-      <button id="btn-continue" class="btn-play btn-cont" onclick="continueGame()" style="display:none;margin-bottom:6px;">▶ Continue Game</button>
-      <button class="btn-play" onclick="startGame()">🐾 New Game</button>
+    <div class="menu-btns">
+      <button id="btn-menu-continue" class="btn-play btn-cont" onclick="menuContinue()" style="display:none;margin-bottom:6px;">▶ Continue</button>
+      <button class="btn-play" onclick="menuPlay()">🐾 PLAY</button>
+      <button class="btn-menu-settings" onclick="void 0">⚙ Settings</button>
       <div style="display:flex;justify-content:center;margin-top:6px;">
         <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
       </div>
@@ -69,6 +58,17 @@
       </div>
     </div>
   </div>
+</div>
+<!-- BRANCHES (World Map) -->
+<div id="s-branches" class="scr">
+  <div class="br-topbar">
+    <button class="sp-back" onclick="exitToMenu()">← Back</button>
+    <div class="rds-title">WORLD MAP</div>
+    <div class="sp-mon">
+      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="br-cash">0</span></span>
+    </div>
+  </div>
+  <div class="br-scroll" id="br-body"></div>
 </div>
 
 <!-- ROUNDS / SHOP (combined) -->
@@ -230,6 +230,14 @@
     <button class="bok or" onclick="goShop()">Visit Pet Store 🏪</button>
   </div>
 </div>
+<!-- OV: BRANCH WIN -->
+<div class="ov off" id="ov-branch-win">
+  <div class="ob">
+    <h1 style="color:var(--gr)">🎉 Victory!</h1>
+    <div class="sub" id="bw-name">Branch Complete!</div>
+    <button class="bok or" onclick="closeBranchWin()">Back to World Map 🗺</button>
+  </div>
+</div>
 <!-- OV: FAIL -->
 <div class="ov off" id="ov-fail">
   <div class="ob">
@@ -283,6 +291,7 @@
 <script src="js/treats/siamese_twins.js"></script>
 <script src="js/treats/personal_space.js"></script>
 <script src="js/config.js"></script>
+<script src="js/branches.js"></script>
 <script src="js/state.js"></script>
 <script src="js/board.js"></script>
 <script src="js/backpack.js"></script>

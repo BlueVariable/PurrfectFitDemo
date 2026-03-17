@@ -1,0 +1,19 @@
+Branch ID,Branch Name,Continent,Continent Emoji,Deck,Modifier,Description,Order
+eu_1,London,Europe,🏰,classic,,The classic starter — no surprises,1
+eu_2,Paris,Europe,🏰,classic,hands-1,One fewer hand per round,2
+eu_3,Rome,Europe,🏰,wild,no-discard,No discards allowed,3
+as_1,Tokyo,Asia,🏯,orange,,Orange cats only — synergy time,4
+as_2,Bangkok,Asia,🏯,wild,bp-small,Smaller backpack (3×3),5
+as_3,Mumbai,Asia,🏯,big,hands-1,Big shapes with fewer hands,6
+af_1,Cairo,Africa,🌍,classic,cash-2,Start with less gold,7
+af_2,Nairobi,Africa,🌍,wild,no-discard,Wildcats with no discards,8
+af_3,Cape Town,Africa,🌍,orange,bp-small|hands-1,Tiny bag and fewer hands,9
+na_1,New York,N. America,🗽,big,,Go big or go home,10
+na_2,Vancouver,N. America,🗽,classic,hands-1|cash-2,Fewer hands and less gold,11
+na_3,Miami,N. America,🗽,wild,no-discard|bp-small,No discards with tiny bag,12
+sa_1,Rio,S. America,🌴,orange,hands-1,Orange Gang minus one hand,13
+sa_2,Lima,S. America,🌴,big,bp-small,Chonky cats in a tiny bag,14
+sa_3,Buenos Aires,S. America,🌴,wild,no-discard|hands-1|cash-2,Triple threat modifier,15
+oc_1,Sydney,Oceania,🦘,classic,cash-2,Underfunded down under,16
+oc_2,Auckland,Oceania,🦘,big,no-discard|hands-1,No discards and fewer hands,17
+oc_3,Fiji,Oceania,🦘,wild,bp-small|hands-1|cash-2,The ultimate challenge,18

@@ -9,13 +9,8 @@ const REROLL_COST_DEFAULT=1;
 function getRerollCost(){return CFG.reroll_cost||REROLL_COST_DEFAULT;}
 
 function generateShopPool(){
-  const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
   const available=TDEFS.filter(td=>!G.purchasedTreatIds.has(td.id));
-  const canAfford=available.filter(td=>G.cash>=td.pr);
-  const canAffordWithSelling=available.filter(td=>G.cash<td.pr&&G.cash+totalSellable>=td.pr);
-  const expensive=available.filter(td=>G.cash+totalSellable<td.pr);
-  sfl(canAfford);sfl(canAffordWithSelling);sfl(expensive);
-  return [...canAfford,...canAffordWithSelling,...expensive].slice(0,3);
+  return weightedSample(available,3,td=>RARITY_WEIGHTS[td.rar]??1);
 }
 
 function rerollTreats(){

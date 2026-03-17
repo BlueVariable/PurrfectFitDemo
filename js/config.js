@@ -18,6 +18,7 @@ const SHEET_URLS = {
   'Cats':      'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1088427227&single=true&output=csv',
   'Shapes':     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1916856622&single=true&output=csv',
   'Decks':   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2016141493&single=true&output=csv',
+  'Rarity':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1377980715&single=true&output=csv',
 };
 const SHEET_NAMES = Object.keys(SHEET_URLS);
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -31,6 +32,7 @@ let EMS  = {};
 let DECKS = {};
 let RCFG  = [];
 let CFG   = {};
+let RARITY_WEIGHTS = {};
 let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
 const DECK_META={};
 
@@ -91,7 +93,7 @@ async function fetchAllSheetsRaw(onStatus){
       if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
       raw[name]=await res.text();
     }catch(e){
-      if(name==='Shapes'){raw[name]='';}else throw e;
+      if(name==='Shapes'||name==='Rarity'){raw[name]='';}else throw e;
     }
   }
   return raw;
@@ -148,6 +150,15 @@ function applyConfigFromRaw(raw){
     };
   });
 
+  if(raw['Rarity']){
+    RARITY_WEIGHTS={};
+    parseCSV(raw['Rarity']).forEach(r=>{
+      const rar=String(r['Rarity']||'').trim().toLowerCase();
+      const prob=parseFloat(r['Drop Probability']);
+      if(rar&&!isNaN(prob)) RARITY_WEIGHTS[rar]=prob;
+    });
+  }
+
   const deckRows=parseCSV(raw['Decks']||'');
   console.log('[Config] Decks raw CSV:', raw['Decks']?.slice(0,500));
   console.log('[Config] Deck rows parsed:', deckRows.length, deckRows.map(r=>r['Deck ID']));
@@ -186,7 +197,6 @@ async function _bgCheckConfig(){
     if(!cached||cached.hash!==newHash){
       applyConfigFromRaw(raw);
       saveConfigCache(raw);
-      initDeckCarousel();
       const btn=g('btn-reload-cfg');
       if(btn){btn.textContent='↺ Updated';btn.style.color='var(--gr)';setTimeout(()=>{btn.textContent='↺ Reload Config';btn.style.color='';},3000);}
     }
@@ -202,8 +212,8 @@ async function loadConfig(){
       applyConfigFromRaw(cached.data);
       setLoadStatus('ready!');
       await new Promise(res=>setTimeout(res,100));
-      show('s-title');
-      initDeckCarousel();applyDevModeUI();
+      show('s-menu');
+      menuUpdateContinue();applyDevModeUI();
       _bgCheckConfig();
       return;
     }catch(e){/* fall through to full load */}
@@ -214,8 +224,8 @@ async function loadConfig(){
     saveConfigCache(raw);
     setLoadStatus('ready!');
     await new Promise(res=>setTimeout(res,300));
-    show('s-title');
-    initDeckCarousel();applyDevModeUI();
+    show('s-menu');
+    menuUpdateContinue();applyDevModeUI();
   }catch(err){
     console.error('Config load error:',err);
     const errEl=g('load-error');
@@ -255,7 +265,6 @@ async function reloadConfig(){
     saveConfigCache(raw);
     if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
     if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
-    initDeckCarousel();
     setTimeout(()=>{
       if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
       if(statusEl)statusEl.style.display='none';

@@ -457,14 +457,33 @@ function goShop(){
   G.usedTreats=[];
   // advance round
   G.round++;
+  // Check if all rounds are completed — branch victory
+  if(G.round>RCFG.length){
+    if(G.branchId)markBranchComplete(G.branchId);
+    gameInProgress=false;
+    menuUpdateContinue();
+    showBranchWin();
+    return;
+  }
   const c=rcfg(G.round);
   G.tgt=c.tgt;G.bsr=c.bsr;G.bsc=c.bsc;G.earn=c.earn;G.hands=c.h;G.disc=CFG.discard_count||3;G.score=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
+  applyModifiers();
   openRounds();
+}
+
+function showBranchWin(){
+  const branches=BRANCHES.length?BRANCHES:BRANCHES_FALLBACK;
+  const branch=branches.find(b=>b.id===G.branchId);
+  const nm=branch?branch.name:'Branch';
+  const ovEl=g('ov-branch-win');
+  g('bw-name').textContent=nm+' Complete!';
+  ovEl.classList.remove('off');
 }
 function roundFail(){
   g('fv-sc').textContent=G.score.toLocaleString();
   g('fv-tg').textContent=G.tgt.toLocaleString();
   g('ov-fail').classList.remove('off');
 }
-function restart(){g('ov-fail').classList.add('off');gameInProgress=false;updateContinueBtn();show('s-title');}
+function restart(){g('ov-fail').classList.add('off');gameInProgress=false;menuUpdateContinue();goToBranches();}
+function closeBranchWin(){g('ov-branch-win').classList.add('off');goToBranches();}

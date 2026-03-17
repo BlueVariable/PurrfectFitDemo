@@ -19,51 +19,6 @@ function openDeckPopup(){
 function closeDeckPopup(){g('ov-deck').classList.add('off');}
 
 function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
-// pickDeck replaced by deckGoTo+renderDeckCarousel
-// ── Deck carousel ──
-let DECK_ORDER=['classic','orange','wild','big']; // rebuilt from DECKS in initDeckCarousel
-let deckIdx=0;
-function initDeckCarousel(){
-  const carousel=g('deck-carousel');
-  if(!carousel)return;
-  // Rebuild DECK_ORDER from loaded DECKS
-  DECK_ORDER=Object.keys(DECKS);
-  if(!DECK_ORDER.length){console.error('No decks loaded from sheet');return;}
-  if(!DECK_ORDER.length)DECK_ORDER=['classic'];
-  // Rebuild carousel cards from DECKS
-  carousel.innerHTML='';
-  DECK_ORDER.forEach((id,i)=>{
-    const meta=DECK_META[id]||{name:id,em:'🐱',desc:''};
-    const card=document.createElement('div');
-    card.className='dk'+(i===0?' sel':'');
-    card.dataset.deck=id;
-    card.innerHTML=`<div class="de">${meta.em}</div><div class="dn">${meta.name}</div><div class="dd">${meta.desc}</div><button class="dk-preview-btn" onclick="openDeckPreview('${id}')">👁 Preview Deck</button>`;
-    card.addEventListener('click',e=>{
-      if(e.target.classList.contains('dk-preview-btn'))return;
-      deckGoTo(i);
-    });
-    carousel.appendChild(card);
-  });
-  deckIdx=Math.max(0,DECK_ORDER.indexOf(curDeck));
-  renderDeckCarousel();
-}
-function renderDeckCarousel(){
-  const carousel=g('deck-carousel');
-  if(!carousel)return;
-  carousel.querySelectorAll('.dk').forEach((c,i)=>c.classList.toggle('sel',i===deckIdx));
-  // Use scrollLeft based on card width
-  const cardW=carousel.offsetWidth;
-  carousel.scrollTo({left:deckIdx*cardW,behavior:'smooth'});
-  const arrL=g('dk-arr-l'),arrR=g('dk-arr-r');
-  if(arrL)arrL.disabled=deckIdx===0;
-  if(arrR)arrR.disabled=deckIdx===DECK_ORDER.length-1;
-  // dots
-  const dots=g('deck-dots');
-  if(dots){dots.innerHTML='';DECK_ORDER.forEach((_,i)=>{const d=document.createElement('div');d.className='deck-dot'+(i===deckIdx?' active':'');d.onclick=()=>deckGoTo(i);dots.appendChild(d);});}
-  curDeck=DECK_ORDER[deckIdx];
-}
-function deckNav(dir){deckGoTo(Math.max(0,Math.min(DECK_ORDER.length-1,deckIdx+dir)));}
-function deckGoTo(i){deckIdx=i;renderDeckCarousel();}
 function openDeckPreview(deckId){
   // Build a preview deck and show popup
   const cfg=DECKS[deckId];
@@ -88,30 +43,23 @@ function openDeckPreview(deckId){
   g('deck-pop-sub').textContent=deckName+' — '+(CFG.deck_card_count||30)+' cards';
   g('ov-deck').classList.remove('off');
 }
-// Keyboard nav on title screen
-document.addEventListener('keydown',e=>{
-  if(!g('s-title').classList.contains('on'))return;
-  if(e.key==='ArrowLeft')deckNav(-1);
-  if(e.key==='ArrowRight')deckNav(1);
-});
 // Boot: fetch sheets then init
 document.addEventListener('DOMContentLoaded',loadConfig);
 
-function startGame(){newGame(curDeck);gameInProgress=true;updateContinueBtn();openRounds();}
-function updateContinueBtn(){
-  const btn=g('btn-continue');
-  if(btn) btn.style.display=gameInProgress?'block':'none';
+function menuUpdateContinue(){
+  const btn=g('btn-menu-continue');
+  if(btn)btn.style.display=gameInProgress?'block':'none';
 }
-function continueGame(){
+function menuContinue(){
   if(!gameInProgress)return;
   openRounds();
 }
+function menuPlay(){goToBranches();}
 function exitToMenu(){
-  // Reset held state so nothing lingers
   H=resetH();
   updateGhost();hideHUD();
-  show('s-title');
-  updateContinueBtn();
+  show('s-menu');
+  menuUpdateContinue();
 }
 function openRounds(){
   shopBoughtIds=new Set();

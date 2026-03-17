@@ -15,5 +15,8 @@
       "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh --project-dir \"C:/Users/laurus/laurus/Projects/PurrfectFitDemo\" 2>&1)",
       "Bash(curl:*)"
     ]
+  },
+  "enabledPlugins": {
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
   }
 }
