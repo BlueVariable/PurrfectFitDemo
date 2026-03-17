@@ -578,6 +578,9 @@ body::before{display:none;}
 .br-btn-locked{background:rgba(0,0,0,.08);color:#b0b4bc;border-color:transparent;box-shadow:none;cursor:default;font-size:10px;}
 
 /* ── Branches: Theme Map toggle ── */
+.btn-theme-toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
+.btn-theme-toggle:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.4);}
+#s-branches.theme-map .btn-theme-toggle{background:rgba(245,194,0,.15);border-color:rgba(245,194,0,.5);}
 #s-branches.theme-map{background:linear-gradient(160deg,#5a6d80 0%,#7a8d9f 40%,#6a7d95 100%);}
 #s-branches.theme-map .br-continent{background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,.04) 100%);border-color:rgba(255,255,255,.18);backdrop-filter:blur(6px);}
 #s-branches.theme-map .br-card{box-shadow:0 4px 16px rgba(0,0,0,.2),3px 3px 0 #1a1a2a;}
