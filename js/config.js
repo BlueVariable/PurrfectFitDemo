@@ -181,11 +181,11 @@ function applyConfigFromRaw(raw){
   const branchRows=parseCSV(raw['Branches']||'');
   BRANCHES=branchRows.filter(r=>r['Branch ID']&&String(r['Branch ID']).trim()).map(r=>{
     const id=String(r['Branch ID']).trim();
-    const mods=String(r['Modifier']||'').split('|').map(s=>s.trim()).filter(Boolean);
+    const mod=String(r['Modifier']||'').trim();
     return{
       id, name:String(r['Branch Name']||id), continent:String(r['Continent']||''),
-      continentEm:String(r['Continent Emoji']||''), deck:String(r['Deck']||'classic').trim(),
-      mods, desc:String(r['Description']||''), order:Number(r['Order'])||0,
+      cem:String(r['Continent Emoji']||''), deck:String(r['Deck']||'classic').trim(),
+      mod, desc:String(r['Description']||''), order:Number(r['Order'])||0,
     };
   }).sort((a,b)=>a.order-b.order);
   console.log('[Config] BRANCHES loaded:', BRANCHES.length, BRANCHES.map(b=>b.id));
