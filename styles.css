@@ -559,23 +559,23 @@ body::before{display:none;}
 .br-cont-em{font-size:28px;}
 .br-cont-nm{font-family:'Fredoka One',cursive;font-size:18px;color:#fff;letter-spacing:2px;flex:1;}
 .br-cont-lock{font-family:'Fredoka One',cursive;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1px;}
-.br-row{display:flex;gap:12px;flex-wrap:wrap;}
-.br-card{background:#fff;border-radius:14px;border:3px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;padding:14px 12px;width:170px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:all .12s;position:relative;}
+.br-row{display:flex;gap:20px;flex-wrap:wrap;justify-content: center;}
+.br-card{background:#fff;border-radius:14px;border:3px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;padding:14px 12px;width:230px;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;transition:all .12s;position:relative;}
 .br-card.br-done{border-color:#5ab855;box-shadow:3px 3px 0 #3a8030;}
 .br-card.br-open{border-color:#f5c200;box-shadow:3px 3px 0 #a08000;}
 .br-card.br-shut{opacity:.5;pointer-events:none;}
 .br-status{font-size:18px;}
-.br-name{font-family:'Fredoka One',cursive;font-size:16px;color:#1a1a2a;}
-.br-deck-em{font-size:16px;line-height:1;}
-.br-deck-nm{font-size:10px;color:#7a8090;font-weight:800;}
-.br-mod{font-size:9px;color:#fff;background:#d04545;border-radius:6px;padding:2px 8px;font-weight:800;}
-.br-desc{font-size:9px;color:#7a8090;font-style:italic;line-height:1.3;}
-.br-btn{width:100%;padding:7px;border:2.5px solid #1a1a2a;cursor:pointer;font-family:'Fredoka One',cursive;font-size:12px;border-radius:10px;transition:all .12s;margin-top:4px;}
+.br-name{font-family:'Fredoka One',cursive;font-size:25px;color:#1a1a2a;}
+.br-deck-em{font-size:15px;line-height:1;}
+.br-deck-nm{font-size:15px;color:#7a8090;font-weight:800;}
+.br-mod{font-size:12px;color:#fff;background:#d04545;border-radius:6px;padding:2px 8px;font-weight:800;}
+.br-desc{font-size:12px;color:#7a8090;font-style:italic;line-height:1.3;}
+.br-btn{width:100%;padding:7px;border:2.5px solid #1a1a2a;cursor:pointer;font-family:'Fredoka One',cursive;font-size:20px;border-radius:10px;transition:all .12s;margin-top:4px;}
 .br-btn-play{background:#5ab855;color:#fff;box-shadow:0 3px 0 #3a8030;}
 .br-btn-play:hover{transform:translateY(-2px);box-shadow:0 5px 0 #3a8030;}
 .br-btn-replay{background:#5a85d5;color:#fff;box-shadow:0 3px 0 #2a4090;}
 .br-btn-replay:hover{transform:translateY(-2px);box-shadow:0 5px 0 #2a4090;}
-.br-btn-locked{background:rgba(0,0,0,.08);color:#b0b4bc;border-color:transparent;box-shadow:none;cursor:default;font-size:10px;}
+.br-btn-locked{background:rgba(0,0,0,.08);color:#b0b4bc;border-color:transparent;box-shadow:none;cursor:default;font-size:20px;}
 
 /* ── Branches: Theme Map toggle ── */
 .btn-theme-toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
