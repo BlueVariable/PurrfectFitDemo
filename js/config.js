@@ -19,6 +19,7 @@ const SHEET_URLS = {
   'Shapes':     'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1916856622&single=true&output=csv',
   'Decks':   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2016141493&single=true&output=csv',
   'Rarity':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1377980715&single=true&output=csv',
+  'Branches':'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1831058342&single=true&output=csv',
 };
 const SHEET_NAMES = Object.keys(SHEET_URLS);
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -33,6 +34,7 @@ let DECKS = {};
 let RCFG  = [];
 let CFG   = {};
 let RARITY_WEIGHTS = {};
+let BRANCHES = [];
 let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
 const DECK_META={};
 
@@ -174,6 +176,19 @@ function applyConfigFromRaw(raw){
     DECK_META[id]={name,em,desc};
   });
   console.log('[Config] DECKS loaded:', Object.keys(DECKS));
+
+  // ── Branches ──
+  const branchRows=parseCSV(raw['Branches']||'');
+  BRANCHES=branchRows.filter(r=>r['Branch ID']&&String(r['Branch ID']).trim()).map(r=>{
+    const id=String(r['Branch ID']).trim();
+    const mods=String(r['Modifier']||'').split('|').map(s=>s.trim()).filter(Boolean);
+    return{
+      id, name:String(r['Branch Name']||id), continent:String(r['Continent']||''),
+      continentEm:String(r['Continent Emoji']||''), deck:String(r['Deck']||'classic').trim(),
+      mods, desc:String(r['Description']||''), order:Number(r['Order'])||0,
+    };
+  }).sort((a,b)=>a.order-b.order);
+  console.log('[Config] BRANCHES loaded:', BRANCHES.length, BRANCHES.map(b=>b.id));
 }
 
 function setLoadStatus(msg){
@@ -264,7 +279,7 @@ async function reloadConfig(){
     applyConfigFromRaw(raw);
     saveConfigCache(raw);
     if(btn){btn.textContent='✓ Reloaded!';btn.style.color='var(--gr)';}
-    if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks`;
+    if(statusEl)statusEl.textContent=`✓ ${RCFG.length} rounds · ${TDEFS.length} treats · ${Object.keys(DECKS).length} decks · ${BRANCHES.length} branches`;
     setTimeout(()=>{
       if(btn){btn.textContent='↺ Reload Config';btn.disabled=false;btn.style.color='';}
       if(statusEl)statusEl.style.display='none';
