@@ -26,7 +26,7 @@ The game is split across `index.html` (markup + inline styles) and multiple JS f
 | `js/held.js` | Mouse/touch drag-and-drop logic |
 | `js/render.js` | All DOM updates (`renderAll`, `renderBoard`, `renderHand`, `renderBP`, `renderShopFull`) |
 | `js/scoring.js` | `doFit()`, `runScoreSequence()`, `endScoreSequence()` — four phases: base → add treats → mul treats → board fill bonus |
-| `js/branches.js` | World map progression: `BRANCHES_FALLBACK`, unlock logic, `renderBranches()`, `selectBranch()`, progress persistence via localStorage |
+| `js/branches.js` | World map progression, unlock logic, `renderBranches()`, `selectBranch()`, progress persistence via localStorage |
 | `js/shop.js` | Treat purchasing and reroll logic |
 
 Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → render → scoring → shop.
@@ -70,7 +70,7 @@ Screens are `display:none` by default and made visible with class `.on`. Overlay
 
 - Top bar: ← Back button (`exitToMenu()`), "WORLD MAP" title, coin display (shown only if `gameInProgress`)
 - Body (`br-body`): rendered by `renderBranches()`, grouped by continent
-- **Continents** are derived from `BRANCHES` (sheet data) or `BRANCHES_FALLBACK` (hardcoded). Each continent has an emoji, name, and ordered list of branches
+- **Continents** are derived from `BRANCHES` (loaded from Google Sheets, with local `sheets/` CSV fallback). Each continent has an emoji, name, and ordered list of branches
 - **Branch cards** show status (✅ completed / 🔓 unlocked / 🔒 locked), city name, deck emoji+name (from `DECK_META`), modifier labels, description, and a Play/Replay/Locked button
 - **Unlock logic** (`isBranchUnlocked`): first branch of first continent is always open; within a continent, previous branch must be completed; first branch of a new continent requires all branches of the previous continent completed
 - **Progress** stored in localStorage key `pf-progress` as `{completed: [branchId, ...]}`

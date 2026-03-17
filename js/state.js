@@ -60,7 +60,7 @@ function applyModifiersOnce(){
 }
 
 function newGameFromBranch(branchId){
-  const branches=BRANCHES.length?BRANCHES:BRANCHES_FALLBACK;
+  const branches=BRANCHES;
   const branch=branches.find(b=>b.id===branchId);
   if(!branch)return;
   newGame(branch.deck);

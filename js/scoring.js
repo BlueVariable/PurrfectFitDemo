@@ -473,7 +473,7 @@ function goShop(){
 }
 
 function showBranchWin(){
-  const branches=BRANCHES.length?BRANCHES:BRANCHES_FALLBACK;
+  const branches=BRANCHES;
   const branch=branches.find(b=>b.id===G.branchId);
   const nm=branch?branch.name:'Branch';
   const ovEl=g('ov-branch-win');

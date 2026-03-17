@@ -85,6 +85,7 @@ async function fetchSheet(name){
 }
 
 // Fetch all sheets as raw CSV text (for caching / change detection)
+// Falls back to local sheets/ CSV files when Google Sheets fetch fails.
 async function fetchAllSheetsRaw(onStatus){
   const raw={};
   for(const name of SHEET_NAMES){
@@ -95,7 +96,15 @@ async function fetchAllSheetsRaw(onStatus){
       if(!res.ok)throw new Error(`Sheet "${name}" failed (${res.status})`);
       raw[name]=await res.text();
     }catch(e){
-      if(name==='Shapes'||name==='Rarity'){raw[name]='';}else throw e;
+      try{
+        const local=await fetch('sheets/'+name+'.csv');
+        if(!local.ok)throw new Error('local fallback failed');
+        raw[name]=await local.text();
+        console.warn(`[Config] ${name}: using local fallback (sheets/${name}.csv)`);
+      }catch(e2){
+        if(name==='Shapes'||name==='Rarity'){raw[name]='';}
+        else throw new Error(`Sheet "${name}" failed and no local fallback`);
+      }
     }
   }
   return raw;
