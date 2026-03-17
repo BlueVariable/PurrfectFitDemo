@@ -3,7 +3,7 @@
 //  BRANCHES — World Map progression
 // ══════════════════════════════════════════════════════
 
-let BRANCHES=[];
+// BRANCHES is declared in config.js
 
 // ── Progress persistence ──
 const PROGRESS_KEY='pf-progress';

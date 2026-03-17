@@ -28,4 +28,4 @@ function weightedSample(items,n,weightFn){
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function g(id){return document.getElementById(id);}
 function uid(){return Math.random().toString(36).slice(2,9);}
-window.addEventListener('resize',()=>{if(G.board?.length)renderBoard();});
+window.addEventListener('resize',()=>{if(typeof G!=='undefined'&&G.board?.length)renderBoard();});
