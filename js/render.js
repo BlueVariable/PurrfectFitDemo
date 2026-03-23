@@ -260,7 +260,7 @@ function renderHand(){
     const isHeld=H.kind==='cat'&&H.handIdx===i;
     const d=document.createElement('div');
     d.className='cslot'+(isHeld?' held':'');
-    d.innerHTML=shpHTML(cat.cells,cat.col,9)+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
+    d.innerHTML=shpHTML(cat.cells,cat.col,25)+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
       // compute grab offset within the mini shape preview
@@ -403,7 +403,7 @@ function renderBP(){
 
 function shpHTML(cells,col,sz){
   const cols=cells[0].length;
-  let h=`<div style="display:grid;grid-template-columns:repeat(${cols},${sz}px);gap:1px">`;
+  let h=`<div style="display:grid;grid-template-columns:repeat(${cols},${sz}px);gap:5px">`;
   cells.forEach(row=>row.forEach(v=>{
     if(v) h+=`<div style="width:${sz}px;height:${sz}px;border-radius:2px;background:${col};"></div>`;
     else  h+=`<div style="width:${sz}px;height:${sz}px;"></div>`;
