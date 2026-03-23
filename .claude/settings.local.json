@@ -13,7 +13,8 @@
       "Bash(claude mcp:*)",
       "Bash(cd \"C:\\\\Users\\\\laurus\\\\laurus\\\\Projects\\\\PurrfectFitDemo\" && rm js/treats/tuna.js)",
       "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh --project-dir \"C:/Users/laurus/laurus/Projects/PurrfectFitDemo\" 2>&1)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "mcp__nanobanana__generate_image"
     ]
   },
   "enabledPlugins": {
