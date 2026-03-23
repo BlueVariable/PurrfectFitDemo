@@ -416,7 +416,7 @@ body::before{display:none;}
 .sp-bp-card{
   background:#fff;border-radius:14px;
   border:3px solid #1a1a2a;overflow:hidden;
-  box-shadow:4px 4px 0 #1a1a2a;width:100%;
+  box-shadow:4px 4px 0 #1a1a2a;min-width:300px;
 }
 .sp-bp-hdr{
   background:#8090cc;border-radius:0;
@@ -446,7 +446,7 @@ body::before{display:none;}
 
 /* right panel */
 .sp-right{
-  flex:1;max-width:700px;display:flex;flex-direction:column;overflow:auto;
+  flex:1;max-width:800px;display:flex;flex-direction:column;overflow:auto;
   padding:10px 0;gap:12px;
 }
 /* treat section */
