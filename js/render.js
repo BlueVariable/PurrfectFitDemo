@@ -295,7 +295,7 @@ function renderHand(){
     d.addEventListener('click',()=>{if(!H.dragging)pickupCat(i);});
     row.appendChild(d);
   });
-  for(let i=G.hand.length;i<(CFG.hand_count||7);i++){const e=document.createElement('div');e.className='eslot';row.appendChild(e);}
+  for(let i=G.hand.length;i<(CFG.hand_dealt_count||7);i++){const e=document.createElement('div');e.className='eslot';row.appendChild(e);}
 }
 
 function renderBP(){

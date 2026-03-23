@@ -29,7 +29,7 @@ function newGame(deckId){
   if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
   G={
-    round:1,score:0,tgt:c.tgt,bsr:c.bsr,bsc:c.bsc,earn:c.earn,hands:c.h,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
+    round:1,score:0,tgt:c.tgt,bsr:c.bsr,bsc:c.bsc,earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
@@ -97,7 +97,7 @@ function mkDeck(){
 
 function dealHand(){
   G.newCardIndices=new Set();
-  while(G.hand.length<(CFG.hand_count||7)&&G.deck.length>0){
+  while(G.hand.length<(CFG.hand_dealt_count||7)&&G.deck.length>0){
     G.newCardIndices.add(G.hand.length);
     G.hand.push(G.deck.shift());
   }

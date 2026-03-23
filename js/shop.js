@@ -13,8 +13,9 @@ function generateShopPool(){
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
   const budget=G.cash+totalSellable;
   const affordable=available.filter(td=>td.pr<=budget);
-  const pool=affordable.length>=3?affordable:available;
-  return weightedSample(pool,3,td=>RARITY_WEIGHTS[td.rar]??1);
+  const stockCount=CFG.shop_stock_count||5;
+  const pool=affordable.length>=stockCount?affordable:available;
+  return weightedSample(pool,stockCount,td=>RARITY_WEIGHTS[td.rar]??1);
 }
 
 function rerollTreats(){
