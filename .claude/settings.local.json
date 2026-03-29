@@ -14,7 +14,13 @@
       "Bash(cd \"C:\\\\Users\\\\laurus\\\\laurus\\\\Projects\\\\PurrfectFitDemo\" && rm js/treats/tuna.js)",
       "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.2/skills/brainstorming/scripts/start-server.sh --project-dir \"C:/Users/laurus/laurus/Projects/PurrfectFitDemo\" 2>&1)",
       "Bash(curl:*)",
-      "mcp__nanobanana__generate_image"
+      "mcp__nanobanana__generate_image",
+      "Skill(update-config)",
+      "mcp__google-sheets__sheets_check_access",
+      "mcp__google-sheets__sheets_get_values",
+      "mcp__google-sheets__sheets_update_values",
+      "Bash(cd:*)",
+      "Bash(python3:*)"
     ]
   },
   "enabledPlugins": {
