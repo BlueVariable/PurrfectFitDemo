@@ -156,6 +156,7 @@ function applyConfigFromRaw(raw){
       id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
       bpS, ef, addEf, req:String(r['Requirement']||r['Req']||'').trim(),
       pr:buyPr, sp:sellPr,
+      enabled:String(r['Enabled']||'true').trim().toLowerCase()!=='false',
       fl:String(r['Flavor']||r['Flavour']||''),
       fn:buildTreatFn(id,ef,phase,addEf),
     };
