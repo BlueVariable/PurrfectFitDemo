@@ -33,8 +33,9 @@ FALSE,,mul,yarn,YARN BALL,🧶,rare,L,,,,5,bag full of purr-fection,,
 TRUE,placement,add,diagonal_dash,DIAGONAL DASH,🐾,rare,straight,+45 to cats on DIAGONALS,,,6,corner to corner in one stride,Proposed,Diagonals are an uncovered placement axis.
 TRUE,cat shape,mul,chonk_champ,CHONK CHAMP,🏆,epic,chonk,×3 CHONK shaped cats,,,8,big cat big points,Proposed,L/DUO/T shapes all have multipliers but CHONK does not.
 TRUE,placement,mul,couch_claim,COUCH CLAIM,🛋️,rare,cross,×2 cats in CENTER cells,,,6,centre of the universe,Proposed,CENTER axis is uncovered - non-edge non-corner cells.
-FALSE,,,,,,,,,,,,,,
-FALSE,,,,,,,,,,,,,,
+TRUE,placement,add,nesting_instinct,NESTING INSTINCT,🪺,epic,cross,+40 to cats with ALL 4 adjacent cells filled,,,8,tucked in tight,Proposed,New "enclosed" axis — bonuses cats fully hemmed in by neighboring cats (all 4 cardinal neighbors filled). Unlike BOX (bonuses cats surrounding a treat), this bonuses cats surrounded by other cats. Incentivizes dense interior placement. New mechanic needed — js/treats/nesting_instinct.js.
+TRUE,timing,mul,eldest_cat,ELDEST CAT,👑,epic,T,×3 to all cats matching FIRST cat type placed,,,8,first in best in,Proposed,Timing axis — dynamically multiplies all cats of whichever type was placed first this round. Unlike TUNA CAN/SHADOW FEAST (fixed type ×2), this is player-chosen ×3 via placement order. New mechanic needed — js/treats/eldest_cat.js (track first cat type placed in round).
+TRUE,placement,add,territorial,TERRITORIAL,🗺️,rare,straight,+25 to cats that share NO row or column with same type,,,6,one per zip code,Proposed,Spread axis — rewards distributing same-type cats so no two share a row or column. Anti-clustering counterpart to TUNA CAN/SHADOW FEAST builds. Rare +25 matches ROW/COL bonus tier. New mechanic needed — js/treats/territorial.js.
 FALSE,,,,,,,,,,,,,,
 FALSE,,,,,,,,,,,,,,
 FALSE,,,,,,,,,,,,,,
