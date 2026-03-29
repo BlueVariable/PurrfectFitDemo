@@ -158,6 +158,21 @@ function treatReqFails(td){
   return requirementFails(td.req);
 }
 
+function treatCurrentEf(td){
+  if(!td.addEf)return null;
+  const incM=td.addEf.match(/([\d.]+)/);
+  if(!incM)return null;
+  const plays=(G.treatPlayCounts&&G.treatPlayCounts[td.id])||0;
+  if(plays===0)return null;
+  const inc=parseFloat(incM[1]);
+  const isMul=/[×x]/.test(td.ef);
+  const baseM=td.ef.match(/([\d.]+)/);
+  if(!baseM)return null;
+  const base=parseFloat(baseM[1]);
+  const cur=Math.round((base+plays*inc)*100)/100;
+  return isMul?`Now: ×${cur}`:`Now: +${cur}`;
+}
+
 function showBoardTip(e,r,c){
   if(H.kind)return; // don't show tip while dragging
   const bd=G.board[r][c];if(!bd.filled)return;
@@ -173,7 +188,8 @@ function showBoardTip(e,r,c){
     const ti=G.treats.find(t=>t.gid===gid);
     if(!ti)return;
     const td=ti.tdef;
-    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
+    const curEf=treatCurrentEf(td);
+    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:9px;color:#9a7ed7;margin-top:2px;">${td.addEf}${curEf?` <span style="color:#e040a0">${curEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
   }
   tip.style.display='block';
   moveBoardTip(e);
@@ -192,7 +208,8 @@ function showBPTip(e,r,c){
   const td=bd.tdef;
   const fail=treatReqFails(td);
   const tip=g('board-tip');
-  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}${fail?'<div style="font-size:9px;color:#f04040;margin-top:3px;">⚠ Requirement not met</div>':''}`;
+  const bpCurEf=treatCurrentEf(td);
+  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:9px;color:#9a7ed7;margin-top:2px;">${td.addEf}${bpCurEf?` <span style="color:#e040a0">${bpCurEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}${fail?'<div style="font-size:9px;color:#f04040;margin-top:3px;">⚠ Requirement not met</div>':''}`;
   tip.style.display='block';
   moveBPTip(e);
 }
@@ -414,6 +431,14 @@ function shpHTML(cells,col,sz){
 function showTTP(t){
   g('ttn').textContent=t.nm;
   g('tte').innerHTML=t.ef.replace(/×(\d+)/g,'<span>×$1</span>').replace(/\+(\d+)/g,'<span>+$1</span>');
+  const ttae=g('ttae');
+  if(t.addEf){
+    const cur=treatCurrentEf(t);
+    ttae.innerHTML=t.addEf+(cur?` <span>${cur}</span>`:'');
+    ttae.style.display='block';
+  } else {
+    ttae.style.display='none';
+  }
   const ttr=g('ttr');if(t.req){ttr.textContent=t.req;ttr.style.display='block';}else ttr.style.display='none';
   g('ttf').textContent=t.fl||'';
   g('ttp').classList.add('on');

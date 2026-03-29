@@ -151,6 +151,8 @@ body::before{display:none;}
 .ttn{font-family:'Fredoka One',cursive;font-size:14px;color:#e040a0;letter-spacing:.5px;}
 .tte{font-size:10px;font-weight:800;color:#1a1a2a;margin-top:2px;line-height:1.5;}
 .tte span{color:#e040a0;}
+.ttae{font-size:9px;font-weight:800;color:#7a5ec7;margin-top:3px;line-height:1.4;display:none;}
+.ttae span{color:#e040a0;}
 .ttr{background:#d04545;color:#fff;border-radius:6px;padding:3px 7px;font-size:9px;font-weight:800;margin-top:4px;line-height:1.4;display:none;}
 .ttf{font-size:9px;color:#7a8090;font-style:italic;margin-top:4px;text-align:center;}
 .ttsell{margin-top:5px;display:flex;gap:6px;align-items:center;}
