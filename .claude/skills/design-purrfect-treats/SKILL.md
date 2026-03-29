@@ -126,7 +126,7 @@ A new effect that introduces a new **axis** (diagonal, connected group, majority
 ### 8. Output CSV Row
 
 ```
-TRUE,{strategy},{phase},{id},{NAME},{emoji},{rarity},{shapeId},{effect},{additionalEffects},{requirement},{buyPrice},{tagline}
+TRUE,{strategy},{phase},{id},{NAME},{emoji},{rarity},{shapeId},{effect},{additionalEffects},{requirement},{buyPrice},{tagline},Proposed,{claudeNotes}
 ```
 
 **Field rules:**
@@ -135,14 +135,30 @@ TRUE,{strategy},{phase},{id},{NAME},{emoji},{rarity},{shapeId},{effect},{additio
 - `additionalEffects`: scaling mechanic if any — existing or new (e.g. "Doubles every 3 rounds", "−1 per treat in backpack"), else blank
 - `requirement`: blank, existing string, or new string — be exact, it must be evaluable at score time
 - Leave `additionalEffects` and `requirement` blank (not null — just empty) if unused
+- `claudeNotes`: your design rationale — why this effect, how it plays, balance concerns, what makes it unique
 
 **If proposing a new effect, requirement, or additional effect**, add an implementation note after the CSV row:
 > ⚠️ New mechanic — needs `js/treats/<id>.js` implementation (and `js/treats/requirements.js` entry if new requirement)
+
+### 9. Add to Sheet
+
+After outputting the CSV row, **add the treat to the Google Sheets Treats tab** with `Status = Proposed`:
+
+1. Use `mcp__google-sheets__sheets_get_values` to find the next empty row after the last named treat (look for the first `FALSE,,,,` row after all named entries)
+2. Use `mcp__google-sheets__sheets_update_values` to write the full row including the `Proposed` status and your Claude Notes
+3. Also add the row to `sheets/Treats.csv` (local snapshot) in the same position
+
+**Review & approval flow:**
+- `Proposed` — Claude has designed the treat; awaiting user review
+- `Approved` — User has reviewed and signed off; ready to implement
+- `WIP` — Implementation in progress
+
+The user will review proposed treats directly in the sheet and may adjust values before asking you to implement.
 
 ## Example
 
 **Concept:** Cozy cat bed that rewards cats near the center of the board
 
 ```
-TRUE,placement,add,cat_bed,CAT BED,🛏️,rare,chonk,+40 to cats adjacent to CENTER,,,$5,snooze in style
+TRUE,placement,add,cat_bed,CAT BED,🛏️,rare,chonk,+40 to cats adjacent to CENTER,,,5,snooze in style,Proposed,CENTER is a unique axis not covered by any existing treat. Chose +40 as center cells are few (1-4 on a typical board) so the bonus is meaningful but not overpowered. Rare feels right — placement precision without requiring a specific cat type.
 ```
