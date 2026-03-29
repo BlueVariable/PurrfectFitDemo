@@ -30,9 +30,9 @@ FALSE,,misc,cat_phone,CAT PHONE,📞,legendary,cross,overwrite the self ability 
 TRUE,majority,mul,pack_leader,PACK LEADER,🐱,epic,chonk,×2 to your MOST PLACED cat type,,,7,democracy but make it cats,Approved,
 FALSE,,misc,siamese_twins,SIAMESE TWINS,👯,epic,chonk,change one random cat type to match adjacent cat,,,7,two of a kind,,
 FALSE,,mul,yarn,YARN BALL,🧶,rare,L,,,,5,bag full of purr-fection,,
-FALSE,,,,,,,,,,,,,,,
-FALSE,,,,,,,,,,,,,,,
-FALSE,,,,,,,,,,,,,,,
+TRUE,placement,add,diagonal_dash,DIAGONAL DASH,🐾,rare,straight,+45 to cats on DIAGONALS,,,6,corner to corner in one stride,Proposed,Diagonals are an uncovered placement axis.
+TRUE,cat shape,mul,chonk_champ,CHONK CHAMP,🏆,epic,chonk,×3 CHONK shaped cats,,,8,big cat big points,Proposed,L/DUO/T shapes all have multipliers but CHONK does not.
+TRUE,placement,mul,couch_claim,COUCH CLAIM,🛋️,rare,cross,×2 cats in CENTER cells,,,6,centre of the universe,Proposed,CENTER axis is uncovered - non-edge non-corner cells.
 FALSE,,,,,,,,,,,,,,
 FALSE,,,,,,,,,,,,,,
 FALSE,,,,,,,,,,,,,,
