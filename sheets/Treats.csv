@@ -27,6 +27,7 @@ TRUE,cat type,mul,shadow_feast,SHADOW FEAST,🌑,legendary,cross,×2 all BLACK c
 TRUE,misc,misc,mirror,MIRROR,🪞,legendary,duo,apply all ADD treats again,,,10,twice as nice
 TRUE,misc,mul,all_or_nothing,ALL OR NOTHING,⚡,legendary,uno,×5 ALL cats,,BOARD FULL,10,go big or go home
 FALSE,,misc,cat_phone,CAT PHONE,📞,legendary,cross,overwrite the self ability with one random ability from backpack,,,15,calling in reinforcements
+TRUE,majority,mul,pack_leader,PACK LEADER,🐱,epic,chonk,×2 to your MOST PLACED cat type,,,7,democracy but make it cats
 FALSE,,misc,siamese_twins,SIAMESE TWINS,👯,epic,chonk,change one random cat type to match adjacent cat,,,7,two of a kind
 FALSE,,mul,yarn,YARN BALL,🧶,rare,L,,,,5,bag full of purr-fection
 FALSE,,,,,,,,,,,,
