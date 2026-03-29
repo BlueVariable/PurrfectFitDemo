@@ -52,11 +52,14 @@ Choose **phase**: `add`, `mul`, or `misc`
 
 **Inventing new effect types is encouraged.** Don't be limited to existing patterns. Novel ideas:
 - Count-based: "+5 per cat on board" (scales with density)
-- Diagonal: "+30 to cats on DIAGONALS"
 - Majority: "×2 if you have more of one type than any other"
 - Streak: "×3 to cats in the longest connected group"
 - Threshold: "+100 if 5+ cats placed this round"
 - Negative space: "×2 ALL cats if board is less than half full"
+
+**Declined mechanics — do not propose:**
+- **Diagonal placement** — confusing for players because cats have different shapes; diagonal alignment is hard to read on the board
+- **Center cell placement** — not challenging or fun enough as a positioning goal; doesn't create meaningful decisions
 
 New effect types require a new `js/treats/<id>.js` implementation — flag this in output.
 
@@ -84,7 +87,7 @@ Players fill the board to maximize score. Keep this in mind when evaluating effe
 
 - Effects that reward **clustering, adjacency, or connectivity** are near-trivially satisfied on a full board — almost all cats will be touching. These mechanics only create real decisions if the board is sparse or if placement order matters.
 - Effects that reward **emptiness** (e.g. PERSONAL SPACE) are naturally gated by the fill incentive — they create genuine tension.
-- Effects that reward **specific zones** (edges, corners, diagonals) remain meaningful on a full board because not all cats can occupy those zones.
+- Effects that reward **specific zones** (edges, corners) remain meaningful on a full board because not all cats can occupy those zones.
 - **Threshold effects** (e.g. "if board is less than half full") invert the fill incentive — powerful but creates a strong counter-strategy.
 
 When designing a connectivity or adjacency-based effect, consider whether it's trivially active on a full board. If yes, add a constraint (requirement, threshold, or narrow zone) to restore the strategic decision.
@@ -121,7 +124,7 @@ The goal is a **meaningfully different** effect — not just a reskin of an exis
 
 **Existing additional effects:** per-play flat increase, per-play multiplier increase
 
-A new effect that introduces a new **axis** (diagonal, connected group, majority, threshold, center, etc.) is always valid even if the phase or scope overlaps.
+A new effect that introduces a new **axis** (connected group, majority, threshold, etc.) is always valid even if the phase or scope overlaps. Do not use diagonal or center axes — both have been declined (see Section 2).
 
 ### 8. Output CSV Row
 
@@ -157,8 +160,8 @@ The user will review proposed treats directly in the sheet and may adjust values
 
 ## Example
 
-**Concept:** Cozy cat bed that rewards cats near the center of the board
+**Concept:** Trophy treat that rewards the largest cat shape on the board
 
 ```
-TRUE,placement,add,cat_bed,CAT BED,🛏️,rare,chonk,+40 to cats adjacent to CENTER,,,5,snooze in style,Proposed,CENTER is a unique axis not covered by any existing treat. Chose +40 as center cells are few (1-4 on a typical board) so the bonus is meaningful but not overpowered. Rare feels right — placement precision without requiring a specific cat type.
+TRUE,cat shape,mul,chonk_champ,CHONK CHAMP,🏆,epic,chonk,×3 CHONK shaped cats,,,8,big cat big points,Proposed,L/DUO/T shapes all have multipliers but CHONK does not — fills the gap. ×3 mirrors CORNER NAPPER. Epic with no req since chonk cats require the 2×2 shape which is harder to fit. Follows existing shapeMul pattern.
 ```
