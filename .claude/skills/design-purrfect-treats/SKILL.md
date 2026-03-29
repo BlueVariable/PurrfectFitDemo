@@ -147,9 +147,11 @@ TRUE,{strategy},{phase},{id},{NAME},{emoji},{rarity},{shapeId},{effect},{additio
 
 After outputting the CSV row, **add the treat to the Google Sheets Treats tab** with `Status = Proposed`:
 
+**Spreadsheet ID:** `1qEr42p9HsQFPrBip1TqYB2DBehKPgyT_e0CwmNP_Cd4`
+**Treats tab:** `Treats!A<row>`
+
 1. Use `mcp__google-sheets__sheets_get_values` to find the next empty row after the last named treat (look for the first `FALSE,,,,` row after all named entries)
 2. Use `mcp__google-sheets__sheets_update_values` to write the full row including the `Proposed` status and your Claude Notes
-3. Also add the row to `sheets/Treats.csv` (local snapshot) in the same position
 
 **Review & approval flow:**
 - `Proposed` — Claude has designed the treat; awaiting user review
