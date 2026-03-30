@@ -13,6 +13,7 @@ const REQUIREMENT_FNS = {
     return types.length > 1;
   },
   'BOARD FULL': () => G.board.flat().filter(c=>c.filled).length < G.bsr*G.bsc,
+  'LAST HAND':  () => G.hands > 1,
 };
 
 function requirementFails(req) {
