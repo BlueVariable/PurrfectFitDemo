@@ -102,6 +102,69 @@ Sheet Effect: `"+N per DECK CARD to ALL cats"`
 
 New effect types require a new `js/treats/<id>.js` implementation — flag this in output.
 
+### 2b. Balatro Design Inspiration
+
+Balatro's joker system is the closest design analog to PurrfectFit treats. Study these patterns when stuck or seeking new ideas.
+
+#### Scoring Formula Parallel
+
+Balatro scores as **Chips × Multiplier**. PurrfectFit mirrors this exactly: the `add` phase sets a baseline, then `mul` treats compound multiplicatively on top. Two ×3 multipliers = ×9 total, not ×6. This means:
+- Flat add treats are safe, predictable, never exciting alone
+- Mul treats compound exponentially — conditions/costs must scale with power
+- The most explosive moments come from stacking multiple mul treats
+
+#### Joker Archetypes → Treat Archetypes
+
+| Balatro Archetype | How It Works | PurrfectFit Equivalent |
+|-------------------|--------------|------------------------|
+| **Flat bonus** | +X chips unconditionally | milk, window_perch, rainbow_bowl |
+| **Per-axis scaling** | +N per [hand size / cash / discard] | coin_purr, slow_blink, quick_paws, cardboard_box |
+| **Type multiplier** | ×N to one suit/type | tuna_can, shadow_feast, cotton_cloud, tabby_pack |
+| **Shape multiplier** | ×N to one card rank/shape | yarn, kitten_toy, chonk_champ, gentle_giant |
+| **Conditional big mul** | ×5 only if [board full / flush] | all_or_nothing, frenzy, nap, last_resort |
+| **Ascending scaling** | gains power each play | catnado, cathouse, sprint_finish, purr_fection |
+| **Descending/self-destruct** | starts powerful, weakens/dies | shooting_star, whisker_fatigue, hiss_and_miss, final_feast |
+| **Opportunity cost** | punishes having more of something | nap (no other treat), nine_lives (×(9−treats)) |
+| **Economy** | scales on cash held | coin_purr, deep_pockets |
+| **Spatial** | rewards WHERE pieces are placed | corner_napper, scaredy_cat, window_perch, cathouse |
+| **Copying** | clones another effect | laser, mirror, cat_phone |
+| **Treat synergy** | scales with treat count | cat_nap_stack, nine_lives |
+
+#### Unexplored Axes (High Priority)
+
+These Balatro axes have no PurrfectFit treat yet — strong candidates for new designs:
+
+- **Passive income** — earn +$N at end of each round. Balatro's "Egg" archetype. Completes the economy loop (coin_purr and deep_pockets exist but nothing generates cash).
+- **Adjacent treat bonus** — "+N to all cats per OTHER treat adjacent to this one." Spatial treat placement becomes strategic. Balatro has no grid so this axis is uniquely PurrfectFit's.
+- **Per total cat cells** — "×(total cells occupied by all cats ÷ 6)." Rewards filling the board with many pieces equally regardless of shape.
+- **Backpack full condition** — "×4 ALL cats — only if backpack is completely full." Inverse of empty_nest. Rewards maxing out treat collection.
+- **Early-round specialist** — "×3 all cats — only on hand 1." Balatro's "Dusk" (last-hand retrigger) inverted. Rewards immediate play.
+- **Per discard USED (ascending)** — "+N per discard used this round." Rewards burning discards aggressively, opposite of slow_blink.
+- **Poverty scaling** — "×(max(1, 5 − cash)) all cats." Rewards spending everything; anti-synergy with coin_purr/deep_pockets, creates a completely different economic build.
+- **Sell-value scaling** — "×(count of rare/legendary treats in backpack) all cats." Rewards collecting expensive treats. Balatro's Swashbuckler archetype.
+
+#### Core Design Principles from Balatro
+
+1. **The best modifiers change HOW you play, not just how much you score.** A treat that gives +50 flat is boring. A treat that rewards holding cash (+N per $1) changes your spending behavior. Treats that restructure placement, type selection, or resource conservation are always more interesting.
+
+2. **Power should be inversely proportional to reliability.** Unconditional ×2 is weak and fine at common. Conditional ×5 is strong and fine at epic/legendary. Make players earn big numbers.
+
+3. **Opportunity cost treats are excellent design.** nap (×2, no other treat) and nine_lives (×(9−treats)) create genuine philosophy choices: go wide (many cheap treats) vs. go narrow (one powerful treat). Both reward commitment differently.
+
+4. **Scaling treats need a natural ceiling or the build will trivialize late rounds.** Uncapped ascending scaling (like catnado with no max) can become dominant. When designing a scaling treat, consider adding a soft cap (e.g., `Math.min(m, 5.0)`) or a self-destruct endpoint.
+
+5. **Spatial axes are PurrfectFit's biggest differentiator from Balatro.** Balatro has no grid, no adjacency, no placement constraints. Every treat that rewards WHERE a piece is placed (corner, edge, isolated, adjacent to other cats/treats) is uniquely yours — lean into this.
+
+6. **Emergent synergies are better than designed ones.** Don't build treat A to combo with treat B. Build both around independent axes (timing, economy, spatial) and let players discover that the axes amplify each other. The combo should be a discovery, not an intent.
+
+#### Patterns to Avoid (Balatro Lessons)
+
+- **Unconditional high multipliers** — ×5 with no condition is uninteresting. Always attach a cost, condition, or drawback to anything above ×3.
+- **Pure randomness without player influence** — wild_dice and lucky_paw can't be planned around. Fine for one or two treats but don't add more in this category.
+- **Retrigger mechanics** — Balatro's most explosive axis. If a cat's scoring were re-evaluated (add phase runs twice per cat), the interaction with multiple mul treats causes exponential compounding (e.g., catnado × cat_nap_stack, squared). Do not implement a full retrigger. If ever proposed, limit it strictly to re-running the add phase only, never multipliers.
+- **Mirror/laser self-reference loops** — if laser copies mirror, and mirror re-runs all add treats including laser's copied effect, you get infinite recursion. Any copying treat must explicitly exclude itself from the "all treats" scan.
+- **Cross-round persistent scaling with no cap** — a treat that grows each round (not each play) would be trivially dominant by the last branch. Avoid unless it has a built-in ceiling.
+
 ### 3. Choose Requirement (Optional)
 
 Requirements gate power — higher multipliers or broader effects need them.
