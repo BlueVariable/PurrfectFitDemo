@@ -96,6 +96,9 @@ Sheet Effect: `"+N per DECK CARD to ALL cats"`
 **Declined mechanics — do not propose:**
 - **Diagonal placement** — confusing for players; diagonal alignment is hard to read on the board
 - **Center cell placement** — not challenging or fun enough; doesn't create meaningful decisions
+- **Above-average scoring cat** — boring mechanic, not interesting enough
+- **Used treats this run** (`G.usedTreats`) — hard for players to track; not transparent enough
+- **Round number** (`G.round`) — always in the player's favor at purchase time (later rounds = more power), making it a trivially good buy regardless of strategy
 
 New effect types require a new `js/treats/<id>.js` implementation — flag this in output.
 
@@ -153,10 +156,10 @@ Match shape to theme and rarity — bigger shapes = rarer feels.
 The goal is a **meaningfully different** effect. Same mechanic + different number = not unique enough.
 
 **Existing add effects (avoid direct duplicates):**
-ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per HAND REMAINING · per $1 HELD
+ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per HAND REMAINING · per $1 HELD · per DISCARD REMAINING
 
 **Existing mul effects (avoid direct duplicates):**
-L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells
+L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells · ×(unique shape count) · ×(empty BP cells ÷ 4)
 
 A new effect that introduces a new **axis** (connected group, majority, threshold, etc.) is always valid even if phase/scope overlaps.
 
