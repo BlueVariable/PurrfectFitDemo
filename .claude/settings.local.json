@@ -20,7 +20,14 @@
       "mcp__google-sheets__sheets_get_values",
       "mcp__google-sheets__sheets_update_values",
       "Bash(cd:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(find C:UsersMildmanialaurusProjectsPurrfectFitDemosheets -name *.csv -type f)",
+      "Bash(xargs cat:*)",
+      "Skill(design-purrfect-treats)",
+      "WebFetch(domain:balatrogame.fandom.com)",
+      "WebFetch(domain:balatrowiki.org)",
+      "WebFetch(domain:games.gg)",
+      "mcp__google-sheets__sheets_batch_update_values"
     ]
   },
   "enabledPlugins": {
