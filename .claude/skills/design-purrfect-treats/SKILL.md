@@ -111,6 +111,7 @@ Requirements gate power — higher multipliers or broader effects need them.
 - `BOARD FULL` — all board cells filled
 - `ALL SAME TYPE` — all cats on board are same type
 - `LAST HAND` — must be the last hand of the round (`G.hands === 1`)
+- `NO DISCARDS REMAINING` — all discards must be spent (`G.disc === 0`)
 
 **New requirements welcome** — e.g.:
 - `NO DUPLICATES` — no two cats of the same type
@@ -156,10 +157,10 @@ Match shape to theme and rarity — bigger shapes = rarer feels.
 The goal is a **meaningfully different** effect. Same mechanic + different number = not unique enough.
 
 **Existing add effects (avoid direct duplicates):**
-ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per HAND REMAINING · per $1 HELD · per DISCARD REMAINING
+ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per MISSING DECK CARD · per HAND REMAINING · per $1 HELD · per DISCARD REMAINING · per CARD IN HAND (scaling) · SURROUNDING (degrading) · ISOLATED cats (no neighbors)
 
 **Existing mul effects (avoid direct duplicates):**
-L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells · ×(unique shape count) · ×(empty BP cells ÷ 4)
+L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · ALL (×8, self-destructs after 1 play) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ALL (×2→growing, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells · ×(unique shape count) · ×(empty BP cells ÷ 4) · ×(discards remaining +1) · ×(cash ÷ 5) · ×N if score ≥ target (growing) · ×4 req: NO DISCARDS REMAINING
 
 A new effect that introduces a new **axis** (connected group, majority, threshold, etc.) is always valid even if phase/scope overlaps.
 
