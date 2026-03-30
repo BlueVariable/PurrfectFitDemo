@@ -453,7 +453,7 @@ function goShop(){
   wi.classList.remove('visible');
   wi.style.display='none';
   // restore treats used this round back to backpack
-  (G.usedTreats||[]).forEach(tdef=>bpAutoPlace(tdef));
+  (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
   G.usedTreats=[];
   // advance round
   G.round++;

@@ -59,6 +59,39 @@ Choose **phase**: `add`, `mul`, or `x`
 - Threshold: "+100 if 5+ cats placed this round"
 - Negative space: "×2 ALL cats if board is less than half full"
 - Underdog: "×4 to the cat with the lowest score"
+- Above-average: "×2 cats whose score exceeds the group average"
+- Isolated: "+N to cats with no adjacent cats"
+
+**Special mechanic patterns (implemented, reuse these patterns):**
+
+**Degrading** (SHOOTING STAR) — starts powerful, weakens each play. Use `G.treatPlayCounts.<id>` to track plays. Parse decrement from `addEf`. Clamp at 0.
+```js
+const plays = G.treatPlayCounts.my_treat || 0;
+const amt = Math.max(0, baseAmt - plays * decrease);
+G.treatPlayCounts.my_treat = plays + 1;
+```
+Sheet Additional Effects: `"Decreases by −N every time played"`
+
+**Self-destructing** (FINAL FEAST) — fires N times then vanishes from backpack. Mark `tdef._expired = true` on the final play; `goShop()` in `scoring.js` already filters these out.
+```js
+const plays = G.treatPlayCounts.my_treat || 0;
+G.treatPlayCounts.my_treat = plays + 1;
+if (plays + 1 >= maxPlays) {
+  const self = ts.find(t => t.cells === p);
+  if (self) self.tdef._expired = true;
+}
+```
+Sheet Additional Effects: `"Self-destructs after N plays"`
+> No changes to `scoring.js` needed — the `_expired` filter is already in `goShop()`.
+
+**Deck-size as stat** (LEAN LARDER) — scale bonus with `G.deck.length` (cards remaining in draw pile). Returns a `bonusMap` so each cat gets the computed flat bonus.
+```js
+const bonus = amt * G.deck.length;
+const bonusMap = {};
+cats.forEach(grp => { bonusMap[grp.gid] = bonus; });
+return { bonusMap };
+```
+Sheet Effect: `"+N per DECK CARD to ALL cats"`
 
 **Declined mechanics — do not propose:**
 - **Diagonal placement** — confusing for players; diagonal alignment is hard to read on the board
@@ -119,10 +152,10 @@ Match shape to theme and rarity — bigger shapes = rarer feels.
 The goal is a **meaningfully different** effect. Same mechanic + different number = not unique enough.
 
 **Existing add effects (avoid direct duplicates):**
-ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL
+ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD (degrading) · per DECK CARD remaining
 
 **Existing mul effects (avoid direct duplicates):**
-L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat
+L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · cats in same COL (scaling)
 
 A new effect that introduces a new **axis** (connected group, majority, threshold, etc.) is always valid even if phase/scope overlaps.
 
