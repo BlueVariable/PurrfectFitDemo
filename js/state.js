@@ -96,6 +96,8 @@ function mkDeck(){
 }
 
 function dealHand(){
+  const noDiscard=G.modifiers&&G.modifiers.split('|').some(m=>m.trim()==='no-discard');
+  G.disc=noDiscard?0:(CFG.discard_count||3);
   G.newCardIndices=new Set();
   while(G.hand.length<(CFG.hand_dealt_count||7)&&G.deck.length>0){
     G.newCardIndices.add(G.hand.length);
