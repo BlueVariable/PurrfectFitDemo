@@ -4,9 +4,10 @@
 // ══════════════════════════════════════════════════════
 let shopPool=[]; // current treat pool shown
 let shopBoughtIds=new Set(); // treats bought this shop visit
+let rerollExtraCost=0; // increments each reroll purchase, resets each round
 // REROLL_COST now comes from CFG.reroll_cost (loaded from sheets)
 const REROLL_COST_DEFAULT=1;
-function getRerollCost(){return CFG.reroll_cost||REROLL_COST_DEFAULT;}
+function getRerollCost(){return (CFG.reroll_cost||REROLL_COST_DEFAULT)+rerollExtraCost;}
 
 function generateShopPool(){
   const available=TDEFS.filter(td=>td.enabled&&!G.purchasedTreatIds.has(td.id));
@@ -21,6 +22,7 @@ function generateShopPool(){
 function rerollTreats(){
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
+  rerollExtraCost++;
   shopPool=generateShopPool();
   renderShopFull();
 }
