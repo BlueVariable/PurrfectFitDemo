@@ -4,6 +4,7 @@
 //  +N to ALL cats, decreases by decrement each play (min 0)
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['shooting_star'] = {
+  isDecreasing: true,
   buildFn(ef, phase, addEf) {
     const baseAmt = extractNum(ef);
     let decrease = 0;

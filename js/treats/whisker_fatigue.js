@@ -4,6 +4,7 @@
 //  +N to SURROUNDING cats, decreases by decrement each play (min 0)
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['whisker_fatigue'] = {
+  isDecreasing: true,
   buildFn(ef, phase, addEf) {
     const baseAmt = extractNum(ef);
     let decrease = 0;

@@ -170,7 +170,10 @@ function treatCurrentEf(td){
   const baseM=td.ef.match(/([\d.]+)/);
   if(!baseM)return null;
   const base=parseFloat(baseM[1]);
-  const cur=Math.round((base+plays*inc)*100)/100;
+  const isDecreasing=TREAT_REGISTRY[td.id]?.isDecreasing;
+  const cur=isDecreasing
+    ?Math.max(0,Math.round((base-plays*inc)*100)/100)
+    :Math.round((base+plays*inc)*100)/100;
   return isMul?`Now: ×${cur}`:`Now: +${cur}`;
 }
 
