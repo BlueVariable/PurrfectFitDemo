@@ -417,6 +417,9 @@ function endScoreSequence(total){
   // Sync score display
   const scoreEl=g('g-score');
   if(scoreEl) scoreEl.textContent=G.score.toLocaleString();
+  // Restore treats used this play back to backpack immediately
+  (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
+  G.usedTreats=[];
   // No popup — go straight to next hand logic
   G.hands--;
   if(G.score>=G.tgt){roundWin();return;}
