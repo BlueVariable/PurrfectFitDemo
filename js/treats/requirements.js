@@ -7,6 +7,18 @@
 // ══════════════════════════════════════════════════════
 const REQUIREMENT_FNS = {
   'NO OTHER TREAT': () => G.treats.length > 1,
+  'NO SAME TYPE ADJACENT': () => {
+    for (const cat of G.cats) {
+      for (const other of G.cats) {
+        if (cat.gid === other.gid || cat.type !== other.type) continue;
+        const adj = cat.cells.some(([r, c]) =>
+          other.cells.some(([r2, c2]) => Math.abs(r - r2) <= 1 && Math.abs(c - c2) <= 1)
+        );
+        if (adj) return true;
+      }
+    }
+    return false;
+  },
   'NEEDS ORANGE':   () => !G.cats.some(c => c.type === 'orange'),
   'ALL SAME TYPE':  () => {
     const types = [...new Set(G.cats.map(c => c.type))];
