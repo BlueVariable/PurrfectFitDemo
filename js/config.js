@@ -175,8 +175,8 @@ function applyConfigFromRaw(raw){
   console.log('[Config] Decks raw CSV:', raw['Decks']?.slice(0,500));
   console.log('[Config] Deck rows parsed:', deckRows.length, deckRows.map(r=>r['Deck ID']));
   DECKS={};
-  deckRows.filter(r=>r['Deck ID']&&String(r['Deck ID']).trim()).forEach(r=>{
-    const id=String(r['Deck ID']).trim();
+  deckRows.filter(r=>(r['Deck ID']||r['v'])&&String(r['Deck ID']||r['v']).trim()).forEach(r=>{
+    const id=String(r['Deck ID']||r['v']).trim();
     const ty=String(r['Cats']||'orange').split(',').map(t=>t.trim().replace(/\([^)]+\)/,'').trim()).filter(Boolean);
     const sh=String(r['Shapes']||'straight').split(',').map(s=>s.trim()).filter(Boolean);
     const name=String(r['Deck Name']||r['Name']||id);
