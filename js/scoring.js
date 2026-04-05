@@ -296,6 +296,8 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
           if(futureBonus>0)logLine+=`: +${futureBonus} buffered`;
         }else if(result.bonus>0){
           logLine+=`: +${extractNum(treat.tdef.ef)} buffered`;
+        }else if(result.scoreBonus!==undefined){
+          logLine+=`: +${result.scoreBonus}`;
         }
       }else if(phase==='mul'){
         if(result.gids&&result.gids.length&&result.m>1)
