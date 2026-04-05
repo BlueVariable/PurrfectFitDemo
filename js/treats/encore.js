@@ -10,6 +10,8 @@ TREAT_REGISTRY['encore'] = {
       if (!pool.length) return { type: 'x', skip: true };
       const target = pool[Math.floor(Math.random() * pool.length)];
       const result = target.tdef.fn(b, cats, ts, target.cells, cs);
+      // If retriggered treat returns a scoreMultiplier (Type B), propagate directly
+      if (result.scoreMultiplier) return { scoreMultiplier: true, m: result.m, copiedFrom: target.tdef, laserCells: p };
       return { type: 'x', subPhase: target.tdef.phase, result, copiedFrom: target.tdef, laserCells: p };
     };
   },

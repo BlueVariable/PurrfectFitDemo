@@ -298,7 +298,8 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         if(result.gids&&result.gids.length&&result.m>1)
           logLine+=`: ×${result.m} (${result.gids.length} cat${result.gids.length!==1?'s':''} ahead)`;
       }else if(phase==='x'){
-        if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
+        if(result.scoreMultiplier&&result.m>1)logLine+=`: copied ${result.copiedFrom?.em||''} ×${result.m}`;
+        else if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
         else if(result.subPhase==='mul'&&result.result?.m>1)logLine+=`: copied ${result.copiedFrom.em} ×${result.result.m}`;
         else if(result.subPhase==='mirror')logLine+=`: mirror +${result.totalBonus||0}`;
         else if(result.luckyGid)logLine+=`: ×4 lucky, ×½ others`;
@@ -316,14 +317,14 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
           flashTreat(seq,boardEl,treat,G.bsc);
           addLogLine(logDiv,logLine);
 
-          if(phase==='mul'&&result.scoreMultiplier){
-            // Type B mul: score slam
+          if(result.scoreMultiplier){
+            // Type B mul: score slam (any phase — x-phase treats like laser/encore/loaded_dice may propagate this)
             if(result.m!==1){
               animateScoreSlam(scoreEl,result.newTotal,baseScoreBeforeHand);
               displayedScore=result.newTotal;
             }
-          }else if(phase==='add'&&result.scoreBonus!==undefined){
-            // Type B add: floating badge
+          }else if(result.scoreBonus!==undefined){
+            // Type B add: floating badge (any phase — e.g. big_bite is x-phase)
             const sign=result.scoreBonus>=0?'+':'';
             animateScoreFloatBadge(seq,scoreEl,sign+result.scoreBonus,baseScoreBeforeHand,result.newTotal);
             displayedScore=result.newTotal;
