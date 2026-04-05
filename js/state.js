@@ -80,15 +80,24 @@ function mkDeck(){
   console.log('[mkDeck] deckId:',G.deckId,'ty:',cfg.ty,'sh:',cfg.sh);
   console.log('[mkDeck] COLS:',JSON.stringify(COLS),'EMS:',JSON.stringify(EMS));
   G.deck=[];
-  // Filter out 1x1 shapes for cats
   const validShapes=Object.entries(CSHAPES).filter(([k,v])=>{
     const total=v.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0);return total>1;
   }).map(([k])=>k);
+  // Distribute shapes among types via round-robin: type i gets sh[i], sh[i+tyLen], ...
+  const tyLen=cfg.ty.length;
+  const typeShapes=cfg.ty.map((_,ti)=>{
+    const chunk=cfg.sh.filter((_,si)=>si%tyLen===ti);
+    return chunk.length?chunk:[cfg.sh[ti%cfg.sh.length]];
+  });
+  const typeCounts=cfg.ty.map(()=>0);
   for(let i=0;i<(CFG.deck_card_count||30);i++){
-    const type=cfg.ty[i%cfg.ty.length];
-    let shape=cfg.sh[i%cfg.sh.length];
+    const ti=i%tyLen;
+    const type=cfg.ty[ti];
+    const shapes=typeShapes[ti];
+    const cnt=typeCounts[ti]++;
+    let shape=shapes[cnt%shapes.length];
     if(!validShapes.includes(shape)||CSHAPES[shape].reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0)<=1)
-      shape=validShapes[i%validShapes.length];
+      shape=validShapes[cnt%validShapes.length];
     G.deck.push({id:i+Date.now(),name:cap(type)+' Cat',type,shape,
       cells:CSHAPES[shape],col:COLS[type],em:EMS[type]});
   }
