@@ -273,7 +273,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
               setTimeout(()=>{lbl.classList.remove('boosted');lbl.style.background='';},700);
             }
           }
-          animateCounter(capturedTotal,280);
+          animateCounter(capturedTotal,500);
           addLogLine(logDiv,`🐱 +${score}${desc}`);
         }
       });
@@ -345,7 +345,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
 
   // Final step: board bonus + total banner
   const finalCatTotal=runningTotal;
-  const finalEndDelay=(boardBonus>0?450:0)+750;
+  const finalEndDelay=(boardBonus>0?700:0)+1200;
   steps.push({
     kind:'final',
     explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
@@ -353,13 +353,13 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
     run(){
       if(boardBonus>0){
         addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
-        animateCounter(finalCatTotal+boardBonus,400);
+        animateCounter(finalCatTotal+boardBonus,700);
       }
       setTimeout(()=>{
         addLogLine(logDiv,`🏆 Total: +${total.toLocaleString()}`);
         banner.textContent='+'+total.toLocaleString();
         banner.classList.add('show');
-      },boardBonus>0?450:150);
+      },boardBonus>0?700:250);
     },
     isLast:true
   });
@@ -370,12 +370,12 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
     if(stepIdx>=steps.length){endScoreSequence(total);return;}
     const step=steps[stepIdx];
     if(stepExplain)stepExplain.textContent=step.explain||'';
-    setTimeout(()=>step.run(),80);
+    setTimeout(()=>step.run(),120);
     if(DEV_MODE){
       nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
       nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
     }else{
-      const delay=step.isLast?(step.endDelay||1800):step.kind==='treat'?300:450;
+      const delay=step.isLast?(step.endDelay||2400):step.kind==='treat'?550:750;
       if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
       else setTimeout(runNextStep,delay);
     }
