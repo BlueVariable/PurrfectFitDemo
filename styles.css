@@ -492,7 +492,7 @@ body::before{display:none;}
 .tc-shape{display:flex;justify-content:center;flex-shrink:0;}
 .tc-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;align-items:center;}
 .tc-nm{font-family:'Fredoka One',cursive;font-size:12px;color:#1a1a2a;line-height:1.2;}
-.tc-ef{font-size:11px;color:#7a8090;line-height:1.4;font-weight:800;}
+.tc-ef{font-size:13px;color:#7a8090;line-height:1.4;font-weight:800;}
 .tc-right{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
 /* coin price badge */
 .tc-price{

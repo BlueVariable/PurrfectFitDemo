@@ -183,8 +183,8 @@ function renderTreatsRow(){
       <div class="tc-info">
         <div class="tc-nm">${td.nm}</div>
         <div class="tc-ef">${td.ef}</div>
-        ${td.addEf?`<div style="font-size:7px;color:#9a7ed7;font-weight:800;margin-top:1px;">${td.addEf}</div>`:''}
-        ${td.req?`<div style="font-size:7px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
+        ${td.addEf?`<div style="font-size:9px;color:#9a7ed7;font-weight:800;margin-top:1px;">${td.addEf}</div>`:''}
+        ${td.req?`<div style="font-size:9px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
         ${noSpc&&!broke?'<div style="font-size:7px;color:var(--re);">Bag full!</div>':''}
       </div>
       <div class="tc-right">
