@@ -10,7 +10,7 @@ const REROLL_COST_DEFAULT=1;
 function getRerollCost(){return (CFG.reroll_cost||REROLL_COST_DEFAULT)+rerollExtraCost;}
 
 function generateShopPool(){
-  const available=TDEFS.filter(td=>td.enabled&&!G.purchasedTreatIds.has(td.id));
+  const available=TDEFS.filter(td=>td.enabled);
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
   const budget=G.cash+totalSellable;
   const affordable=available.filter(td=>td.pr<=budget);
