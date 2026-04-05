@@ -117,7 +117,7 @@ function showShopBPTip(e,r,c){
   const td=bd.tdef;
   const tip=g('board-tip');
   const shopBpCur=treatCurrentEf(td);
-  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:9px;color:#9a7ed7;margin-top:2px;">${td.addEf}${shopBpCur?` <span style="color:#e040a0">${shopBpCur}</span>`:''}</div>`:''}${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
+  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:12px;color:#9a7ed7;margin-top:2px;">${td.addEf}${shopBpCur?` <span style="color:#e040a0">${shopBpCur}</span>`:''}</div>`:''}${td.req?`<div style="font-size:12px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
   tip.style.display='block';
   moveShopBPTip(e);
 }
@@ -183,8 +183,8 @@ function renderTreatsRow(){
       <div class="tc-info">
         <div class="tc-nm">${td.nm}</div>
         <div class="tc-ef">${td.ef}</div>
-        ${td.addEf?`<div style="font-size:9px;color:#9a7ed7;font-weight:800;margin-top:1px;">${td.addEf}</div>`:''}
-        ${td.req?`<div style="font-size:9px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
+        ${td.addEf?`<div style="font-size:12px;color:#9a7ed7;font-weight:800;margin-top:1px;">${td.addEf}</div>`:''}
+        ${td.req?`<div style="font-size:12px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
         ${noSpc&&!broke?'<div style="font-size:7px;color:var(--re);">Bag full!</div>':''}
       </div>
       <div class="tc-right">
