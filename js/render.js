@@ -8,7 +8,8 @@ function openDeckPopup(){
   const grid=g('deck-pop-grid');
   grid.innerHTML='';
   if(deck.length===0){grid.innerHTML='<div style="color:var(--mu);font-size:13px;grid-column:1/-1;text-align:center;padding:12px;">Deck is empty!</div>';g('ov-deck').classList.remove('off');return;}
-  deck.forEach(cat=>{
+  const sorted=[...deck].sort((a,b)=>a.type<b.type?-1:a.type>b.type?1:0);
+  sorted.forEach(cat=>{
     const d=document.createElement('div');
     d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
     d.innerHTML=shpHTML(cat.cells,cat.col,10)+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
