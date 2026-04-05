@@ -1,7 +1,7 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: catnado
-//  ×N ALL cats, increases by increment each time played
+//  ×N score multiplier, increases by increment each time played
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['catnado'] = {
   buildFn(ef, phase, addEf) {
@@ -13,9 +13,9 @@ TREAT_REGISTRY['catnado'] = {
     }
     return (b, cats, ts, p, cs) => {
       const plays = G.treatPlayCounts.catnado || 0;
-      const m = baseM + plays * increment;
+      const m = Math.round((baseM + plays * increment) * 100) / 100;
       G.treatPlayCounts.catnado = plays + 1;
-      return allMulCS(cats, cs, m);
+      return { scoreMultiplier: true, m };
     };
   },
 };

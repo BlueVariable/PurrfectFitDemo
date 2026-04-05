@@ -30,6 +30,7 @@ function doFit(){
   const scoredGids=new Set();
   const treatBuffer=[]; // {treat, result, phase} — effects waiting to apply to future cats
   const scanResults=[]; // passed to animation
+  let runningTotal=0;
 
   for(const item of allPieces){
     if(item.kind==='cat'){
@@ -46,6 +47,7 @@ function doFit(){
       const score=Math.round((base+addBonus)*mulFactor);
       catScores[cat.gid]=score;
       scoredGids.add(cat.gid);
+      runningTotal+=score;
       scanResults.push({kind:'cat',piece:cat,score,base,addBonus,mulFactor});
     }else{
       const treat=item.piece;
@@ -57,13 +59,29 @@ function doFit(){
       const futureCats=G.cats.filter(c=>!scoredGids.has(c.gid));
       const csCopy=Object.assign({},catScores);
       const result=treat.tdef.fn(G.board,futureCats,G.treats,treat.cells,csCopy)||{};
-      treatBuffer.push({treat,result,phase:treat.tdef.phase});
+
+      if(result.scoreMultiplier){
+        // Type B mul: apply to running total directly, do not buffer
+        result.prevTotal=runningTotal;
+        runningTotal=Math.round(runningTotal*result.m);
+        result.newTotal=runningTotal;
+      }else if(result.scoreBonus!==undefined){
+        // Type B add: apply to running total directly, do not buffer
+        result.prevTotal=runningTotal;
+        runningTotal+=result.scoreBonus;
+        result.newTotal=runningTotal;
+      }else{
+        // Type A: buffer for future cats; compute affectedGids for animation
+        if(treat.tdef.phase==='add'){
+          result._affectedGids=futureCats
+            .filter(cat=>getAddBonusForCat({treat,result,phase:treat.tdef.phase},cat)>0)
+            .map(cat=>cat.gid);
+        }
+        treatBuffer.push({treat,result,phase:treat.tdef.phase});
+      }
       scanResults.push({kind:'treat',piece:treat,result,phase:treat.tdef.phase});
     }
   }
-
-  // Sum finalized cat scores
-  const catTotal=Object.values(catScores).reduce((a,b)=>a+b,0);
 
   // Board fill bonus
   const filledCells=G.board.flat().filter(c=>c.filled).length;
@@ -71,7 +89,7 @@ function doFit(){
   const boardFull=filledCells===totalBoardCells;
   const boardBonus=boardFull?totalBoardCells*(CFG.board_fill_bonus||5):0;
 
-  const total=catTotal+boardBonus;
+  const total=runningTotal+boardBonus;
   G.lastScore=total;
 
   const catsSnapshot=[...G.cats];
@@ -297,6 +315,25 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         run(){
           flashTreat(seq,boardEl,treat,G.bsc);
           addLogLine(logDiv,logLine);
+
+          if(phase==='mul'&&result.scoreMultiplier){
+            // Type B mul: score slam
+            if(result.m!==1){
+              animateScoreSlam(scoreEl,result.newTotal,baseScoreBeforeHand);
+              displayedScore=result.newTotal;
+            }
+          }else if(phase==='add'&&result.scoreBonus!==undefined){
+            // Type B add: floating badge
+            const sign=result.scoreBonus>=0?'+':'';
+            animateScoreFloatBadge(seq,scoreEl,sign+result.scoreBonus,baseScoreBeforeHand,result.newTotal);
+            displayedScore=result.newTotal;
+          }else if(phase==='mul'&&result.gids&&result.gids.length){
+            // Type A mul: gold pulse on matching cats
+            flashCatCells(seq,boardEl,result.gids,catsSnapshot,G.bsc,'mul');
+          }else if(phase==='add'&&result._affectedGids&&result._affectedGids.length){
+            // Type A add: cyan pulse on affected cats
+            flashCatCells(seq,boardEl,result._affectedGids,catsSnapshot,G.bsc,'add');
+          }
         }
       });
     }
@@ -355,6 +392,64 @@ function flashTreat(seq,boardEl,treat,bsc){
     setTimeout(()=>flash.style.opacity='0',600);
     setTimeout(()=>flash.remove(),900);
   });
+}
+
+function flashCatCells(seq,boardEl,gids,catsSnapshot,bsc,phase){
+  const pulseClass=phase==='add'?'cat-pulse-add':'cat-pulse-mul';
+  const badgeClass=phase==='add'?'add':'mul';
+  gids.forEach(gid=>{
+    const grp=catsSnapshot.find(c=>c.gid===gid);
+    if(!grp)return;
+    grp.cells.forEach(([r,c])=>{
+      const el=boardEl.children[r*bsc+c];
+      if(!el)return;
+      el.classList.remove(pulseClass);
+      void el.offsetWidth;
+      el.classList.add(pulseClass);
+      setTimeout(()=>el.classList.remove(pulseClass),700);
+    });
+    // Badge on topmost-leftmost cell
+    const tcell=grp.cells.reduce((best,[r,c])=>(r<best[0]||(r===best[0]&&c<best[1]))?[r,c]:best,[Infinity,Infinity]);
+    const el=boardEl.children[tcell[0]*bsc+tcell[1]];
+    if(!el)return;
+    const rect=el.getBoundingClientRect();
+    const badge=document.createElement('div');
+    badge.className='cat-bonus-badge '+badgeClass;
+    const label=phase==='mul'?'×':'+';
+    badge.textContent=label;
+    badge.style.left=(rect.right-11)+'px';
+    badge.style.top=(rect.top-11)+'px';
+    seq.appendChild(badge);
+    setTimeout(()=>badge.classList.add('show'),20);
+    setTimeout(()=>badge.classList.remove('show'),550);
+    setTimeout(()=>badge.remove(),800);
+  });
+}
+
+function animateScoreSlam(scoreEl,newVal,baseScoreBeforeHand){
+  if(!scoreEl)return;
+  scoreEl.classList.add('score-slam-out');
+  setTimeout(()=>{
+    scoreEl.classList.remove('score-slam-out');
+    scoreEl.textContent=(baseScoreBeforeHand+newVal).toLocaleString();
+    scoreEl.classList.add('score-slam-in');
+    setTimeout(()=>scoreEl.classList.remove('score-slam-in'),420);
+  },220);
+}
+
+function animateScoreFloatBadge(seq,scoreEl,text,baseScoreBeforeHand,newVal){
+  if(!scoreEl)return;
+  scoreEl.style.color='#38c0c0';
+  scoreEl.textContent=(baseScoreBeforeHand+newVal).toLocaleString();
+  setTimeout(()=>{scoreEl.style.color='';},600);
+  const rect=scoreEl.getBoundingClientRect();
+  const badge=document.createElement('div');
+  badge.className='score-float-badge';
+  badge.textContent=text;
+  badge.style.left=(rect.left+rect.width/2)+'px';
+  badge.style.top=(rect.bottom-4)+'px';
+  seq.appendChild(badge);
+  setTimeout(()=>badge.remove(),950);
 }
 
 function addLogLine(parent,text){
