@@ -27,7 +27,9 @@
       "WebFetch(domain:balatrogame.fandom.com)",
       "WebFetch(domain:balatrowiki.org)",
       "WebFetch(domain:games.gg)",
-      "mcp__google-sheets__sheets_batch_update_values"
+      "mcp__google-sheets__sheets_batch_update_values",
+      "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/scripts/start-server.sh:*)",
+      "Bash(bash:*)"
     ]
   },
   "enabledPlugins": {

@@ -1,0 +1,204 @@
+<h2>Add treat animations</h2>
+<p class="subtitle">Two sub-questions. Scroll down for both.</p>
+
+<style>
+  .section-header {
+    font-family:'Fredoka One',cursive,sans-serif;
+    font-size:16px; color:#fff; margin:28px 0 4px;
+    border-bottom:2px solid rgba(255,255,255,.12); padding-bottom:8px;
+  }
+  .demo-row { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:16px 0; }
+  .demo-box {
+    background:#1a1a2e; border-radius:14px; padding:18px;
+    width:200px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  .demo-label { font-family:'Fredoka One',cursive,sans-serif; font-size:12px; color:#aab; letter-spacing:1px; text-transform:uppercase; }
+  .mini-board {
+    display:grid; grid-template-columns:repeat(4,36px); grid-template-rows:repeat(3,36px);
+    gap:4px; width:fit-content;
+  }
+  .mc { width:36px;height:36px;border-radius:6px;background:#2a2a3e;border:2px solid #3a3a5e;
+        display:flex;align-items:center;justify-content:center;font-size:16px;position:relative;overflow:visible; }
+  .mc.cat-a { background:#f5a623bb;border-color:#f5a623; }
+  .mc.cat-b { background:#7ed36fbb;border-color:#7ed36f; }
+  .mc.cat-c { background:#5b8cffbb;border-color:#5b8cff; }
+  .mc.treat  { background:#38c0c0bb;border-color:#38c0c0; }
+
+  .badge {
+    position:absolute; top:-8px; right:-8px;
+    font-family:'Fredoka One',cursive; font-size:10px;
+    border-radius:50%; width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,.4); z-index:10;
+  }
+  .badge-gold { background:#f5c200; color:#1a1a2e; }
+  .badge-green { background:#5de875; color:#1a1a2e; }
+  .badge-cyan  { background:#38c0c0; color:#1a1a2e; }
+
+  /* Add Type A — Option A: same gold as mul */
+  @keyframes cat-pulse {
+    0%   { box-shadow:none; transform:scale(1); }
+    40%  { box-shadow:0 0 0 4px var(--glow), 0 0 16px 4px var(--glowA); transform:scale(1.16); }
+    100% { box-shadow:none; transform:scale(1); }
+  }
+  .gold-pulse { --glow:#f5c200; --glowA:#f5c200aa; animation:cat-pulse 1.2s ease-in-out infinite; }
+  .green-pulse { --glow:#5de875; --glowA:#5de875aa; animation:cat-pulse 1.2s ease-in-out infinite; }
+  .cyan-pulse  { --glow:#38c0c0; --glowA:#38c0c0aa; animation:cat-pulse 1.2s ease-in-out infinite; }
+  .gold-pulse:nth-child(2),.green-pulse:nth-child(2),.cyan-pulse:nth-child(2) { animation-delay:.15s; }
+  .gold-pulse:nth-child(5),.green-pulse:nth-child(5),.cyan-pulse:nth-child(5) { animation-delay:.3s; }
+
+  /* Add Type B score counter */
+  .score-wrap {
+    background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.12);
+    border-radius:12px; padding:8px 16px; text-align:center; width:100%; box-sizing:border-box; position:relative;
+  }
+  .score-label { font-size:9px; color:#7a8090; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
+  .score-num { font-family:'Fredoka One',cursive; font-size:30px; color:#fff; line-height:1; display:block; }
+
+  /* Type B Option X: floating +N badge (light) */
+  @keyframes badge-float {
+    0%   { opacity:0; transform:translateX(-50%) translateY(4px) scale(.7); }
+    35%  { opacity:1; transform:translateX(-50%) translateY(-18px) scale(1.05); }
+    65%  { opacity:1; transform:translateX(-50%) translateY(-22px) scale(1); }
+    100% { opacity:0; transform:translateX(-50%) translateY(-36px) scale(.85); }
+  }
+  @keyframes score-glow-green {
+    0%,100% { color:#fff; }
+    35%     { color:#5de875; filter:drop-shadow(0 0 10px #5de875); transform:scale(1.1); }
+  }
+  .badge-float-el {
+    position:absolute; left:50%; bottom:10px;
+    background:#5de875; color:#1a1a2e;
+    font-family:'Fredoka One',cursive; font-size:13px;
+    border-radius:20px; padding:2px 10px;
+    pointer-events:none; white-space:nowrap;
+    box-shadow:0 2px 6px rgba(0,0,0,.3);
+    animation:badge-float 1.6s ease-in-out infinite;
+  }
+  .score-glow-green { animation:score-glow-green 1.6s ease-in-out infinite; }
+
+  /* Type B Option Y: same dramatic slam as mul (old out, new in) */
+  @keyframes num-out { 0%,40%{opacity:1;transform:scale(1)} 55%{opacity:0;transform:scale(.7)} 100%{opacity:0} }
+  @keyframes num-in  { 0%,45%{opacity:0;transform:scale(1.6);color:#5de875} 65%{opacity:1;transform:scale(.95);color:#5de875;filter:drop-shadow(0 0 10px #5de875)} 100%{opacity:1;transform:scale(1);color:#fff;filter:none} }
+  .num-out { animation:num-out 1.8s ease-in-out infinite; }
+  .num-in  { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%); font-family:'Fredoka One',cursive;font-size:30px;line-height:1;color:#fff; animation:num-in 1.8s ease-in-out infinite; }
+
+  .desc-text { font-size:11px; color:#8890aa; text-align:center; line-height:1.5; }
+  .divider { width:100%; border:none; border-top:2px solid rgba(255,255,255,.08); margin:8px 0 0; }
+</style>
+
+<!-- ── PART 1: Add Type A color ── -->
+<div class="section-header">Part 1 — Add Type A: what color should the per-cat pulse be?</div>
+<p class="subtitle" style="margin-top:4px">Mul Type A uses gold. Should Add Type A use a different color to distinguish + from ×?</p>
+
+<div class="demo-row">
+  <div class="demo-box">
+    <div class="demo-label">Same gold</div>
+    <div class="mini-board">
+      <div class="mc cat-a gold-pulse">🐱<span class="badge badge-gold">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc cat-a gold-pulse">🐱<span class="badge badge-gold">+3</span></div>
+      <div class="mc"></div>
+      <div class="mc treat">🌿</div>
+      <div class="mc cat-a gold-pulse">🐱<span class="badge badge-gold">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+    </div>
+    <p class="desc-text">Consistent look. No color distinction between add and mul.</p>
+  </div>
+  <div class="demo-box">
+    <div class="demo-label">Green</div>
+    <div class="mini-board">
+      <div class="mc cat-a green-pulse">🐱<span class="badge badge-green">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc cat-a green-pulse">🐱<span class="badge badge-green">+3</span></div>
+      <div class="mc"></div>
+      <div class="mc treat">🌿</div>
+      <div class="mc cat-a green-pulse">🐱<span class="badge badge-green">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+    </div>
+    <p class="desc-text">Green = add, gold = mul. Clear at a glance which type fired.</p>
+  </div>
+  <div class="demo-box">
+    <div class="demo-label">Cyan</div>
+    <div class="mini-board">
+      <div class="mc cat-a cyan-pulse">🐱<span class="badge badge-cyan">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc cat-a cyan-pulse">🐱<span class="badge badge-cyan">+3</span></div>
+      <div class="mc"></div>
+      <div class="mc treat">🌿</div>
+      <div class="mc cat-a cyan-pulse">🐱<span class="badge badge-cyan">+3</span></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+    </div>
+    <p class="desc-text">Cyan. Distinct from both gold (mul) and general UI colors.</p>
+  </div>
+</div>
+
+<div class="options" data-multiselect style="max-width:520px;margin:0 auto 0;">
+  <div class="option" data-choice="gold" onclick="toggleSelect(this)">
+    <div class="letter">★</div>
+    <div class="content"><h3>Same gold for both add and mul</h3></div>
+  </div>
+  <div class="option" data-choice="green" onclick="toggleSelect(this)">
+    <div class="letter">★</div>
+    <div class="content"><h3>Green for add, gold for mul</h3></div>
+  </div>
+  <div class="option" data-choice="cyan" onclick="toggleSelect(this)">
+    <div class="letter">★</div>
+    <div class="content"><h3>Cyan for add, gold for mul</h3></div>
+  </div>
+</div>
+
+<hr class="divider" style="margin:28px 0 0;">
+
+<!-- ── PART 2: Add Type B animation ── -->
+<div class="section-header">Part 2 — Add Type B: how dramatic should the score counter animation be?</div>
+<p class="subtitle" style="margin-top:4px">Mul Type B uses the dramatic old-number-out / new-number-slam. Should Add Type B match that intensity, or be lighter since + is less impactful than ×?</p>
+
+<div class="demo-row">
+  <div class="demo-box">
+    <div class="demo-label">Light (floating badge)</div>
+    <div class="mc treat" style="width:44px;height:44px;border-radius:10px;font-size:24px;border-color:#38c0c0;background:#38c0c0bb;box-shadow:0 0 0 3px #38c0c088;">🍖</div>
+    <div class="score-wrap" style="position:relative;">
+      <div class="score-label">Score</div>
+      <span class="score-num score-glow-green">280</span>
+      <div class="badge-float-el">+85</div>
+    </div>
+    <p class="desc-text">Score glows green, +N badge floats up. Subtle — matches the lighter impact of addition.</p>
+  </div>
+  <div class="demo-box">
+    <div class="demo-label">Same dramatic slam</div>
+    <div class="mc treat" style="width:44px;height:44px;border-radius:10px;font-size:24px;border-color:#38c0c0;background:#38c0c0bb;box-shadow:0 0 0 3px #38c0c088;">🍖</div>
+    <div class="score-wrap" style="min-height:60px;position:relative;">
+      <div class="score-label">Score</div>
+      <span class="score-num num-out">280</span>
+      <span class="num-in">365</span>
+    </div>
+    <p class="desc-text">Old number out, new number slams in green. Same weight as mul Type B.</p>
+  </div>
+</div>
+
+<div class="options" style="max-width:440px;margin:0 auto;">
+  <div class="option" data-choice="light" onclick="toggleSelect(this)">
+    <div class="letter">X</div>
+    <div class="content"><h3>Light floating badge</h3><p>Keeps add visually lighter than mul</p></div>
+  </div>
+  <div class="option" data-choice="slam" onclick="toggleSelect(this)">
+    <div class="letter">Y</div>
+    <div class="content"><h3>Same dramatic slam</h3><p>Consistent treatment for all Type B treats</p></div>
+  </div>
+</div>

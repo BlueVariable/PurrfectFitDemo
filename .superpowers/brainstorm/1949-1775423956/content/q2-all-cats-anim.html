@@ -1,0 +1,236 @@
+<h2>When a "×N ALL cats" treat fires…</h2>
+<p class="subtitle">e.g., Power Nap ×2 ALL cats — all cats are affected. How should this feel <em>different</em> from Option A?</p>
+
+<style>
+  .demo-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 24px 0;
+  }
+  .demo-box {
+    background: #1a1a2e;
+    border-radius: 14px;
+    padding: 18px;
+    width: 240px;
+    flex-shrink: 0;
+  }
+  .demo-label {
+    font-family: 'Fredoka One', cursive, sans-serif;
+    font-size: 13px;
+    color: #aab;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .mini-board {
+    display: grid;
+    grid-template-columns: repeat(4, 40px);
+    grid-template-rows: repeat(4, 40px);
+    gap: 4px;
+    margin: 0 auto;
+    width: fit-content;
+    position: relative;
+  }
+  .mc { width: 40px; height: 40px; border-radius: 6px; background: #2a2a3e; border: 2px solid #3a3a5e; display: flex; align-items: center; justify-content: center; font-size: 18px; position: relative; overflow: visible; }
+  .mc.cat-a { background: #f5a623bb; border-color: #f5a623; }
+  .mc.cat-b { background: #7ed36fbb; border-color: #7ed36f; }
+  .mc.cat-c { background: #5b8cffbb; border-color: #5b8cff; }
+  .mc.treat { background: #c060f0bb; border-color: #c060f0; }
+
+  /* Option A (reminder — targeted) */
+  @keyframes cat-pulse-a {
+    0%   { box-shadow: none; transform: scale(1); }
+    40%  { box-shadow: 0 0 0 4px #f5c200, 0 0 18px 4px #f5c200aa; transform: scale(1.18); }
+    100% { box-shadow: none; transform: scale(1); }
+  }
+  .badge-mul {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #f5c200;
+    color: #1a1a2e;
+    font-family: 'Fredoka One', cursive;
+    font-size: 10px;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    z-index: 10;
+  }
+
+  /* Option B: wave ripple that sweeps across ALL cats left→right */
+  @keyframes wave-cat {
+    0%   { box-shadow: none; transform: scale(1); filter: brightness(1); }
+    50%  { box-shadow: 0 0 0 4px #a78bfa, 0 0 20px 4px #a78bfaaa; transform: scale(1.12); filter: brightness(1.4); }
+    100% { box-shadow: none; transform: scale(1); filter: brightness(1); }
+  }
+  .anim-b .mc.cat-a,
+  .anim-b .mc.cat-b,
+  .anim-b .mc.cat-c {
+    animation: wave-cat 1.4s ease-in-out infinite;
+  }
+  /* stagger by board position */
+  .anim-b .pos-01 { animation-delay: 0.05s; }
+  .anim-b .pos-10 { animation-delay: 0.1s; }
+  .anim-b .pos-12 { animation-delay: 0.15s; }
+  .anim-b .pos-13 { animation-delay: 0.2s; }
+  .anim-b .pos-20 { animation-delay: 0.25s; }
+  .anim-b .pos-31 { animation-delay: 0.3s; }
+  .anim-b .pos-32 { animation-delay: 0.35s; }
+  .badge-all {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #a78bfa;
+    color: #fff;
+    font-family: 'Fredoka One', cursive;
+    font-size: 10px;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    z-index: 10;
+  }
+
+  /* Option C: board-wide gold wash + big centered ×N overlay */
+  @keyframes board-glow-wash {
+    0%   { box-shadow: none; transform: scale(1); }
+    45%  { box-shadow: inset 0 0 12px 4px rgba(245,194,0,.35), 0 0 14px 3px rgba(245,194,0,.3); transform: scale(1.06); }
+    100% { box-shadow: none; transform: scale(1); }
+  }
+  .anim-c .mc.cat-a,
+  .anim-c .mc.cat-b,
+  .anim-c .mc.cat-c {
+    animation: board-glow-wash 1.4s ease-in-out infinite;
+  }
+  .anim-c .pos-01 { animation-delay: 0s; }
+  .anim-c .pos-10 { animation-delay: 0.07s; }
+  .anim-c .pos-12 { animation-delay: 0.14s; }
+  .anim-c .pos-13 { animation-delay: 0.21s; }
+  .anim-c .pos-20 { animation-delay: 0.28s; }
+  .anim-c .pos-31 { animation-delay: 0.35s; }
+  .anim-c .pos-32 { animation-delay: 0.42s; }
+  .board-overlay-mul {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    z-index: 20;
+  }
+  .board-mul-label {
+    font-family: 'Fredoka One', cursive;
+    font-size: 32px;
+    color: #f5c200;
+    text-shadow: 0 0 20px #f5c200, 0 2px 0 rgba(0,0,0,.5);
+    letter-spacing: 2px;
+  }
+  @keyframes mul-label-pulse {
+    0%,100% { transform: scale(1); opacity: .9; }
+    50%      { transform: scale(1.15); opacity: 1; }
+  }
+  .anim-c .board-mul-label { animation: mul-label-pulse 1.4s ease-in-out infinite; }
+
+  .desc-text {
+    font-size: 12px;
+    color: #8890aa;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  .reminder-box {
+    background: rgba(245,194,0,.08);
+    border: 1.5px solid rgba(245,194,0,.25);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin: 0 auto 20px;
+    max-width: 520px;
+    font-size: 12px;
+    color: #c8b860;
+    text-align: center;
+  }
+</style>
+
+<div class="reminder-box">
+  Reminder — Option A (chosen): specific-cat treats pulse each affected cat gold with a ×N badge.
+  The ALL-cats animation should feel <strong>bigger / more sweeping</strong> to signal universality.
+</div>
+
+<div class="demo-row">
+
+  <!-- Option B: purple wave ripple across all cats -->
+  <div class="demo-box anim-b">
+    <div class="demo-label">Option B</div>
+    <div class="mini-board">
+      <div class="mc pos-00"></div>
+      <div class="mc cat-b pos-01">🐱<span class="badge-all">×2</span></div>
+      <div class="mc pos-02"></div>
+      <div class="mc pos-03"></div>
+
+      <div class="mc cat-a pos-10">🐱<span class="badge-all">×2</span></div>
+      <div class="mc cat-a pos-11"></div>
+      <div class="mc cat-a pos-12">🐱<span class="badge-all">×2</span></div>
+      <div class="mc cat-c pos-13">🐱<span class="badge-all">×2</span></div>
+
+      <div class="mc cat-c pos-20">🐱<span class="badge-all">×2</span></div>
+      <div class="mc pos-21"></div>
+      <div class="mc treat pos-22">😴</div>
+      <div class="mc pos-23"></div>
+
+      <div class="mc pos-30"></div>
+      <div class="mc cat-b pos-31">🐱<span class="badge-all">×2</span></div>
+      <div class="mc cat-b pos-32">🐱<span class="badge-all">×2</span></div>
+      <div class="mc pos-33"></div>
+    </div>
+    <p class="desc-text">All cats ripple in purple/violet (different color from gold). Same badge style as Option A but universal — every cat lights up in a staggered wave.</p>
+  </div>
+
+  <!-- Option C: gold board-wide wash + centered ×N label -->
+  <div class="demo-box anim-c">
+    <div class="demo-label">Option C</div>
+    <div class="mini-board">
+      <div class="mc pos-00"></div>
+      <div class="mc cat-b pos-01">🐱</div>
+      <div class="mc pos-02"></div>
+      <div class="mc pos-03"></div>
+
+      <div class="mc cat-a pos-10">🐱</div>
+      <div class="mc cat-a pos-11"></div>
+      <div class="mc cat-a pos-12">🐱</div>
+      <div class="mc cat-c pos-13">🐱</div>
+
+      <div class="mc cat-c pos-20">🐱</div>
+      <div class="mc pos-21"></div>
+      <div class="mc treat pos-22">😴</div>
+      <div class="mc pos-23"></div>
+
+      <div class="mc pos-30"></div>
+      <div class="mc cat-b pos-31">🐱</div>
+      <div class="mc cat-b pos-32">🐱</div>
+      <div class="mc pos-33"></div>
+
+      <div class="board-overlay-mul">
+        <span class="board-mul-label">× 2</span>
+      </div>
+    </div>
+    <p class="desc-text">All cats glow gold simultaneously + a large ×2 label floats over the whole board. No per-cat badge — the multiplier is one big board-level event.</p>
+  </div>
+
+</div>
+
+<div class="options" style="max-width:520px;margin:0 auto;">
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Purple wave — all cats, same badge style</h3>
+      <p>Same feel as Option A but a different color signals "everyone is affected." Staggered ripple across all cats.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Gold board wash + big ×N overlay</h3>
+      <p>All cat cells glow gold at once, with a large multiplier label floating over the board. More dramatic — feels like a board-wide event rather than per-cat.</p>
+    </div>
+  </div>
+</div>

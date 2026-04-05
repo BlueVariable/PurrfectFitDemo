@@ -1,0 +1,162 @@
+<h2>Type B: "×N" score multiplier animation</h2>
+<p class="subtitle">e.g., Lone Kitty ×2 fires when score is 120 so far → becomes 240. How should this look?</p>
+
+<style>
+  .demo-row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin:24px 0; }
+  .demo-box {
+    background:#1a1a2e; border-radius:14px; padding:20px;
+    width:220px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .demo-label { font-family:'Fredoka One',cursive,sans-serif; font-size:13px; color:#aab; letter-spacing:1px; text-transform:uppercase; }
+
+  /* Shared score display */
+  .score-wrap {
+    background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.12);
+    border-radius:12px; padding:10px 20px; text-align:center; width:100%; box-sizing:border-box; position:relative;
+  }
+  .score-label { font-size:10px; color:#7a8090; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
+  .score-num { font-family:'Fredoka One',cursive; font-size:36px; color:#fff; line-height:1; }
+
+  /* Treat cell */
+  .treat-cell {
+    width:52px; height:52px; border-radius:10px;
+    background:#c060f0bb; border:2px solid #c060f0;
+    display:flex; align-items:center; justify-content:center; font-size:28px;
+    box-shadow:0 0 0 3px #c060f088, 0 0 14px 4px #c060f055;
+  }
+
+  /* Option A: score counter flashes + ×N badge slides up from number */
+  @keyframes score-flash-a {
+    0%   { color:#fff; transform:scale(1); }
+    30%  { color:#f5c200; transform:scale(1.22); filter:drop-shadow(0 0 12px #f5c200); }
+    60%  { color:#f5c200; transform:scale(1.18); }
+    100% { color:#fff; transform:scale(1); }
+  }
+  @keyframes mul-badge-up {
+    0%   { opacity:0; transform:translateX(-50%) translateY(8px) scale(.6); }
+    40%  { opacity:1; transform:translateX(-50%) translateY(-24px) scale(1.1); }
+    70%  { opacity:1; transform:translateX(-50%) translateY(-28px) scale(1); }
+    100% { opacity:0; transform:translateX(-50%) translateY(-44px) scale(.8); }
+  }
+  .anim-a .score-num { animation:score-flash-a 1.6s ease-in-out infinite; }
+  .badge-floating {
+    position:absolute; left:50%; bottom:10px;
+    background:#f5c200; color:#1a1a2e;
+    font-family:'Fredoka One',cursive; font-size:14px;
+    border-radius:20px; padding:3px 12px;
+    pointer-events:none; white-space:nowrap;
+    box-shadow:0 3px 8px rgba(0,0,0,.4);
+    animation:mul-badge-up 1.6s ease-in-out infinite;
+  }
+
+  /* Option B: old number fades out, new (doubled) number slams in */
+  @keyframes num-out {
+    0%,40%  { opacity:1; transform:scale(1); color:#fff; }
+    55%     { opacity:0; transform:scale(.7); }
+    100%    { opacity:0; }
+  }
+  @keyframes num-in {
+    0%,45%  { opacity:0; transform:scale(1.6); color:#f5c200; }
+    65%     { opacity:1; transform:scale(.95); color:#f5c200; filter:drop-shadow(0 0 10px #f5c200); }
+    100%    { opacity:1; transform:scale(1); color:#fff; filter:none; }
+  }
+  .anim-b .score-old { animation:num-out 1.8s ease-in-out infinite; display:block; }
+  .anim-b .score-new {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    animation:num-in 1.8s ease-in-out infinite;
+    font-family:'Fredoka One',cursive; font-size:36px; line-height:1; color:#fff;
+  }
+  .score-wrap-b { position:relative; }
+
+  /* Option C: ×N overlay covers whole treat + score area, then explodes */
+  @keyframes bigmul-appear {
+    0%    { opacity:0; transform:scale(.3); }
+    25%   { opacity:1; transform:scale(1.1); }
+    55%   { opacity:1; transform:scale(1); }
+    100%  { opacity:0; transform:scale(1.4); }
+  }
+  @keyframes score-bump-c {
+    0%,30% { color:#fff; transform:scale(1); }
+    60%    { color:#f5c200; transform:scale(1.15); }
+    100%   { color:#fff; transform:scale(1); }
+  }
+  .big-mul-wrap {
+    width:100%; display:flex; align-items:center; justify-content:center;
+    position:relative; height:52px;
+  }
+  .big-mul-label {
+    font-family:'Fredoka One',cursive; font-size:44px; color:#f5c200;
+    text-shadow:0 0 24px #f5c200, 0 3px 0 rgba(0,0,0,.5);
+    animation:bigmul-appear 1.8s ease-in-out infinite;
+  }
+  .anim-c .score-num { animation:score-bump-c 1.8s ease-in-out infinite; }
+
+  .desc-text { font-size:11px; color:#8890aa; text-align:center; line-height:1.5; }
+  .tag { display:inline-block; background:rgba(245,194,0,.15); color:#f5c200; border-radius:6px; padding:2px 8px; font-size:10px; font-weight:700; margin-bottom:4px; }
+</style>
+
+<div class="demo-row">
+
+  <!-- Option A: counter flashes gold + floating ×N badge -->
+  <div class="demo-box">
+    <div class="demo-label">Option A</div>
+    <div class="treat-cell">🐾</div>
+    <div class="score-wrap anim-a" style="position:relative;">
+      <div class="score-label">Score so far</div>
+      <div class="score-num">120</div>
+      <div class="badge-floating">×2</div>
+    </div>
+    <p class="desc-text">Score number flashes gold. A ×2 badge floats up from it and fades out.</p>
+  </div>
+
+  <!-- Option B: old number pops out, new doubled number slams in -->
+  <div class="demo-box">
+    <div class="demo-label">Option B</div>
+    <div class="treat-cell">🐾</div>
+    <div class="score-wrap score-wrap-b anim-b" style="min-height:68px;">
+      <div class="score-label">Score so far</div>
+      <span class="score-num score-old">120</span>
+      <span class="score-new">240</span>
+    </div>
+    <p class="desc-text">Old number shrinks out. New doubled number slams in gold, then settles white.</p>
+  </div>
+
+  <!-- Option C: big ×N floats up between treat and score, then score bumps -->
+  <div class="demo-box">
+    <div class="demo-label">Option C</div>
+    <div class="treat-cell">🐾</div>
+    <div class="big-mul-wrap">
+      <span class="big-mul-label">×2</span>
+    </div>
+    <div class="score-wrap anim-c">
+      <div class="score-label">Score so far</div>
+      <div class="score-num">240</div>
+    </div>
+    <p class="desc-text">A large ×2 bursts between the treat and the score counter, then the counter bumps to the new value.</p>
+  </div>
+
+</div>
+
+<div class="options" style="max-width:520px;margin:0 auto;">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Score flashes + floating ×N badge</h3>
+      <p>Subtle — counter glows gold, ×N floats up and fades. Clean and fast.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Old number out, new number slams in</h3>
+      <p>Explicit — the number visibly transforms, making the multiplication unmistakeable.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Big ×N bursts, score counter bumps</h3>
+      <p>Dramatic — the multiplier itself is the hero of the animation, then the score updates.</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,253 @@
+<h2>When a "×N specific cats" treat fires…</h2>
+<p class="subtitle">e.g., Yarn Ball ×2 L-shaped cats — what should the animation target?</p>
+
+<style>
+  .demo-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 24px 0;
+  }
+  .demo-box {
+    background: #1a1a2e;
+    border-radius: 14px;
+    padding: 18px;
+    width: 240px;
+    flex-shrink: 0;
+  }
+  .demo-label {
+    font-family: 'Fredoka One', cursive, sans-serif;
+    font-size: 13px;
+    color: #aab;
+    margin-bottom: 12px;
+    text-align: center;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  /* Mini board */
+  .mini-board {
+    display: grid;
+    grid-template-columns: repeat(4, 40px);
+    grid-template-rows: repeat(4, 40px);
+    gap: 4px;
+    margin: 0 auto;
+    width: fit-content;
+  }
+  .mc { width: 40px; height: 40px; border-radius: 6px; background: #2a2a3e; border: 2px solid #3a3a5e; display: flex; align-items: center; justify-content: center; font-size: 18px; position: relative; overflow: visible; }
+  .mc.cat-a { background: #f5a623bb; border-color: #f5a623; }
+  .mc.cat-b { background: #7ed36fbb; border-color: #7ed36f; }
+  .mc.cat-c { background: #5b8cffbb; border-color: #5b8cff; }
+  .mc.treat { background: #c060f0bb; border-color: #c060f0; }
+
+  /* Option A: highlight the affected cats */
+  @keyframes cat-pulse-a {
+    0%   { box-shadow: none; transform: scale(1); }
+    40%  { box-shadow: 0 0 0 4px #f5c200, 0 0 18px 4px #f5c200aa; transform: scale(1.18); }
+    100% { box-shadow: none; transform: scale(1); }
+  }
+  .anim-a .mc.cat-a { animation: cat-pulse-a 1.2s ease-in-out infinite; }
+  .anim-a .mc.cat-a:nth-child(2) { animation-delay: 0.15s; }
+  .anim-a .mc.cat-a:nth-child(3) { animation-delay: 0.3s; }
+
+  /* Option A: ×2 badge on each affected cat */
+  .badge-mul {
+    position: absolute;
+    top: -8px; right: -8px;
+    background: #f5c200;
+    color: #1a1a2e;
+    font-family: 'Fredoka One', cursive;
+    font-size: 10px;
+    font-weight: 900;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    z-index: 10;
+  }
+
+  /* Option B: score counter gets the ×N badge */
+  .score-area {
+    text-align: center;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.06);
+    border-radius: 10px;
+    border: 2px solid rgba(255,255,255,.12);
+  }
+  .score-val {
+    font-family: 'Fredoka One', cursive, sans-serif;
+    font-size: 28px;
+    color: #fff;
+    line-height: 1;
+  }
+  @keyframes score-mul-flash {
+    0%   { transform: scale(1); color: #fff; }
+    35%  { transform: scale(1.18); color: #f5c200; filter: drop-shadow(0 0 8px #f5c200); }
+    100% { transform: scale(1); color: #fff; }
+  }
+  .anim-b .score-val { animation: score-mul-flash 1.4s ease-in-out infinite; }
+  .mul-badge {
+    display: inline-block;
+    background: #f5c200;
+    color: #1a1a2e;
+    font-family: 'Fredoka One', cursive;
+    font-size: 13px;
+    font-weight: 900;
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-top: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  @keyframes badge-pop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    50%  { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .anim-b .mul-badge { animation: badge-pop 1.4s ease-in-out infinite; }
+
+  /* Option C: beam lines from treat to affected cats */
+  .beam-container {
+    position: relative;
+    width: fit-content;
+    margin: 0 auto;
+  }
+  .beam-line {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to bottom, #f5c200cc, transparent);
+    border-radius: 2px;
+    transform-origin: top center;
+  }
+  @keyframes beam-fire {
+    0%   { opacity: 0; transform: scaleY(0) rotate(var(--angle)); }
+    30%  { opacity: 1; transform: scaleY(1) rotate(var(--angle)); }
+    70%  { opacity: 1; transform: scaleY(1) rotate(var(--angle)); }
+    100% { opacity: 0; transform: scaleY(0) rotate(var(--angle)); }
+  }
+  @keyframes cat-zap {
+    0%,60% { box-shadow: none; }
+    80%  { box-shadow: 0 0 0 3px #f5c200, 0 0 12px 3px #f5c200aa; }
+    100% { box-shadow: none; }
+  }
+  .anim-c .mc.cat-a { animation: cat-zap 1.4s ease-in-out infinite; }
+  .anim-c .mc.cat-a:nth-child(2) { animation-delay: 0.1s; }
+
+  .desc-text {
+    font-size: 12px;
+    color: #8890aa;
+    text-align: center;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+</style>
+
+<div class="demo-row">
+
+  <!-- Option A: flash/pulse the affected cat cells -->
+  <div class="demo-box">
+    <div class="demo-label">Option A</div>
+    <div class="mini-board anim-a">
+      <div class="mc"></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+
+      <div class="mc cat-a">🐱<span class="badge-mul">×2</span></div>
+      <div class="mc cat-a">🐱<span class="badge-mul">×2</span></div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+
+      <div class="mc cat-a">🐱<span class="badge-mul">×2</span></div>
+      <div class="mc"></div>
+      <div class="mc treat">🧶</div>
+      <div class="mc"></div>
+
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+    </div>
+    <p class="desc-text">Affected cat cells pulse gold + show ×2 badge. Others stay dim.</p>
+  </div>
+
+  <!-- Option B: score counter multiplied -->
+  <div class="demo-box anim-b">
+    <div class="demo-label">Option B</div>
+    <div class="mini-board" style="opacity:.5">
+      <div class="mc"></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+      <div class="mc cat-a">🐱</div>
+      <div class="mc cat-a">🐱</div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc cat-a">🐱</div>
+      <div class="mc"></div>
+      <div class="mc treat">🧶</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+    </div>
+    <div class="score-area">
+      <div class="score-val">1,240</div>
+      <div><span class="mul-badge">× 2 L-cats</span></div>
+    </div>
+    <p class="desc-text">Board dims. Score counter flashes with a ×N badge overlay.</p>
+  </div>
+
+  <!-- Option C: targeted beams -->
+  <div class="demo-box">
+    <div class="demo-label">Option C</div>
+    <div class="mini-board anim-c">
+      <div class="mc"></div>
+      <div class="mc cat-b">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+
+      <div class="mc cat-a">🐱</div>
+      <div class="mc cat-a">🐱</div>
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+
+      <div class="mc cat-a">🐱</div>
+      <div class="mc"></div>
+      <div class="mc treat" style="box-shadow:0 0 0 3px #c060f0, 0 0 12px 4px #c060f0aa;">🧶</div>
+      <div class="mc"></div>
+
+      <div class="mc"></div>
+      <div class="mc cat-c">🐱</div>
+      <div class="mc"></div>
+      <div class="mc"></div>
+    </div>
+    <p class="desc-text">Treat cell glows, then affected cats zap/flash in sequence. Unaffected cats stay unchanged.</p>
+  </div>
+
+</div>
+
+<div class="options" style="max-width:560px;margin:0 auto;">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Pulse + badge on affected cats</h3>
+      <p>Each matching cat cell glows gold with a ×N badge. Non-matching cats stay unchanged.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Score counter ×N flash</h3>
+      <p>Board dims slightly, score counter flashes gold with a floating ×N label.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Treat fires, then cats zap in sequence</h3>
+      <p>Treat cell glows first, then each affected cat flashes in sequence (like being hit by energy).</p>
+    </div>
+  </div>
+</div>
