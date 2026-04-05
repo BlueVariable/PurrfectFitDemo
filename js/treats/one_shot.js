@@ -1,12 +1,16 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: frenzy
-//  Multiplies surrounding cats by ×N only if all cats
-//  on the board are the same type
+//  TREAT: one_shot
+//  ×2 score multiplier — fires only once per round
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['frenzy'] = {
+TREAT_REGISTRY['one_shot'] = {
   buildFn(ef, phase) {
-    const m = parseFloat(ef) || extractMul(ef);
-    return (b, cats, ts, p, cs) => surrMulCS(b, cats, p, m, cs);
+    const m = extractMul(ef);
+    let lastUsedRound = -1;
+    return (b, cats, ts, p, cs) => {
+      if (G.round === lastUsedRound) return {};
+      lastUsedRound = G.round;
+      return { scoreMultiplier: true, m };
+    };
   },
 };

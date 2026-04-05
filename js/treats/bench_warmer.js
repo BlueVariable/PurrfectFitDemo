@@ -1,20 +1,14 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: personal_space
-//  +N per EMPTY cell on the entire board (flat score bonus)
+//  TREAT: bench_warmer
+//  +N per remaining cat in hand (flat score bonus)
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['personal_space'] = {
+TREAT_REGISTRY['bench_warmer'] = {
   buildFn(ef, phase) {
     const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {
-      let emptyCells = 0;
-      for (let r = 0; r < G.bsr; r++) {
-        for (let c = 0; c < G.bsc; c++) {
-          if (!b[r][c].filled) emptyCells++;
-        }
-      }
-      if (!emptyCells) return { scoreBonus: 0 };
-      return { scoreBonus: emptyCells * amt };
+      const scoreBonus = amt * G.hand.length;
+      return { scoreBonus };
     };
   },
 };
