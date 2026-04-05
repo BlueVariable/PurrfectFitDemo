@@ -1,6 +1,10 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  SCORING — animated sequence
+//  SCORING — scan-order animated sequence
+//  Pieces (cats + treats) are processed top-left → bottom-right.
+//  A piece's "trigger cell" is its topmost-then-leftmost cell.
+//  When a cat fires: buffered treat effects are applied, score locked in.
+//  When a treat fires: its result is buffered for future cats.
 // ══════════════════════════════════════════════════════
 function doFit(){
   if(!G.cats.length)return;
@@ -8,36 +12,60 @@ function doFit(){
   // Restore any requirements disabled by jumping_ball in the previous hand
   TDEFS.forEach(td=>{if(td._origReq!==undefined){td.req=td._origReq;delete td._origReq;}});
 
-  // cats start at 10 per cell
+  // Trigger cell = topmost then leftmost cell of a piece
+  function triggerCell(cells){
+    return cells.reduce((best,[r,c])=>
+      (r<best[0]||(r===best[0]&&c<best[1]))?[r,c]:best
+    ,[Infinity,Infinity]);
+  }
+
+  // Build unified sorted list of all pieces (cats + treats)
+  const allPieces=[
+    ...G.cats.map(cat=>({kind:'cat',piece:cat,trigger:triggerCell(cat.cells)})),
+    ...G.treats.map(treat=>({kind:'treat',piece:treat,trigger:triggerCell(treat.cells)}))
+  ];
+  allPieces.sort((a,b)=>a.trigger[0]-b.trigger[0]||a.trigger[1]-b.trigger[1]);
+
   const catScores={};
-  G.cats.forEach(grp=>{catScores[grp.gid]=grp.cells.length*10;});
+  const scoredGids=new Set();
+  const treatBuffer=[]; // {treat, result, phase} — effects waiting to apply to future cats
+  const scanResults=[]; // passed to animation
 
-  // sort treats top-to-bottom (higher on board = smaller row = applied first)
-  const sorted=[...G.treats].sort((a,b)=>{
-    const minA=Math.min(...a.cells.map(([r])=>r));
-    const minB=Math.min(...b.cells.map(([r])=>r));
-    return minA-minB;
-  });
-
-  // apply treats in sorted order — pass all treat cells (not just first)
-  // Central requirement check: if a treat's req is set and fails, skip it.
-  // This allows jumping_ball (which clears tdef.req) to actually unlock treats.
-  const treatResults=sorted.map(t=>{
-    if(t.tdef.req&&requirementFails(t.tdef.req)){
-      if(t.tdef.phase==='mul') return{treat:t,result:{gids:[],m:1},phase:t.tdef.phase};
-      return{treat:t,result:{},phase:t.tdef.phase};
+  for(const item of allPieces){
+    if(item.kind==='cat'){
+      const cat=item.piece;
+      const base=cat.cells.length*10;
+      let addBonus=0;
+      let mulFactor=1;
+      // Apply buffered treats: sum all add bonuses, then compound all mul factors
+      for(const buf of treatBuffer){
+        addBonus+=getAddBonusForCat(buf,cat);
+        const m=getMulFactorForCat(buf,cat);
+        if(m!==1)mulFactor*=m;
+      }
+      const score=Math.round((base+addBonus)*mulFactor);
+      catScores[cat.gid]=score;
+      scoredGids.add(cat.gid);
+      scanResults.push({kind:'cat',piece:cat,score,base,addBonus,mulFactor});
+    }else{
+      const treat=item.piece;
+      if(treat.tdef.req&&requirementFails(treat.tdef.req)){
+        scanResults.push({kind:'treat',piece:treat,result:{skip:true},phase:treat.tdef.phase,skipped:true});
+        continue;
+      }
+      // Pass future cats and a copy of current scores so fn() can't mutate locked cat scores
+      const futureCats=G.cats.filter(c=>!scoredGids.has(c.gid));
+      const csCopy=Object.assign({},catScores);
+      const result=treat.tdef.fn(G.board,futureCats,G.treats,treat.cells,csCopy)||{};
+      treatBuffer.push({treat,result,phase:treat.tdef.phase});
+      scanResults.push({kind:'treat',piece:treat,result,phase:treat.tdef.phase});
     }
-    const res=t.tdef.fn(G.board,G.cats,G.treats,t.cells,catScores)||{};
-    if(t.tdef.phase==='add') applyAddResult(t,res,catScores);
-    else if(t.tdef.phase==='mul') applyMulResult(t,res,catScores);
-    else if(t.tdef.phase==='x') applyXResult(t,res,catScores);
-    return{treat:t,result:res,phase:t.tdef.phase};
-  });
+  }
 
-  // sum finalized cat scores
+  // Sum finalized cat scores
   const catTotal=Object.values(catScores).reduce((a,b)=>a+b,0);
 
-  // board fill bonus
+  // Board fill bonus
   const filledCells=G.board.flat().filter(c=>c.filled).length;
   const totalBoardCells=G.bsr*G.bsc;
   const boardFull=filledCells===totalBoardCells;
@@ -54,62 +82,70 @@ function doFit(){
   });
   G.treats=[];
 
-  runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,catsSnapshot);
+  runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot);
 }
 
-// Distribute add bonus: flat +amt per affected cat group
-function applyAddResult(t,res,catScores){
-  if(!res)return;
-  if(res.bonusMap){
-    Object.entries(res.bonusMap).forEach(([gid,amt])=>{
-      if(catScores[gid]!==undefined)catScores[gid]+=amt;
-    });
-    return;
-  }
-  if(!res.bonus)return;
-  const ef=t.tdef.ef;
-  const amt=extractNum(ef);
-  const treatCells=t.cells;
-  const [tRow,tCol]=treatCells[0];
-  const affected=[];
-  G.cats.forEach(grp=>{
+// ── Compute add bonus from one buffered treat for a specific future cat ──
+function getAddBonusForCat(buf,cat){
+  const{treat,result,phase}=buf;
+  if(phase==='add'){
+    if(result.bonusMap)return result.bonusMap[cat.gid]||0;
+    if(!result.bonus)return 0;
+    const ef=treat.tdef.ef;
+    const amt=extractNum(ef);
+    const treatCells=treat.cells;
+    const[tRow,tCol]=treatCells[0];
     let hit=false;
-    if(ef.includes('ALL')) hit=true;
-    else if(ef.includes('ROW')) hit=grp.cells.some(([r])=>r===tRow);
-    else if(ef.includes('COL')) hit=grp.cells.some(([,c])=>c===tCol);
-    else if(ef.includes('SURR')||ef.includes('surrounding')){
-      // check against ALL treat cells (full shape)
-      hit=treatCells.some(([tr,tc])=>grp.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
-    }
+    if(ef.includes('ALL'))hit=true;
+    else if(ef.includes('ROW'))hit=cat.cells.some(([r])=>r===tRow);
+    else if(ef.includes('COL'))hit=cat.cells.some(([,c])=>c===tCol);
+    else if(ef.includes('SURR')||ef.includes('surrounding'))
+      hit=treatCells.some(([tr,tc])=>cat.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
     else hit=true;
-    if(hit) affected.push(grp.gid);
-  });
-  // flat +amt per affected cat group (not per cell)
-  affected.forEach(gid=>{if(catScores[gid]!==undefined)catScores[gid]+=amt;});
-}
-
-// Apply a mul-treat's multiplier to specific catScores
-function applyMulResult(t,res,catScores){
-  if(!res)return;
-  // res format: {gids:[...], m:multiplier} OR legacy {bonus, desc}
-  if(res.gids!==undefined){
-    // new format
-    const {gids,m}=res;
-    if(!gids.length||m<=1)return;
-    gids.forEach(gid=>{if(catScores[gid]!==undefined)catScores[gid]=Math.round(catScores[gid]*m);});
+    return hit?amt:0;
   }
+  if(phase==='x'){
+    if(result.subPhase==='add'&&result.result){
+      const r2=result.result;
+      if(r2.bonusMap)return r2.bonusMap[cat.gid]||0;
+      if(!r2.bonus)return 0;
+      const ef2=result.copiedFrom.ef;
+      const amt2=extractNum(ef2);
+      const cells2=result.laserCells;
+      const[tRow2,tCol2]=cells2[0];
+      let hit2=false;
+      if(ef2.includes('ALL'))hit2=true;
+      else if(ef2.includes('ROW'))hit2=cat.cells.some(([r])=>r===tRow2);
+      else if(ef2.includes('COL'))hit2=cat.cells.some(([,c])=>c===tCol2);
+      else if(ef2.includes('SURR')||ef2.includes('surrounding'))
+        hit2=cells2.some(([tr,tc])=>cat.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
+      else hit2=true;
+      return hit2?amt2:0;
+    }
+    if(result.subPhase==='mirror')return result.bonusMap?.[cat.gid]||0;
+  }
+  return 0;
 }
 
-function applyXResult(t,res,catScores){
-  if(!res||res.skip)return;
-  if(res.subPhase==='add') applyAddResult({tdef:res.copiedFrom,cells:res.laserCells},res.result,catScores);
-  else if(res.subPhase==='mul') applyMulResult(t,res.result,catScores);
-  else if(res.subPhase==='mirror'){/* already applied in fn */}
-  else if(res.luckyGid){/* already applied in fn */}
-  // jumping_ball and brownies apply effects as side effects in their fn; nothing to do here
+// ── Compute mul factor from one buffered treat for a specific future cat ──
+function getMulFactorForCat(buf,cat){
+  const{result,phase}=buf;
+  if(phase==='mul'){
+    if(result.gids&&result.gids.includes(cat.gid)&&result.m>1)return result.m;
+    return 1;
+  }
+  if(phase==='x'){
+    if(result.subPhase==='mul'&&result.result){
+      if(result.result.gids&&result.result.gids.includes(cat.gid)&&result.result.m>1)return result.result.m;
+    }
+    if(result.luckyGid===cat.gid)return 4;
+    if(result.halvedGids&&result.halvedGids.includes(cat.gid))return 0.5;
+  }
+  return 1;
 }
 
-function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,catsSnapshot){
+// ── Scan-order animation ──
+function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.add('active');
@@ -126,31 +162,14 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
   dim.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:-1;';
   seq.appendChild(dim);
 
-  // grpMap — cats start at 10 per cell; treats modify from base
+  // One centered label per cat group, revealed when the cat fires
   const grpMap={};
-  catsSnapshot.forEach(grp=>{
-    grpMap[grp.gid]={cells:grp.cells,score:grp.cells.length*10,els:[]};
-  });
+  catsSnapshot.forEach(grp=>{grpMap[grp.gid]={cells:grp.cells,els:[]};});
 
-  const updateLabels=(highlightGids=[],color)=>{
-    Object.entries(grpMap).forEach(([gid,info])=>{
-      const sc=info.score;
-      info.els.forEach((lbl,i)=>{
-        if(sc>0){lbl.textContent='+'+sc;lbl.classList.add('show');}
-        if(highlightGids.includes(gid)){
-          lbl.style.background=color||'rgba(245,166,35,.85)';
-          lbl.classList.add('boosted');
-          setTimeout(()=>{lbl.classList.remove('boosted');lbl.style.background='';},700);
-        }
-      });
-    });
-  };
-
-  // place ONE centered label per group (centered on bounding box of group cells)
   catsSnapshot.forEach(grp=>{
-    const rs=grp.cells.map(([r])=>r), cs=grp.cells.map(([,c])=>c);
-    const minR=Math.min(...rs), maxR=Math.max(...rs);
-    const minC=Math.min(...cs), maxC=Math.max(...cs);
+    const rs=grp.cells.map(([r])=>r),cs=grp.cells.map(([,c])=>c);
+    const minR=Math.min(...rs),maxR=Math.max(...rs);
+    const minC=Math.min(...cs),maxC=Math.max(...cs);
     const tlEl=boardEl.children[minR*G.bsc+minC];
     const brEl=boardEl.children[maxR*G.bsc+maxC];
     if(!tlEl||!brEl)return;
@@ -204,165 +223,102 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
   seq.appendChild(nextBtn);
 
   const steps=[];
+  let runningTotal=0;
 
-  // Step 1: show base scores (10 per cell) — counter stays at 0
-  steps.push({
-    explain:`🐱 Base score: 10 pts per cell`,
-    run(){
-      updateLabels([]);
+  scanResults.forEach(item=>{
+    if(item.kind==='cat'){
+      const{piece:cat,score,base,addBonus,mulFactor}=item;
+      const info=grpMap[cat.gid];
+      runningTotal+=score;
+      const capturedTotal=runningTotal;
+
+      let desc='';
+      if(addBonus>0&&mulFactor!==1)desc=` (${base}+${addBonus})×${mulFactor}`;
+      else if(addBonus>0)desc=` (${base}+${addBonus})`;
+      else if(mulFactor!==1)desc=` (${base}×${mulFactor})`;
+
+      steps.push({
+        kind:'cat',
+        explain:`🐱 scored +${score}`,
+        run(){
+          flashTreat(seq,boardEl,{cells:cat.cells},G.bsc);
+          if(info){
+            const lbl=info.els[0];
+            if(lbl){
+              lbl.textContent='+'+score;
+              lbl.classList.add('show');
+              lbl.style.background='rgba(245,166,35,.85)';
+              lbl.classList.add('boosted');
+              setTimeout(()=>{lbl.classList.remove('boosted');lbl.style.background='';},700);
+            }
+          }
+          animateCounter(capturedTotal,280);
+          addLogLine(logDiv,`🐱 +${score}${desc}`);
+        }
+      });
+    }else{
+      const{piece:treat,result,phase,skipped}=item;
+      if(skipped){
+        steps.push({
+          kind:'treat',
+          explain:`${treat.tdef.em} ${treat.tdef.nm}: req not met`,
+          run(){addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: req not met`);}
+        });
+        return;
+      }
+
+      // Build log line describing what this treat does
+      let logLine=`${treat.tdef.em} ${treat.tdef.nm}`;
+      if(phase==='add'){
+        if(result.bonusMap){
+          const futureBonus=Object.values(result.bonusMap).reduce((a,b)=>a+b,0);
+          if(futureBonus>0)logLine+=`: +${futureBonus} buffered`;
+        }else if(result.bonus>0){
+          logLine+=`: +${extractNum(treat.tdef.ef)} buffered`;
+        }
+      }else if(phase==='mul'){
+        if(result.gids&&result.gids.length&&result.m>1)
+          logLine+=`: ×${result.m} (${result.gids.length} cat${result.gids.length!==1?'s':''} ahead)`;
+      }else if(phase==='x'){
+        if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
+        else if(result.subPhase==='mul'&&result.result?.m>1)logLine+=`: copied ${result.copiedFrom.em} ×${result.result.m}`;
+        else if(result.subPhase==='mirror')logLine+=`: mirror +${result.totalBonus||0}`;
+        else if(result.luckyGid)logLine+=`: ×4 lucky, ×½ others`;
+        else if(result.disabledTreat)logLine+=`: disabled req for ${result.disabledTreat.em} ${result.disabledTreat.nm}`;
+        else if(result.addedCatEm!==undefined)logLine+=`: added ${result.addedCatEm} ${result.addedCatName} to deck`;
+        else if(result.transformedInto)logLine+=`: transformed → ${result.transformedInto.em} ${result.transformedInto.nm}`;
+        else if(result.convertedGid)logLine+=`: converted ${result.oldType} → ${result.convertedEm} ${result.newType}`;
+        else if(result.destroyedCat)logLine+=`: removed ${result.destroyedCat.em} ${result.destroyedCat.name}`;
+      }
+
+      steps.push({
+        kind:'treat',
+        explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}"`,
+        run(){
+          flashTreat(seq,boardEl,treat,G.bsc);
+          addLogLine(logDiv,logLine);
+        }
+      });
     }
   });
 
-  // One step per treat (top-to-bottom, as sorted in doFit) — labels update, counter stays at 0
-  treatResults.forEach(({treat,result,phase})=>{
-    const hasEffect=phase==='add'?(result&&(result.bonus>0||result.bonusMap)):phase==='x'?(result&&!result.skip):(result&&result.gids&&result.gids.length&&result.m>1);
-    if(!hasEffect)return;
-    steps.push({
-      explain:`${treat.tdef.em} ${treat.tdef.nm}: "${treat.tdef.ef}"`,
-      run(){
-        flashTreat(seq,boardEl,treat,G.bsc);
-        const ef=treat.tdef.ef;
-        const treatCells=treat.cells;
-        const [tRow,tCol]=treatCells[0];
-        if(phase==='add'){
-          if(result.bonusMap){
-            const aff=[];
-            Object.entries(result.bonusMap).forEach(([gid,amt])=>{
-              if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
-            });
-            const total=Object.values(result.bonusMap).reduce((a,b)=>a+b,0);
-            updateLabels(aff,'rgba(100,210,90,.85)');
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${total}`);
-          } else {
-          const aff=[];
-          const amt=extractNum(ef);
-          Object.entries(grpMap).forEach(([gid,info])=>{
-            let hit=false;
-            if(ef.includes('ALL'))hit=true;
-            else if(ef.includes('ROW'))hit=info.cells.some(([r])=>r===tRow);
-            else if(ef.includes('COL'))hit=info.cells.some(([,c])=>c===tCol);
-            else if(ef.includes('SURR')||ef.includes('surrounding')){
-              hit=treatCells.some(([tr,tc])=>info.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
-            }
-            else hit=true;
-            if(hit)aff.push(gid);
-          });
-          aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
-          updateLabels(aff,'rgba(100,210,90,.85)');
-          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: +${result.bonus}`);
-          }
-        } else if(phase==='mul'){
-          // mul — multiply from current score (which includes the 10/cell base)
-          result.gids.forEach(gid=>{
-            if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.m);}
-          });
-          updateLabels(result.gids,'rgba(240,120,40,.9)');
-          addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×${result.m}`);
-        } else if(phase==='x'){
-          if(result.subPhase==='add'&&result.result&&(result.result.bonus>0||result.result.bonusMap)){
-            if(result.result.bonusMap){
-              const aff=[];
-              Object.entries(result.result.bonusMap).forEach(([gid,amt])=>{
-                if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
-              });
-              const total=Object.values(result.result.bonusMap).reduce((a,b)=>a+b,0);
-              updateLabels(aff,'rgba(100,210,90,.85)');
-              addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} → +${total}`);
-            } else {
-            const ef=result.copiedFrom.ef;
-            const amt=extractNum(ef);
-            const treatCells=result.laserCells;
-            const[tRow,tCol]=treatCells[0];
-            const aff=[];
-            Object.entries(grpMap).forEach(([gid,info])=>{
-              let hit=false;
-              if(ef.includes('ALL'))hit=true;
-              else if(ef.includes('ROW'))hit=info.cells.some(([r])=>r===tRow);
-              else if(ef.includes('COL'))hit=info.cells.some(([,c])=>c===tCol);
-              else if(ef.includes('SURR')||ef.includes('surrounding'))hit=treatCells.some(([tr,tc])=>info.cells.some(([r,c])=>Math.abs(r-tr)<=1&&Math.abs(c-tc)<=1));
-              else hit=true;
-              if(hit)aff.push(gid);
-            });
-            aff.forEach(gid=>{if(grpMap[gid])grpMap[gid].score+=amt;});
-            updateLabels(aff,'rgba(100,210,90,.85)');
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} → +${result.result.bonus}`);
-            }
-          } else if(result.subPhase==='mul'&&result.result&&result.result.gids&&result.result.gids.length&&result.result.m>1){
-            result.result.gids.forEach(gid=>{
-              if(grpMap[gid]){const prev=grpMap[gid].score;grpMap[gid].score=Math.round(prev*result.result.m);}
-            });
-            updateLabels(result.result.gids,'rgba(240,120,40,.9)');
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} → ×${result.result.m}`);
-          } else if(result.disabledTreat){
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: disabled req for ${result.disabledTreat.em} ${result.disabledTreat.nm}`);
-          } else if(result.addedCatEm!==undefined){
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: added ${result.addedCatEm} ${result.addedCatName} to deck`);
-          } else if(result.transformedInto){
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: transformed into ${result.transformedInto.em} ${result.transformedInto.nm}!`);
-          } else if(result.convertedGid){
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: converted ${result.oldType} → ${result.convertedEm} ${result.newType}`);
-          } else if(result.destroyedCat){
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: removed ${result.destroyedCat.em} ${result.destroyedCat.name} from deck`);
-          } else if(result.subPhase==='mirror'){
-            const aff=[];
-            Object.entries(result.bonusMap||{}).forEach(([gid,amt])=>{
-              if(grpMap[gid]&&amt>0){grpMap[gid].score+=amt;aff.push(gid);}
-            });
-            updateLabels(aff,'rgba(100,210,90,.85)');
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: mirrored +${result.totalBonus||0}`);
-          } else if(result.luckyGid){
-            if(grpMap[result.luckyGid])grpMap[result.luckyGid].score=Math.round(grpMap[result.luckyGid].score*4);
-            (result.halvedGids||[]).forEach(gid=>{if(grpMap[gid])grpMap[gid].score=Math.round(grpMap[gid].score*0.5);});
-            updateLabels([result.luckyGid],'rgba(255,215,0,.9)');
-            addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: ×4 lucky cat, ×½ others`);
-          }
-        }
-      }
-    });
-  });
-
-  // Final step: sum cats top-to-bottom into counter, then board bonus, then banner
-  const sortedCatGroups=[...catsSnapshot].sort((a,b)=>{
-    const minA=Math.min(...a.cells.map(([r])=>r));
-    const minB=Math.min(...b.cells.map(([r])=>r));
-    return minA-minB;
-  });
-  const finalEndDelay=sortedCatGroups.length*500+(boardBonus>0?450:0)+750;
+  // Final step: board bonus + total banner
+  const finalCatTotal=runningTotal;
+  const finalEndDelay=(boardBonus>0?450:0)+750;
   steps.push({
+    kind:'final',
     explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
     endDelay:finalEndDelay,
     run(){
-      let running=0;
-      let delay=0;
-      sortedCatGroups.forEach(grp=>{
-        const info=grpMap[grp.gid];
-        if(!info)return;
-        const target=running+info.score;
-        const capturedTarget=target;
-        const capturedInfo=info;
-        running=target;
-        setTimeout(()=>{
-          flashTreat(seq,boardEl,{cells:grp.cells},G.bsc);
-          const lbl=capturedInfo.els[0];
-          if(lbl){lbl.classList.add('boosted');setTimeout(()=>lbl.classList.remove('boosted'),500);}
-          animateCounter(capturedTarget,280);
-          addLogLine(logDiv,`🐱 +${capturedInfo.score}`);
-        },delay);
-        delay+=500;
-      });
       if(boardBonus>0){
-        const bonusTarget=running+boardBonus;
-        setTimeout(()=>{
-          addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
-          animateCounter(bonusTarget,400);
-        },delay);
-        delay+=450;
+        addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
+        animateCounter(finalCatTotal+boardBonus,400);
       }
       setTimeout(()=>{
         addLogLine(logDiv,`🏆 Total: +${total.toLocaleString()}`);
         banner.textContent='+'+total.toLocaleString();
         banner.classList.add('show');
-      },delay+150);
+      },boardBonus>0?450:150);
     },
     isLast:true
   });
@@ -372,13 +328,13 @@ function runScoreSequence(catScores,treatResults,boardBonus,boardFull,total,cats
     stepIdx++;
     if(stepIdx>=steps.length){endScoreSequence(total);return;}
     const step=steps[stepIdx];
-    stepExplain.textContent=step.explain;
+    if(stepExplain)stepExplain.textContent=step.explain||'';
     setTimeout(()=>step.run(),80);
     if(DEV_MODE){
       nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
       nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
     }else{
-      const delay=step.isLast?(step.endDelay||1800):750;
+      const delay=step.isLast?(step.endDelay||1800):step.kind==='treat'?300:450;
       if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
       else setTimeout(runNextStep,delay);
     }
@@ -416,7 +372,7 @@ function endScoreSequence(total){
   G.score+=total;
   // Sync score display
   const scoreEl=g('g-score');
-  if(scoreEl) scoreEl.textContent=G.score.toLocaleString();
+  if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
   // Restore treats used this play back to backpack immediately
   (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
   G.usedTreats=[];
@@ -429,25 +385,21 @@ function endScoreSequence(total){
 
 function roundWin(){
   // base earn + $1 per unused hand remaining
-  const bonus=G.hands; // G.hands was decremented before roundWin called, so this is hands remaining
+  const bonus=G.hands;
   const total=G.earn+bonus;
   G.cash+=total;
-  // slide cc and rc out to the right
   const cc=document.querySelector('.cc');
   const rc=document.querySelector('.rc');
   if(cc)cc.classList.add('round-won');
   if(rc)rc.classList.add('round-won');
-  // show inline win info
   const wi=g('win-inline');
   g('wi-sc').textContent=G.score.toLocaleString();
   g('wi-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} unused hands)`;
   wi.style.display='';
-  // trigger reflow so transition plays
   void wi.offsetWidth;
   wi.classList.add('visible');
 }
 function goShop(){
-  // clean up inline win
   const cc=document.querySelector('.cc');
   const rc=document.querySelector('.rc');
   if(cc)cc.classList.remove('round-won');
@@ -455,12 +407,9 @@ function goShop(){
   const wi=g('win-inline');
   wi.classList.remove('visible');
   wi.style.display='none';
-  // restore treats used this round back to backpack
   (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
   G.usedTreats=[];
-  // advance round
   G.round++;
-  // Check if all rounds are completed — branch victory
   if(G.round>RCFG.length){
     if(G.branchId)markBranchComplete(G.branchId);
     gameInProgress=false;
