@@ -19,6 +19,7 @@ function markBranchComplete(branchId){
 function isBranchCompleted(branchId){return loadProgress().completed.includes(branchId);}
 
 function isBranchUnlocked(branchId){
+  if(DEV_MODE)return true;
   const branches=BRANCHES;
   const branch=branches.find(b=>b.id===branchId);
   if(!branch)return false;
