@@ -46,10 +46,11 @@ body::before{display:none;}
 /* ════════ GAME ════════ */
 #s-game{flex-direction:column;height:100vh;overflow:hidden;}
 #g-topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;height:44px;flex-shrink:0;background:rgba(0,0,0,.12);border-bottom:2px solid rgba(0,0,0,.15);}
-.gtb-left{display:flex;align-items:center;}
+.gtb-left{display:flex;align-items:center;gap:6px;}
 .gtb-center{display:flex;align-items:center;}
 .gtb-right{display:flex;align-items:center;justify-content:flex-end;}
 .gtb-round-pill{background:#5ab855;border:2px solid #1a1a2a;border-radius:50px;padding:3px 14px;color:#fff;font-family:'Fredoka One',cursive;font-size:13px;font-weight:normal;letter-spacing:.5px;}
+.gtb-score-pill{background:#f57c35;border:2px solid #1a1a2a;border-radius:50px;padding:3px 12px;color:#fff;font-family:'Fredoka One',cursive;font-size:13px;font-weight:normal;box-shadow:0 3px 0 #c05010;}
 .gtb-title{font-family:'Fredoka One',cursive;color:rgba(255,255,255,.7);font-size:14px;letter-spacing:3px;}
 .gtb-cash{display:flex;align-items:center;gap:5px;background:#f5a820;border:2px solid #1a1a2a;border-radius:50px;padding:3px 12px 3px 6px;box-shadow:0 3px 0 #c07810;font-family:'Fredoka One',cursive;font-size:14px;color:#1a1a2a;}
 .gtb-coin{width:20px;height:20px;background:#f8d040;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;border:1.5px solid #c07810;}

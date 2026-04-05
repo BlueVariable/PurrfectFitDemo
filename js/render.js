@@ -140,6 +140,7 @@ function renderStats(){
   g('g-tgt').textContent=G.tgt.toLocaleString();
   g('g-earn').textContent=G.earn;
   g('g-score').textContent=G.score.toLocaleString();
+  const tbs=g('g-topbar-score');if(tbs)tbs.querySelector('span').textContent=G.score.toLocaleString();
   g('g-hands').textContent=G.hands;
   g('g-last').textContent=G.lastScore;
   g('g-deck').textContent=G.deck.length;

@@ -211,17 +211,20 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
   const baseScoreBeforeHand=G.score;
   let displayedScore=0;
   let _counterIv=null;
+  const tbScoreEl=g('g-topbar-score');
+  function syncTopbarScore(val){if(tbScoreEl)tbScoreEl.querySelector('span').textContent=val;}
   function animateCounter(targetScore,duration){
     if(!scoreEl)return;
     if(_counterIv){clearInterval(_counterIv);_counterIv=null;}
     const start=displayedScore,diff=targetScore-start;
-    if(diff<=0){scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();displayedScore=targetScore;return;}
+    if(diff<=0){const v=(baseScoreBeforeHand+targetScore).toLocaleString();scoreEl.textContent=v;syncTopbarScore(v);displayedScore=targetScore;return;}
     const steps2=Math.min(30,Math.ceil(duration/16));let step=0;
     if(scoreCard){scoreCard.classList.remove('score-card-lit');void scoreCard.offsetWidth;scoreCard.classList.add('score-card-lit');}
     _counterIv=setInterval(()=>{
       step++;displayedScore=Math.round(start+diff*(step/steps2));
-      if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+displayedScore).toLocaleString();
-      if(step>=steps2){clearInterval(_counterIv);_counterIv=null;displayedScore=targetScore;if(scoreEl)scoreEl.textContent=(baseScoreBeforeHand+targetScore).toLocaleString();}
+      const v=(baseScoreBeforeHand+displayedScore).toLocaleString();
+      if(scoreEl)scoreEl.textContent=v;syncTopbarScore(v);
+      if(step>=steps2){clearInterval(_counterIv);_counterIv=null;displayedScore=targetScore;const vf=(baseScoreBeforeHand+targetScore).toLocaleString();if(scoreEl)scoreEl.textContent=vf;syncTopbarScore(vf);}
     },Math.ceil(duration/steps2));
   }
 
@@ -427,12 +430,14 @@ function flashCatCells(seq,boardEl,gids,catsSnapshot,bsc,phase){
   });
 }
 
+function _syncTbScore(val){const el=g('g-topbar-score');if(el)el.querySelector('span').textContent=val;}
 function animateScoreSlam(scoreEl,newVal,baseScoreBeforeHand){
   if(!scoreEl)return;
   scoreEl.classList.add('score-slam-out');
   setTimeout(()=>{
     scoreEl.classList.remove('score-slam-out');
-    scoreEl.textContent=(baseScoreBeforeHand+newVal).toLocaleString();
+    const v=(baseScoreBeforeHand+newVal).toLocaleString();
+    scoreEl.textContent=v;_syncTbScore(v);
     scoreEl.classList.add('score-slam-in');
     setTimeout(()=>scoreEl.classList.remove('score-slam-in'),420);
   },220);
@@ -441,7 +446,8 @@ function animateScoreSlam(scoreEl,newVal,baseScoreBeforeHand){
 function animateScoreFloatBadge(seq,scoreEl,text,baseScoreBeforeHand,newVal){
   if(!scoreEl)return;
   scoreEl.style.color='#38c0c0';
-  scoreEl.textContent=(baseScoreBeforeHand+newVal).toLocaleString();
+  const v=(baseScoreBeforeHand+newVal).toLocaleString();
+  scoreEl.textContent=v;_syncTbScore(v);
   setTimeout(()=>{scoreEl.style.color='';},600);
   const rect=scoreEl.getBoundingClientRect();
   const badge=document.createElement('div');
@@ -469,6 +475,7 @@ function endScoreSequence(total){
   // Sync score display
   const scoreEl=g('g-score');
   if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
+  _syncTbScore(G.score.toLocaleString());
   // Restore treats used this play back to backpack immediately
   (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
   G.usedTreats=[];
