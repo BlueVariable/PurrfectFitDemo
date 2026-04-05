@@ -449,4 +449,4 @@ function showTTP(t){
   g('ttp').classList.add('on');
 }
 function hideTTP(){g('ttp').classList.remove('on');}
-function updFit(){g('btn-fit').disabled=G.cats.length===0;}
+function updFit(){g('btn-fit').disabled=G.cats.length===0&&!G.board.some(r=>r.some(c=>c.filled));}
