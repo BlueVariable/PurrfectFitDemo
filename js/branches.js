@@ -51,9 +51,14 @@ function getContinents(){
 
 const MOD_LABELS={
   'hands-1':'-1 Hand',
+  'hands+1':'+1 Hand',
+  'hands+2':'+2 Hands',
   'no-discard':'No Discards',
+  'discards+1':'+1 Discard',
   'bp-small':'3×3 Backpack',
+  'bp-large':'5×5 Backpack',
   'cash-2':'-$2 Starting Cash',
+  'cash+10':'+$10 Starting Cash',
 };
 function getModifierLabel(modString){
   if(!modString)return'';

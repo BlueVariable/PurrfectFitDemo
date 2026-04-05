@@ -46,6 +46,7 @@ function applyModifiers(){
   const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
   mods.forEach(mod=>{
     if(mod==='hands-1')G.hands=Math.max(1,G.hands-1);
+    if(mod.startsWith('hands+'))G.hands+=(parseInt(mod.slice(6))||0);
     if(mod==='no-discard')G.disc=0;
   });
 }
@@ -55,7 +56,9 @@ function applyModifiersOnce(){
   const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
   mods.forEach(mod=>{
     if(mod==='bp-small'){G._bpOverrideR=3;G._bpOverrideC=3;G.bp=mk2d(3,3,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
+    if(mod==='bp-large'){G._bpOverrideR=5;G._bpOverrideC=5;G.bp=mk2d(5,5,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
     if(mod==='cash-2')G.cash=Math.max(1,G.cash-2);
+    if(mod.startsWith('cash+'))G.cash+=(parseInt(mod.slice(5))||0);
   });
 }
 
@@ -105,8 +108,10 @@ function mkDeck(){
 }
 
 function dealHand(){
-  const noDiscard=G.modifiers&&G.modifiers.split('|').some(m=>m.trim()==='no-discard');
-  G.disc=noDiscard?0:(CFG.discard_count||3);
+  const mods=G.modifiers?G.modifiers.split('|').map(m=>m.trim()):[];
+  const noDiscard=mods.includes('no-discard');
+  const discPlus=mods.filter(m=>m.startsWith('discards+')).reduce((s,m)=>s+parseInt(m.slice(9))||0,0);
+  G.disc=noDiscard?0:((CFG.discard_count||3)+discPlus);
   G.newCardIndices=new Set();
   while(G.hand.length<(CFG.hand_dealt_count||7)&&G.deck.length>0){
     G.newCardIndices.add(G.hand.length);
