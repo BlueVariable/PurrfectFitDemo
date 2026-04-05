@@ -25,7 +25,7 @@ The game is split across `index.html` (markup + inline styles) and multiple JS f
 | `js/backpack.js` | Inventory grid management |
 | `js/held.js` | Mouse/touch drag-and-drop logic |
 | `js/render.js` | All DOM updates (`renderAll`, `renderBoard`, `renderHand`, `renderBP`, `renderShopFull`) |
-| `js/scoring.js` | `doFit()`, `runScoreSequence()`, `endScoreSequence()` — four phases: base → add treats → mul treats → board fill bonus |
+| `js/scoring.js` | `doFit()`, `runScoreSequence()`, `endScoreSequence()` — scan-order scoring: pieces processed top-left→bottom-right; Type A treats buffer per-cat bonuses/multipliers; Type B treats apply directly to a running total; board fill bonus added at end |
 | `js/branches.js` | World map progression, unlock logic, `renderBranches()`, `selectBranch()`, progress persistence via localStorage |
 | `js/shop.js` | Treat purchasing and reroll logic |
 
@@ -82,6 +82,10 @@ Screens are `display:none` by default and made visible with class `.on`. Overlay
 
 `doFit()` triggers the score sequence → `runScoreSequence()` animates phases → `endScoreSequence()` checks win/loss → `roundWin()` or next hand dealt via `dealHand()`.
 
+Scoring processes all pieces in scan order (top-left → bottom-right). A running total (`runningTotal`) accumulates as cats are scored. Treats that fire mid-scan are either:
+- **Type A** (affect individual cat scores): buffered in `treatBuffer`; applied when each cat fires. Return `{ bonus }` / `{ bonusMap }` (add) or `{ gids, m }` (mul).
+- **Type B** (affect the overall score): applied directly to `runningTotal` at their scan position. Return `{ scoreBonus: N }` (add) or `{ scoreMultiplier: true, m: N }` (mul).
+
 ## Treat System
 
 Every treat in the sheet has its own file at `js/treats/<id>.js`. Each file registers into `TREAT_REGISTRY`:
@@ -89,49 +93,59 @@ Every treat in the sheet has its own file at `js/treats/<id>.js`. Each file regi
 ```js
 TREAT_REGISTRY['id'] = {
   buildFn(ef, phase) {
-    // return a function (b, cats, ts, p, cs) => { bonus, desc } or { gids, m }
+    // return a function (b, cats, ts, p, cs) => result
   }
 };
 ```
 
 `buildTreatFn(id, ef, phase, addEf)` in `config.js` checks the registry first; falls back to generic pattern matching only for treats without a registry entry.
 
-Add-phase functions return `{ bonus, desc }` or `{ bonusMap }`. Mul-phase functions return `{ gids: [...], m: N }`.
+### Return shapes by treat type
+
+| Type | When | Return shape |
+|------|------|-------------|
+| Add Type A | effect targets specific cats ("to ALL cats", "in same ROW", etc.) | `{ bonus, desc }` or `{ bonusMap: {gid: N} }` |
+| Add Type B | effect adds to overall score (just "+N") | `{ scoreBonus: N }` |
+| Mul Type A | effect targets specific cat types/shapes ("×N all ORANGE cats") | `{ gids: [...], m: N }` |
+| Mul Type B | effect multiplies the accumulated score ("×N" with no cat type) | `{ scoreMultiplier: true, m: N }` |
+| x-phase | special effects | custom (see individual treat files) |
+
+**Type A** treats are buffered and applied per-cat when each cat fires. **Type B** treats apply directly to `runningTotal` at their scan position and are NOT buffered.
+
+### Animations
+
+| Type | Animation |
+|------|-----------|
+| Add Type A | Cyan pulse on each affected cat cell + cyan badge |
+| Add Type B | Score counter glows cyan + floating +N badge |
+| Mul Type A | Gold pulse on each matching cat cell + gold badge |
+| Mul Type B | Old score number shrinks out → new number slams in gold |
 
 ### All treats (from Google Sheet)
 
-| ID | Name | Phase | Effect | Additional Effects | Requirement |
-|----|------|-------|--------|--------------------|-------------|
-| milk | WARM MILK | add | +8 to ALL cats | — | — |
-| catnip | CATNIP | add | +25 to cats in same ROW | — | — |
-| feather | FEATHER | add | +25 to cats in same COL | — | — |
-| box | BOX | add | +25 to SURROUNDING cats | — | — |
-| scratching_post | SCRATCHING POST | add | +6 per CELL | — | — |
-| yarn | YARN BALL | mul | ×2 L shaped cats | — | — |
-| kitten_toy | KITTEN TOY | mul | ×2 DUO shaped cats | — | — |
-| cat_stretch | CAT STRETCH | mul | ×2 T-shaped cats | — | — |
-| corner_napper | CORNER NAPPER | mul | x3 cats on CORNER | — | — |
-| window_perch | WINDOW PERCH | add | +50 to cats on EDGES | — | — |
-| rainbow_bowl | RAINBOW BOWL | add | +25 per UNIQUE cat type | — | — |
-| sardine_tin | SARDINE TIN | x | destroy one random surrounding cat from deck | — | — |
-| wild_dice | WILD DICE | mul | x3 one random cat | — | — |
-| laser | LASER POINTER | x | copies ability of one other random treat | — | — |
-| jumping_ball | JUMPING BALL | x | disable one random treat's requirement | — | — |
-| brownies | BROWNIES | x | add duplicate of one random surrounding cat to deck | — | — |
-| treat_pile | TREAT PILE | add | +20 per TREAT | — | — |
-| lucky_paw | LUCKY PAW | x | ×4 one random cat ×½ others | — | — |
-| nap | POWER NAP | mul | ×2 ALL cats | — | NO OTHER TREAT |
-| cathouse | CATHOUSE | add | +10 to SURROUNDING cats | +10 per play | — |
-| frenzy | FRENZY BALL | mul | ×3 SURROUNDING cats | — | ALL SAME TYPE |
-| catnado | CATNADO | mul | ×1.5 ALL cats | +0.1 per play | — |
-| tuna_can | TUNA CAN | mul | ×2 all ORANGE cats | — | — |
-| shadow_feast | SHADOW FEAST | mul | ×2 all BLACK cats | — | — |
-| mirror | MIRROR | x | apply all ADD treats again | — | — |
-| all_or_nothing | ALL OR NOTHING | mul | ×5 ALL cats | — | BOARD FULL |
-| cat_phone | CAT PHONE | x | overwrite self with random backpack treat ability | — | — |
-| cat_nap_stack | CAT NAP STACK | mul | ×1.5 per TREAT on board | — | — |
-| siamese_twins | SIAMESE TWINS | x | change one random cat type to match adjacent cat | — | — |
-| personal_space | PERSONAL SPACE | add | +15 per EMPTY cell | — | — |
+| ID | Name | Phase | Type | Effect | Additional Effects | Requirement |
+|----|------|-------|------|--------|--------------------|-------------|
+| milk | WARM MILK | add | A | +10 to ALL cats | — | — |
+| catnip | CATNIP | add | A | +30 to cats in same ROW | — | — |
+| feather | FEATHER | add | A | +30 to cats in same COL | — | — |
+| big_bite | BIG BITE | add | B | +100 to score | −1 per cat already scored | — |
+| lone_kitty | LONE KITTY | mul | B | ×2 score | — | NO SAME TYPE ADJACENT |
+| purebred | PUREBRED | mul | B | ×2 score | — | ALL SAME TYPE |
+| brownies | BROWNIES | x | — | add duplicate of one random surrounding cat to deck | — | — |
+| sardine_tin | SARDINE TIN | x | — | destroy one random surrounding cat from deck | — | — |
+| laser | LASER POINTER | x | — | copies ability of one other random treat | — | — |
+| jumping_ball | JUMPING BALL | x | — | disable one random treat's requirement | — | — |
+| all_or_nothing | ALL OR NOTHING | mul | B | ×1.5 score | +0.1 per play | BOARD FULL |
+| encore | ENCORE | x | — | retrigger one random treat | — | — |
+| wild_dice | WILD DICE | mul | B | ×5 score | — | 1 in 6 trigger chance |
+| loaded_dice | LOADED DICE | x | — | trigger Wild Dice again | — | — |
+| second_breakfast | SECOND BREAKFAST | x | — | retrigger all cats | disappears after 3 uses | — |
+| treat_encore | TREAT ENCORE | x | — | retrigger all treats | disappears after 3 uses | — |
+| cotton_cloud | COTTON CLOUD | mul | A | ×2 all WHITE cats | — | — |
+| tabby_pack | TABBY PACK | mul | A | ×2 all TABBY cats | — | — |
+| tuna_can | TUNA CAN | mul | A | ×2 all ORANGE cats | — | — |
+| shadow_feast | SHADOW FEAST | mul | A | ×2 all BLACK cats | — | — |
+| catnado | CATNADO | mul | B | ×1 score | +0.1 per play | — |
 
 ## Configuration Data Source
 

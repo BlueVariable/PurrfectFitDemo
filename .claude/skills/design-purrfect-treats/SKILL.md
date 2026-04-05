@@ -27,9 +27,15 @@ Identify the **strategy tag** — existing ones or invent new ones:
 
 Choose **phase**: `add`, `mul`, or `x`
 
-- `add` — flat bonus points to specific cats
-- `mul` — multiply specific cats' scores (applied after all add phases)
+- `add` — bonus points; either to specific cats (Type A) or to the overall score (Type B)
+- `mul` — multiplier; either on specific cat scores (Type A) or on the accumulated score (Type B)
 - `x` — special one-off effects (deck manipulation, copying, transforming)
+
+**Type A vs Type B distinction:**
+- **Type A** — effect targets cats explicitly ("to ALL cats", "in same ROW", "all ORANGE cats"). Buffered and applied per-cat as each cat fires.
+- **Type B** — effect is just "+N" or "×N" with no cat type in the effect text. Applied directly to the running total at the treat's scan position.
+
+The classification matters for both mechanics and animation (see Return Shapes below).
 
 **Add phase power benchmarks:**
 | Scope | Typical Value |
@@ -220,10 +226,10 @@ Match shape to theme and rarity — bigger shapes = rarer feels.
 The goal is a **meaningfully different** effect. Same mechanic + different number = not unique enough.
 
 **Existing add effects (avoid direct duplicates):**
-ALL cats · same ROW · same COL · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per MISSING DECK CARD · per HAND REMAINING · per $1 HELD · per DISCARD REMAINING · per CARD IN HAND (scaling) · SURROUNDING (degrading) · ISOLATED cats (no neighbors)
+ALL cats (+10) · same ROW (+30) · same COL (+30) · +100 score (−1 per cat already scored) · SURROUNDING · EDGES · per UNIQUE type · per EMPTY cell · per TREAT · per CELL · per DECK CARD remaining · per MISSING DECK CARD · per HAND REMAINING · per $1 HELD · per DISCARD REMAINING · per CARD IN HAND (scaling) · SURROUNDING (degrading) · ISOLATED cats (no neighbors)
 
 **Existing mul effects (avoid direct duplicates):**
-L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · ALL (×2 no req) · ALL (×5 board full) · ALL (×1.5 scaling) · ORANGE cats · BLACK cats · WHITE cats · TABBY cats · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · ×3 one random · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · ALL (×8, self-destructs after 1 play) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ALL (×2→growing, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells · ×(unique shape count) · ×(empty BP cells ÷ 4) · ×(discards remaining +1) · ×(cash ÷ 5) · ×N if score ≥ target (growing) · ×4 req: NO DISCARDS REMAINING
+WHITE cats (×2) · TABBY cats (×2) · ORANGE cats (×2) · BLACK cats (×2) · score ×2 (req: NO SAME TYPE ADJACENT) · score ×2 (req: ALL SAME TYPE) · score ×1.5 scaling (req: BOARD FULL) · score ×5 1-in-6 chance · score ×1 scaling (catnado) · L-shape · DUO-shape · T-shape · CHONK-shape · CORNERS · SURROUNDING (req: all same type) · per TREAT count · ×4 one random ×½ others · most common type · ×(unique type count) · ×(9 − treat count) · ×4 lowest-scoring cat · ALL (×4, self-destructs after 2 plays) · ALL (×8, self-destructs after 1 play) · cats in same COL (scaling) · ALL (×2, req: LAST HAND) · ALL (×2→growing, req: LAST HAND) · ×2 per card in hand · ×2 cats with 4+ cells · ×(unique shape count) · ×(empty BP cells ÷ 4) · ×(discards remaining +1) · ×(cash ÷ 5) · ×N if score ≥ target (growing) · ×4 req: NO DISCARDS REMAINING
 
 A new effect that introduces a new **axis** (connected group, majority, threshold, etc.) is always valid even if phase/scope overlaps.
 
@@ -281,8 +287,10 @@ Only do this step when the user explicitly asks to implement/add the treat.
 TREAT_REGISTRY['<id>'] = {
   buildFn(ef, phase) {
     return (b, cats, ts, p, cs) => {
-      // return { gids, m } for mul phase
-      // return { bonus, desc } or { bonusMap } for add phase
+      // Add Type A (targets specific cats):  return { bonus, desc } or { bonusMap: {gid: N} }
+      // Add Type B (overall score):          return { scoreBonus: N }
+      // Mul Type A (targets specific cats):  return { gids: [...], m: N }
+      // Mul Type B (overall score):          return { scoreMultiplier: true, m: N }
     };
   },
 };
@@ -312,12 +320,21 @@ From `js/treat-effects.js`:
 | `rowAdd(b, cells, amt)` | `{bonus, desc}` | +amt to cats in same row |
 | `colAdd(b, cells, amt)` | `{bonus, desc}` | +amt to cats in same col |
 | `surrAdd(b, cells, amt)` | `{bonus, desc}` | +amt to adjacent cats |
-| `allMulCS(cats, cs, m)` | `{gids, m}` | ×m all cats |
+| `allMulCS(cats, cs, m)` | `{gids, m}` | ×m all cats (Type A — per-cat) |
 | `colMul(b, cats, cells, m)` | `{gids, m}` | ×m cats in treat's col |
 | `surrMulCS(b, cats, cells, m, cs)` | `{gids, m}` | ×m adjacent cats |
 | `shapeMul(cats, shapes, m)` | `{gids, m}` | ×m cats matching shape(s) |
 | `extractNum(ef)` | `number` | Parse +N from effect string |
 | `extractMul(ef)` | `number` | Parse ×N from effect string |
+
+**Type B return shapes** (apply directly to running total, do NOT use `allMulCS`):
+```js
+// Mul Type B — multiplies accumulated score at this scan position
+return { scoreMultiplier: true, m };
+
+// Add Type B — adds flat amount to accumulated score at this scan position
+return { scoreBonus: amt };
+```
 
 ### Scoring function signature
 
