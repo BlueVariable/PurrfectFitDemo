@@ -478,9 +478,7 @@ function endScoreSequence(total){
   const scoreEl=g('g-score');
   if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
   _syncTbScore(G.score.toLocaleString());
-  // Restore treats used this play back to backpack immediately
-  (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
-  G.usedTreats=[];
+  // Treats stay in usedTreats until the round ends (restored in goShop/roundWin)
   // No popup — go straight to next hand logic
   G.hands--;
   if(G.score>=G.tgt){roundWin();return;}
