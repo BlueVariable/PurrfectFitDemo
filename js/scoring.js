@@ -288,6 +288,13 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         return;
       }
 
+      // Sync local runningTotal for Type B treats so subsequent cat animateCounter calls don't drop
+      if(result.scoreBonus!==undefined){
+        runningTotal+=result.scoreBonus;
+      }else if(result.scoreMultiplier&&result.newTotal!==undefined){
+        runningTotal=result.newTotal;
+      }
+
       // Build log line describing what this treat does
       let logLine=`${treat.tdef.em} ${treat.tdef.nm}`;
       if(phase==='add'){
@@ -302,6 +309,8 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
       }else if(phase==='mul'){
         if(result.gids&&result.gids.length&&result.m>1)
           logLine+=`: ×${result.m} (${result.gids.length} cat${result.gids.length!==1?'s':''} ahead)`;
+        else if(result.scoreBonus!==undefined)
+          logLine+=`: +${result.scoreBonus}`;
       }else if(phase==='x'){
         if(result.scoreMultiplier&&result.m>1)logLine+=`: copied ${result.copiedFrom?.em||''} ×${result.m}`;
         else if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
