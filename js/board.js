@@ -116,7 +116,7 @@ function clearBoard(){
 
 function doDiscard(){
   if(H.kind!=='cat'||G.disc<=0)return;
-  G.deck.push(G.hand.splice(H.handIdx,1)[0]);sfl(G.deck);
+  G.hand.splice(H.handIdx,1);
   G.disc--;
   H=resetH();updateGhost();hideHUD();
   if(G.deck.length>0)G.hand.push(G.deck.shift());
