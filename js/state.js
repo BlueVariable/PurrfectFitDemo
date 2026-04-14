@@ -3,8 +3,8 @@
 //  STATE
 // ══════════════════════════════════════════════════════
 const BPS_DEFAULT=4;
-function getBPR(){if(G._bpOverrideR)return G._bpOverrideR;return CFG.backpack_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
-function getBPC(){if(G._bpOverrideC)return G._bpOverrideC;return CFG.backpack_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
+function getBPR(){if(G._bpOverrideR)return G._bpOverrideR;return CFG.inventory_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
+function getBPC(){if(G._bpOverrideC)return G._bpOverrideC;return CFG.inventory_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
 let G={};
 let gameInProgress=false;
 let curDeck='classic';
