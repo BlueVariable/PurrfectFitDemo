@@ -1,20 +1,17 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: catnado
-//  ×N score multiplier, increases by increment each time played
+//  ×2 score multiplier, destroys 1 random inventory treat
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['catnado'] = {
-  buildFn(ef, phase, addEf) {
-    const baseM = extractMul(ef);
-    let increment = 0;
-    if (addEf) {
-      const im = addEf.match(/([\d.]+)/);
-      if (im) increment = parseFloat(im[1]);
-    }
+  buildFn(ef, phase) {
+    const m = extractMul(ef);
     return (b, cats, ts, p, cs) => {
-      const plays = G.treatPlayCounts.catnado || 0;
-      const m = Math.round((baseM + plays * increment) * 100) / 100;
-      G.treatPlayCounts.catnado = plays + 1;
+      if (G.bpGroups.length > 0) {
+        const idx = Math.floor(Math.random() * G.bpGroups.length);
+        const grp = G.bpGroups[idx];
+        removeBpGid(grp.gid);
+      }
       return { scoreMultiplier: true, m };
     };
   },

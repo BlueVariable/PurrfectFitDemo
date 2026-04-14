@@ -1,11 +1,20 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: sardine_tin
-//  x-phase: destroy one random surrounding cat from deck
+//  Destroys random surrounding cats from deck
+//  +1 more cat destroyed per trigger
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['sardine_tin'] = {
-  buildFn(ef, phase) {
+  buildFn(ef, phase, addEf) {
+    let increment = 1;
+    if (addEf) {
+      const im = addEf.match(/([\d.]+)/);
+      if (im) increment = parseFloat(im[1]);
+    }
     return (b, cats, ts, p, cs) => {
+      const plays = G.treatPlayCounts.sardine_tin || 0;
+      const count = 1 + Math.round(plays * increment);
+      G.treatPlayCounts.sardine_tin = plays + 1;
       const allTCells = Array.isArray(p[0]) ? p : [p];
       const adjGids = new Set();
       allTCells.forEach(([tr, tc]) => {
@@ -18,13 +27,18 @@ TREAT_REGISTRY['sardine_tin'] = {
       });
       if (!adjGids.size) return { type: 'x', skip: true };
       const gidArr = [...adjGids];
-      const chosenGid = gidArr[Math.floor(Math.random() * gidArr.length)];
-      const grp = cats.find(c => c.gid === chosenGid);
-      if (!grp) return { type: 'x', skip: true };
-      const matchIdx = G.deck.findIndex(card => card.type === grp.type);
-      if (matchIdx === -1) return { type: 'x', skip: true };
-      const removed = G.deck.splice(matchIdx, 1)[0];
-      return { type: 'x', destroyedCat: { em: removed.em, name: removed.name, type: removed.type } };
+      let lastDestroyed = null;
+      for (let i = 0; i < count; i++) {
+        const chosenGid = gidArr[Math.floor(Math.random() * gidArr.length)];
+        const grp = cats.find(c => c.gid === chosenGid) || G.cats.find(c => c.gid === chosenGid);
+        if (!grp) continue;
+        const matchIdx = G.deck.findIndex(card => card.type === grp.type);
+        if (matchIdx === -1) continue;
+        const removed = G.deck.splice(matchIdx, 1)[0];
+        lastDestroyed = removed;
+      }
+      if (!lastDestroyed) return { type: 'x', skip: true };
+      return { type: 'x', destroyedCat: { em: lastDestroyed.em, name: lastDestroyed.name, type: lastDestroyed.type } };
     };
   },
 };

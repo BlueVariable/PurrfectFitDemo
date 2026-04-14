@@ -1,11 +1,21 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: all_or_nothing
-//  ×1.5 score multiplier — req: board full
+//  ×1.5 score multiplier, +0.2 per trigger — req: board full
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['all_or_nothing'] = {
-  buildFn(ef, phase) {
-    const m = extractMul(ef);
-    return (b, cats, ts, p, cs) => ({ scoreMultiplier: true, m });
+  buildFn(ef, phase, addEf) {
+    const baseM = extractMul(ef);
+    let increment = 0;
+    if (addEf) {
+      const im = addEf.match(/([\d.]+)/);
+      if (im) increment = parseFloat(im[1]);
+    }
+    return (b, cats, ts, p, cs) => {
+      const plays = G.treatPlayCounts.all_or_nothing || 0;
+      const m = Math.round((baseM + plays * increment) * 100) / 100;
+      G.treatPlayCounts.all_or_nothing = plays + 1;
+      return { scoreMultiplier: true, m };
+    };
   },
 };

@@ -1,10 +1,13 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: milk
-//  +N to each surrounding cat
+//  TREAT: piggy_bank
+//  +$1 to cash each time triggered
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['milk'] = {
+TREAT_REGISTRY['piggy_bank'] = {
   buildFn(ef, phase) {
-    return (b, cats, ts, p) => surrAdd(b, p, extractNum(ef));
+    return (b, cats, ts, p, cs) => {
+      G.cash += 1;
+      return { type: 'x', cashGained: 1 };
+    };
   },
 };
