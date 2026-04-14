@@ -5,6 +5,9 @@
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['catnip'] = {
   buildFn(ef, phase) {
-    return (b, c, ts, p) => rowAdd(b, p, extractNum(ef));
+    return (b, cats, ts, p, cs) => {
+      const { bonus } = rowAdd(b, p, extractNum(ef));
+      return { scoreBonus: bonus };
+    };
   },
 };
