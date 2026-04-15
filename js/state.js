@@ -113,7 +113,7 @@ function applyModifiersOnce(){
   const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
   mods.forEach(mod=>{
     if(mod==='bp-small'){G._bpOverrideR=3;G._bpOverrideC=3;G.bp=mk2d(3,3,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
-    if(mod==='bp-large'){G._bpOverrideR=5;G._bpOverrideC=5;G.bp=mk2d(5,5,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
+    if(mod==='bp-large'){G._bpOverrideR=6;G._bpOverrideC=5;G.bp=mk2d(6,5,()=>({filled:false,col:null,em:null,gid:null,tdef:null}));G.bpGroups=[];}
     if(mod==='cash-2')G.cash=Math.max(1,G.cash-2);
     if(mod.startsWith('cash+'))G.cash+=(parseInt(mod.slice(5))||0);
   });

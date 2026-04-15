@@ -57,7 +57,7 @@ const MOD_LABELS={
   'no-discard':'No Discards',
   'discards+1':'+1 Discard',
   'bp-small':'3×3 Backpack',
-  'bp-large':'5×5 Backpack',
+  'bp-large':'6×5 Backpack',
   'cash-2':'-$2 Starting Cash',
   'cash+10':'+$10 Starting Cash',
 };
