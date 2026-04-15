@@ -23,39 +23,59 @@ function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.chan
 // source: 'hand' | 'board' | 'bp'
 let H=resetH();
 
-// Pick a random (rows, cols) pair whose product equals size.
-// Prefers non-1 factors (rows>=2, cols>=2) so the board has real 2D shape.
-// Randomly orients the pair to allow asymmetric layouts like 2×11 or 11×2.
-function pickBoardDims(size){
-  const pairs=[];
-  for(let r=2;r<=Math.floor(Math.sqrt(size));r++){
-    if(size%r===0){const c=size/r;if(c>=2)pairs.push([r,c]);}
+// Given a target total grid area, pick a random (rows, cols) factorization.
+// Prefers non-1 factors so the board has real 2D shape; randomly orients
+// to allow asymmetric layouts like 2×11 or 11×2. If the exact total can't
+// factor into rows,cols >= 2, scan upward for the nearest total that can.
+function factorArea(total){
+  for(let t=total;t<total+6;t++){
+    const pairs=[];
+    for(let r=2;r<=Math.floor(Math.sqrt(t));r++){
+      if(t%r===0){const c=t/r;if(c>=2)pairs.push([r,c]);}
+    }
+    if(pairs.length){
+      const [a,b]=pairs[Math.floor(Math.random()*pairs.length)];
+      return Math.random()<0.5?{bsr:a,bsc:b,area:t}:{bsr:b,bsc:a,area:t};
+    }
   }
-  if(!pairs.length){
-    // Prime or too small — fall back to 1×size / size×1 if size>=2, else 1×1
-    if(size>=2)pairs.push([1,size]);else return{bsr:1,bsc:1};
-  }
-  const [a,b]=pairs[Math.floor(Math.random()*pairs.length)];
-  return Math.random()<0.5?{bsr:a,bsc:b}:{bsr:b,bsc:a};
+  return{bsr:1,bsc:Math.max(1,total),area:Math.max(1,total)};
 }
 
-// Build the blocked-cell mask for a round: each cell has `prob` chance of being blocked.
-function buildBlockedMask(rows,cols,prob){
+// Pick dims for a round where `playable` must fit exactly and additional
+// cells get blocked per `prob`. Total area = ceil(playable/(1-prob)),
+// factored into rows×cols. Blocked count = area - playable (exact).
+function pickBoardDimsForPlayable(playable,prob){
+  const p=Math.min(Math.max(prob||0,0),0.9);
+  const targetArea=p>0?Math.max(playable,Math.ceil(playable/(1-p))):playable;
+  return factorArea(targetArea);
+}
+
+// Build a blocked mask that marks exactly (area - playable) random cells as blocked.
+function buildBlockedMask(rows,cols,playable){
+  const area=rows*cols;
+  const blockCount=Math.max(0,Math.min(area,area-playable));
+  const idxs=Array.from({length:area},(_,i)=>i);
+  for(let i=idxs.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [idxs[i],idxs[j]]=[idxs[j],idxs[i]];
+  }
+  const blockedSet=new Set(idxs.slice(0,blockCount));
   const mask=[];
   for(let r=0;r<rows;r++){
     mask.push([]);
-    for(let c=0;c<cols;c++) mask[r].push(Math.random()<prob);
+    for(let c=0;c<cols;c++) mask[r].push(blockedSet.has(r*cols+c));
   }
   return mask;
 }
 
-// Configure the board for the current round: choose dims from Board Size and roll blocks.
+// Configure the board for the current round: dims hold exactly `Board Size`
+// playable cells, with extra cells blocked per `Blocked Cell Prob`.
 function setupRoundBoard(){
   const c=rcfg(G.round);
-  const size=c.boardSize||16;
-  const dims=pickBoardDims(size);
+  const playable=c.boardSize||16;
+  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
   G.bsr=dims.bsr;G.bsc=dims.bsc;
-  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,c.blockedProb||0);
+  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,playable);
 }
 
 function newGame(deckId){
@@ -63,9 +83,10 @@ function newGame(deckId){
   const cp=TDEFS.find(td=>td.id==='cat_phone');
   if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
-  const dims=pickBoardDims(c.boardSize||16);
+  const playable=c.boardSize||16;
+  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
   G={
-    round:1,score:0,tgt:c.tgt,bsr:dims.bsr,bsc:dims.bsc,blockedMask:buildBlockedMask(dims.bsr,dims.bsc,c.blockedProb||0),earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
+    round:1,score:0,tgt:c.tgt,bsr:dims.bsr,bsc:dims.bsc,blockedMask:buildBlockedMask(dims.bsr,dims.bsc,playable),earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],

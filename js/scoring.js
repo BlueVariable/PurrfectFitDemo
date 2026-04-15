@@ -530,8 +530,9 @@ function goShop(){
     return;
   }
   const c=rcfg(G.round);
-  const dims=pickBoardDims(c.boardSize||16);
-  G.tgt=c.tgt;G.bsr=dims.bsr;G.bsc=dims.bsc;G.blockedMask=buildBlockedMask(dims.bsr,dims.bsc,c.blockedProb||0);G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;
+  const playable=c.boardSize||16;
+  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
+  G.tgt=c.tgt;G.bsr=dims.bsr;G.bsc=dims.bsc;G.blockedMask=buildBlockedMask(dims.bsr,dims.bsc,playable);G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();
   openRounds();
