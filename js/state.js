@@ -50,22 +50,60 @@ function pickBoardDimsForPlayable(playable,prob){
   return factorArea(targetArea);
 }
 
-// Build a blocked mask that marks exactly (area - playable) random cells as blocked.
+// Build a blocked mask via "border carving": start from the rectangle and
+// repeatedly bite an exposed perimeter cell until exactly (area - playable)
+// cells are blocked. The remaining playable region stays connected and forms
+// an irregular polyomino silhouette instead of a rectangle with random holes.
 function buildBlockedMask(rows,cols,playable){
   const area=rows*cols;
   const blockCount=Math.max(0,Math.min(area,area-playable));
-  const idxs=Array.from({length:area},(_,i)=>i);
-  for(let i=idxs.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [idxs[i],idxs[j]]=[idxs[j],idxs[i]];
-  }
-  const blockedSet=new Set(idxs.slice(0,blockCount));
-  const mask=[];
-  for(let r=0;r<rows;r++){
-    mask.push([]);
-    for(let c=0;c<cols;c++) mask[r].push(blockedSet.has(r*cols+c));
+  const mask=Array.from({length:rows},()=>Array(cols).fill(false));
+  if(blockCount===0)return mask;
+
+  const outOrBlocked=(r,c)=>r<0||r>=rows||c<0||c>=cols||mask[r][c];
+  const isCarvable=(r,c)=>!mask[r][c]&&(
+    outOrBlocked(r-1,c)||outOrBlocked(r+1,c)||outOrBlocked(r,c-1)||outOrBlocked(r,c+1)
+  );
+
+  let carved=0;
+  while(carved<blockCount){
+    const candidates=[];
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) if(isCarvable(r,c))candidates.push([r,c]);
+    if(!candidates.length)break;
+    sfl(candidates);
+    let placed=false;
+    for(const [r,c] of candidates){
+      mask[r][c]=true;
+      if(_isPlayableConnected(mask,rows,cols)){placed=true;break;}
+      mask[r][c]=false; // would split region; try next candidate
+    }
+    if(!placed)break;
+    carved++;
   }
   return mask;
+}
+
+// Verify all unblocked cells in `mask` form one connected component (4-adjacency).
+function _isPlayableConnected(mask,rows,cols){
+  let start=null;
+  for(let r=0;r<rows&&!start;r++)for(let c=0;c<cols;c++){
+    if(!mask[r][c]){start=[r,c];break;}
+  }
+  if(!start)return true;
+  const seen=Array.from({length:rows},()=>Array(cols).fill(false));
+  const queue=[start];seen[start[0]][start[1]]=true;let count=1;
+  while(queue.length){
+    const [r,c]=queue.shift();
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const rr=r+dr,cc=c+dc;
+      if(rr<0||rr>=rows||cc<0||cc>=cols)continue;
+      if(mask[rr][cc]||seen[rr][cc])continue;
+      seen[rr][cc]=true;count++;queue.push([rr,cc]);
+    }
+  }
+  let total=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) if(!mask[r][c])total++;
+  return count===total;
 }
 
 // Configure the board for the current round: dims hold exactly `Board Size`
