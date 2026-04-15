@@ -11,7 +11,7 @@ let curDeck='classic';
 
 // ── Shared helpers ──
 function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};}
-function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null,blocked:false};}
+function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null,blocked:false,offShape:false};}
 
 // Touch drag tracking — true once finger has moved enough to constitute a drag
 let _touchMovedWhileHeld=false;
@@ -23,108 +23,84 @@ function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.chan
 // source: 'hand' | 'board' | 'bp'
 let H=resetH();
 
-// Given a target total grid area, pick a random (rows, cols) factorization.
-// Prefers non-1 factors so the board has real 2D shape; randomly orients
-// to allow asymmetric layouts like 2×11 or 11×2. If the exact total can't
-// factor into rows,cols >= 2, scan upward for the nearest total that can.
-function factorArea(total){
-  for(let t=total;t<total+6;t++){
-    const pairs=[];
-    for(let r=2;r<=Math.floor(Math.sqrt(t));r++){
-      if(t%r===0){const c=t/r;if(c>=2)pairs.push([r,c]);}
+// Generate a random connected polyomino with exactly `targetCells` cells
+// using accretion: start with a center cell, then repeatedly add a random
+// cell adjacent to the existing shape until the size is reached. The bounding
+// box is trimmed to the polyomino's actual extents so bsr/bsc are tight.
+function generatePolyomino(targetCells){
+  const N=Math.max(1,targetCells);
+  const side=Math.max(3,Math.ceil(Math.sqrt(N))+3);
+  const rows=side,cols=side;
+  const inShape=Array.from({length:rows},()=>Array(cols).fill(false));
+  const startR=Math.floor(rows/2),startC=Math.floor(cols/2);
+  inShape[startR][startC]=true;
+  let count=1;
+  const frontier=new Set();
+  const key=(r,c)=>r*cols+c;
+  const addFrontier=(r,c)=>{
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const rr=r+dr,cc=c+dc;
+      if(rr>=0&&rr<rows&&cc>=0&&cc<cols&&!inShape[rr][cc]) frontier.add(key(rr,cc));
     }
-    if(pairs.length){
-      const [a,b]=pairs[Math.floor(Math.random()*pairs.length)];
-      return Math.random()<0.5?{bsr:a,bsc:b,area:t}:{bsr:b,bsc:a,area:t};
+  };
+  addFrontier(startR,startC);
+  while(count<N&&frontier.size>0){
+    const arr=[...frontier];
+    const k=arr[Math.floor(Math.random()*arr.length)];
+    frontier.delete(k);
+    const r=Math.floor(k/cols),c=k%cols;
+    inShape[r][c]=true;count++;
+    addFrontier(r,c);
+  }
+  let minR=rows,maxR=-1,minC=cols,maxC=-1;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    if(inShape[r][c]){
+      if(r<minR)minR=r;if(r>maxR)maxR=r;
+      if(c<minC)minC=c;if(c>maxC)maxC=c;
     }
   }
-  return{bsr:1,bsc:Math.max(1,total),area:Math.max(1,total)};
-}
-
-// Pick dims for a round where `playable` must fit exactly and additional
-// cells get blocked per `prob`. Total area = ceil(playable/(1-prob)),
-// factored into rows×cols. Blocked count = area - playable (exact).
-function pickBoardDimsForPlayable(playable,prob){
-  const p=Math.min(Math.max(prob||0,0),0.9);
-  const targetArea=p>0?Math.max(playable,Math.ceil(playable/(1-p))):playable;
-  return factorArea(targetArea);
-}
-
-// Build a blocked mask via "border carving": start from the rectangle and
-// repeatedly bite an exposed perimeter cell until exactly (area - playable)
-// cells are blocked. The remaining playable region stays connected and forms
-// an irregular polyomino silhouette instead of a rectangle with random holes.
-function buildBlockedMask(rows,cols,playable){
-  const area=rows*cols;
-  const blockCount=Math.max(0,Math.min(area,area-playable));
-  const mask=Array.from({length:rows},()=>Array(cols).fill(false));
-  if(blockCount===0)return mask;
-
-  const outOrBlocked=(r,c)=>r<0||r>=rows||c<0||c>=cols||mask[r][c];
-  const isCarvable=(r,c)=>!mask[r][c]&&(
-    outOrBlocked(r-1,c)||outOrBlocked(r+1,c)||outOrBlocked(r,c-1)||outOrBlocked(r,c+1)
+  const tRows=maxR-minR+1,tCols=maxC-minC+1;
+  const trimmed=Array.from({length:tRows},(_,r)=>
+    Array.from({length:tCols},(_,c)=>inShape[minR+r][minC+c])
   );
+  return{rows:tRows,cols:tCols,shape:trimmed};
+}
 
-  let carved=0;
-  while(carved<blockCount){
-    const candidates=[];
-    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) if(isCarvable(r,c))candidates.push([r,c]);
-    if(!candidates.length)break;
-    sfl(candidates);
-    let placed=false;
-    for(const [r,c] of candidates){
-      mask[r][c]=true;
-      if(_isPlayableConnected(mask,rows,cols)){placed=true;break;}
-      mask[r][c]=false; // would split region; try next candidate
+// Per-cell stochastic blocking — each in-shape cell rolls independently
+// against `prob`. Off-shape cells stay unblocked here; the board cell's
+// `offShape` flag handles their non-placeable status.
+function buildBlockedMaskFromShape(shape,prob){
+  const rows=shape.length,cols=shape[0].length;
+  const mask=Array.from({length:rows},()=>Array(cols).fill(false));
+  if(prob>0){
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      if(shape[r][c]&&Math.random()<prob) mask[r][c]=true;
     }
-    if(!placed)break;
-    carved++;
   }
   return mask;
 }
 
-// Verify all unblocked cells in `mask` form one connected component (4-adjacency).
-function _isPlayableConnected(mask,rows,cols){
-  let start=null;
-  for(let r=0;r<rows&&!start;r++)for(let c=0;c<cols;c++){
-    if(!mask[r][c]){start=[r,c];break;}
-  }
-  if(!start)return true;
-  const seen=Array.from({length:rows},()=>Array(cols).fill(false));
-  const queue=[start];seen[start[0]][start[1]]=true;let count=1;
-  while(queue.length){
-    const [r,c]=queue.shift();
-    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
-      const rr=r+dr,cc=c+dc;
-      if(rr<0||rr>=rows||cc<0||cc>=cols)continue;
-      if(mask[rr][cc]||seen[rr][cc])continue;
-      seen[rr][cc]=true;count++;queue.push([rr,cc]);
-    }
-  }
-  let total=0;
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++) if(!mask[r][c])total++;
-  return count===total;
+// Single source of truth for round/hand board layout: irregular polyomino
+// shape + stochastic blocking inside it.
+function setupBoardLayout(round){
+  const c=rcfg(round||1);
+  const playable=c.boardSize||16;
+  const poly=generatePolyomino(playable);
+  return{
+    rows:poly.rows,cols:poly.cols,shape:poly.shape,
+    mask:buildBlockedMaskFromShape(poly.shape,c.blockedProb||0)
+  };
 }
 
-// Configure the board for the current round: dims hold exactly `Board Size`
-// playable cells, with extra cells blocked per `Blocked Cell Prob`.
-function setupRoundBoard(){
-  const c=rcfg(G.round);
-  const playable=c.boardSize||16;
-  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
-  G.bsr=dims.bsr;G.bsc=dims.bsc;
-  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,playable);
-}
 
 function newGame(deckId){
   // Restore cat_phone if it was transformed in a previous game
   const cp=TDEFS.find(td=>td.id==='cat_phone');
   if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
-  const playable=c.boardSize||16;
-  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
+  const layout=setupBoardLayout(1);
   G={
-    round:1,score:0,tgt:c.tgt,bsr:dims.bsr,bsc:dims.bsc,blockedMask:buildBlockedMask(dims.bsr,dims.bsc,playable),earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
+    round:1,score:0,tgt:c.tgt,bsr:layout.rows,bsc:layout.cols,boardShape:layout.shape,blockedMask:layout.mask,earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
@@ -216,20 +192,16 @@ function dealHand(){
   G.treats.forEach(bt=>bpAutoPlace(bt.tdef));
   G.cats=[];G.treats=[];
   H=resetH();
-  // Re-randomize board dims and blocked layout for the new hand.
-  const c=rcfg(G.round);
-  const playable=c.boardSize||16;
-  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
-  G.bsr=dims.bsr;G.bsc=dims.bsc;
-  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,playable);
+  // Re-roll the polyomino board shape and stochastic block mask each hand.
+  const layout=setupBoardLayout(G.round);
+  G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;
   mkBoard();
 }
 
 function mkBoard(){
   G.board=mk2d(G.bsr,G.bsc,()=>(emptyCell()));
-  if(G.blockedMask){
-    for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
-      if(G.blockedMask[r]&&G.blockedMask[r][c]) G.board[r][c].blocked=true;
-    }
+  for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
+    if(G.boardShape&&G.boardShape[r]&&!G.boardShape[r][c]) G.board[r][c].offShape=true;
+    if(G.blockedMask&&G.blockedMask[r]&&G.blockedMask[r][c]) G.board[r][c].blocked=true;
   }
 }

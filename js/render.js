@@ -103,7 +103,7 @@ function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit(
 
 function checkBoardFull(){
   const filled=G.board.flat().filter(c=>c.filled).length;
-  const playable=G.board.flat().filter(c=>!c.blocked).length;
+  const playable=G.board.flat().filter(c=>!c.blocked&&!c.offShape).length;
   if(filled<playable||playable===0)return;
   // Ripple glow across board cells
   const boardEl=g('board');
@@ -242,6 +242,15 @@ function renderBoard(){
     div.style.width=cs+'px';div.style.height=cs+'px';
     div.style.fontSize=Math.floor(cs*.36)+'px';
     const bd=G.board[r][c];
+    if(bd.offShape){
+      div.classList.add('off-shape');
+      div.style.background='transparent';
+      div.style.border='none';
+      div.style.boxShadow='none';
+      div.style.pointerEvents='none';
+      el.appendChild(div);
+      continue;
+    }
     if(bd.blocked){
       div.classList.add('blocked');
       div.style.background='repeating-linear-gradient(45deg,#1a1a24,#1a1a24 6px,#2a2a38 6px,#2a2a38 12px)';

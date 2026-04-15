@@ -12,8 +12,10 @@ function onBoardEnter(r,c){
       if(!v)return;
       const rr=or+dr,cc=oc+dc;
       if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc){
+        const bd=G.board[rr][cc];
+        if(bd.offShape)return;
         const el=getBCell(rr,cc);
-        if(el) el.classList.add(ok&&!G.board[rr][cc].filled?'ok':'bad');
+        if(el) el.classList.add(ok&&!bd.filled?'ok':'bad');
       }
     }));
     return;
@@ -25,8 +27,10 @@ function onBoardEnter(r,c){
     if(!v)return;
     const rr=or+dr,cc=oc+dc;
     if(rr>=0&&rr<G.bsr&&cc>=0&&cc<G.bsc){
+      const bd=G.board[rr][cc];
+      if(bd.offShape)return;
       const el=getBCell(rr,cc);
-      if(el&&!G.board[rr][cc].filled) el.classList.add(ok?'ok':'bad');
+      if(el&&!bd.filled) el.classList.add(ok?'ok':'bad');
     }
   }));
 }
@@ -96,6 +100,7 @@ function boardCanPlace(cells,r,c){
     if(rr>=G.bsr||cc>=G.bsc||rr<0||cc<0)return false;
     if(G.board[rr][cc].filled)return false;
     if(G.board[rr][cc].blocked)return false;
+    if(G.board[rr][cc].offShape)return false;
   }
   return true;
 }
