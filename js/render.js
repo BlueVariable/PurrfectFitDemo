@@ -163,6 +163,12 @@ function treatReqFails(td){
 }
 
 function treatCurrentEf(td){
+  // Per-treat hook wins — treats that compute a live value (e.g. big_bite,
+  // crowd_pleaser, purrfect_record) provide their own currentValue() method.
+  const reg=TREAT_REGISTRY[td.id];
+  if(reg&&typeof reg.currentValue==='function'){
+    try{const v=reg.currentValue();if(v)return v;}catch(e){}
+  }
   if(!td.addEf)return null;
   const incM=td.addEf.match(/([\d.]+)/);
   if(!incM)return null;
@@ -173,7 +179,7 @@ function treatCurrentEf(td){
   const baseM=td.ef.match(/([\d.]+)/);
   if(!baseM)return null;
   const base=parseFloat(baseM[1]);
-  const isDecreasing=TREAT_REGISTRY[td.id]?.isDecreasing;
+  const isDecreasing=reg?.isDecreasing;
   const cur=isDecreasing
     ?Math.max(0,Math.round((base-plays*inc)*100)/100)
     :Math.round((base+plays*inc)*100)/100;

@@ -178,6 +178,12 @@ function dealHand(){
   G.treats.forEach(bt=>bpAutoPlace(bt.tdef));
   G.cats=[];G.treats=[];
   H=resetH();
+  // Re-randomize board dims and blocked layout for the new hand.
+  const c=rcfg(G.round);
+  const playable=c.boardSize||16;
+  const dims=pickBoardDimsForPlayable(playable,c.blockedProb||0);
+  G.bsr=dims.bsr;G.bsc=dims.bsc;
+  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,playable);
   mkBoard();
 }
 
