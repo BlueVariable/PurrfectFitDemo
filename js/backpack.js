@@ -52,7 +52,7 @@ function bpPlaceAt(tdef,cells,r,c){
     G.bp[rr][cc]={filled:true,col:tdef.col,em:tdef.em,gid,tdef};
     placed.push([rr,cc]);
   }));
-  G.bpGroups.push({gid,tdef,cells:placed});
+  G.bpGroups.push({gid,tdef,cells:placed,or:r,oc:c,shape:cells});
 }
 function removeBpGid(gid){
   const grp=G.bpGroups.find(g=>g.gid===gid);if(!grp)return;

@@ -373,9 +373,12 @@ function renderBP(){
             dropHeld();
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+            const pickedShape=grp.shape||grp.tdef.bpS;
+            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true};
             updateGhost();showHUD();renderBP();
           }
         };
@@ -414,9 +417,12 @@ function renderBP(){
             dropHeld();
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+            const pickedShape=grp.shape||grp.tdef.bpS;
+            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true};
             updateGhost();showHUD();renderBP();
           }
         };

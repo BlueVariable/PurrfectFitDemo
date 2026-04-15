@@ -46,9 +46,12 @@ function onBoardClick(r,c){
         treatGroup.cells.forEach(([tr,tc])=>{G.board[tr][tc]=emptyCell();});
         G.treats.splice(ti,1);
         const tdef=treatGroup.tdef;
-        H={kind:'treat',source:'board',data:tdef,cells:tdef.bpS,rot:0,
+        const pickedShape=treatGroup.shapeGrid||tdef.bpS;
+        const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(treatGroup.or??r)));
+        const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(treatGroup.oc??c)));
+        H={kind:'treat',source:'board',data:tdef,cells:pickedShape,rot:0,
            color:tdef.col,em:tdef.em,handIdx:null,boardGid:gid,bpGid:null,
-           grabDr:Math.floor(tdef.bpS.length/2),grabDc:Math.floor(tdef.bpS[0].length/2),dragging:false};
+           grabDr:gDr,grabDc:gDc,dragging:false};
         updateGhost();showHUD();clrBoardPrev();renderAll();
       }
       return;
@@ -69,7 +72,7 @@ function placeCatOnBoard(r,c){
     G.board[rr][cc]={filled:true,col:H.color,kind:'cat',em:H.em,gid,shape:H.data.shape,type:H.data.type};
     placed.push([rr,cc]);
   }));
-  G.cats.push({cells:placed,col:H.color,shape:H.data.shape,type:H.data.type,cat:H.data,gid});
+  G.cats.push({cells:placed,col:H.color,shape:H.data.shape,type:H.data.type,cat:H.data,gid,or,oc,shapeGrid:H.cells});
   G.hand.splice(H.handIdx,1);
   H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();checkBoardFull();
 }
@@ -82,7 +85,7 @@ function placeTreatOnBoard(r,c){
     G.board[rr][cc]={filled:true,col:H.color,kind:'treat',em:H.em,gid,shape:null,type:null};
     placed.push([rr,cc]);
   }));
-  G.treats.push({cells:placed,gid,tdef:H.data});
+  G.treats.push({cells:placed,gid,tdef:H.data,or,oc,shapeGrid:H.cells});
   H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();checkBoardFull();
 }
 

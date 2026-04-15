@@ -43,10 +43,12 @@ function pickupCatFromBoard(r,c){
   // put back in hand temporarily
   G.hand.push(grp.cat);
   const idx=G.hand.length-1;
-  const _bCells=rotC(grp.cat.cells,0);
-  H={kind:'cat',source:'board',data:grp.cat,cells:_bCells,rot:0,
+  const pickedShape=grp.shapeGrid||rotC(grp.cat.cells,0);
+  const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
+  const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
+  H={kind:'cat',source:'board',data:grp.cat,cells:pickedShape,rot:0,
      color:grp.cat.col,em:grp.cat.em,handIdx:idx,boardGid:grp.gid,bpGid:null,
-     grabDr:Math.floor(_bCells.length/2),grabDc:Math.floor(_bCells[0].length/2),dragging:false};
+     grabDr:gDr,grabDc:gDc,dragging:false};
   updateGhost();showHUD();renderAll();
 }
 
@@ -349,9 +351,10 @@ function updateGhost(){
   const cells=H.cells;
   const cols=cells[0].length;
   const cs=H.kind==='cat'?38:26;
+  const gap=3;
   const grid=g('gh-grid');
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
-  grid.style.gap='3px';
+  grid.style.gap=gap+'px';
   grid.innerHTML='';
   cells.forEach(row=>row.forEach(v=>{
     const d=document.createElement('div');
@@ -361,6 +364,10 @@ function updateGhost(){
     else{d.style.background='transparent';d.style.border='none';}
     grid.appendChild(d);
   }));
+  // Position ghost so the (grabDr, grabDc) cell sits exactly at the cursor.
+  const offX=H.grabDc*(cs+gap)+cs/2;
+  const offY=H.grabDr*(cs+gap)+cs/2;
+  g('ghost').style.transform=`translate(${-offX}px,${-offY}px)`;
 }
 
 function showHUD(){g('ihud').classList.add('on');}
