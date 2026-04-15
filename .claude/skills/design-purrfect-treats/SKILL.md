@@ -235,24 +235,25 @@ A new effect that introduces a new **axis** (connected group, majority, threshol
 
 ### 8. Output Sheet Row
 
-Actual column order for the Treats sheet:
+Actual column order for the Treats sheet (A → P):
 ```
-Enabled | Status | Strategy | Phase | ID | Name | Emoji | Rarity | Shape ID | Effect | Additional Effects | Requirement | Buy Price
+Enabled | ID | Name | Emoji | Strategy | Phase | Rarity | Shape ID | Effect | Additional Effects | Requirement | Buy Price | Description | Status | Claude Notes | Proposition Decline Reason
 ```
 
-Example row:
+Example row (proposal — `Enabled=FALSE` until approved):
 ```
-TRUE, Proposed, cat shape, mul, chonk_champ, CHONK CHAMP, 🏆, epic, chonk, ×3 CHONK shaped cats, , , 8
+FALSE, chonk_champ, CHONK CHAMP, 🏆, cat shape, mul, epic, chonk, ×3 CHONK shaped cats, , , 8, fits big or goes home, Proposed, , 
 ```
 
 **Field rules:**
-- `Enabled`: always `TRUE` for new proposals
-- `Status`: always `Proposed` for new designs
-- `id`: snake_case, unique, descriptive
+- `Enabled`: `FALSE` for proposals (so it doesn't show up in the live shop until approved); flip to `TRUE` at implementation time
+- `Status`: `Proposed` for new designs, `Approved` once user signs off, `Implemented` after code lands
+- `ID`: snake_case, unique, descriptive
 - `Effect`: use existing style OR invent new phrasing — be specific and unambiguous
 - `Additional Effects`: scaling mechanic if any (e.g. "Increases by 10 every time played"), else blank
 - `Requirement`: blank, existing string, or new string
-- Leave `Additional Effects` and `Requirement` blank (empty, not null) if unused
+- `Description`: short tagline (lowercase, witty)
+- Leave any unused field blank (empty string, not null)
 
 **If proposing a new effect, requirement, or additional effect**, add an implementation note:
 > ⚠️ New mechanic — needs `js/treats/<id>.js` implementation (and `js/treats/requirements.js` entry if new requirement)
@@ -262,16 +263,17 @@ TRUE, Proposed, cat shape, mul, chonk_champ, CHONK CHAMP, 🏆, epic, chonk, ×3
 **Spreadsheet ID:** `1qEr42p9HsQFPrBip1TqYB2DBehKPgyT_e0CwmNP_Cd4`
 
 1. Use `mcp__google-sheets__sheets_get_values` to find the next empty row:
-   - Range: `Treats!A1:A60`
-   - Scan for the first row after all named treats where column A is `FALSE` with no ID in column E
+   - Range: `Treats!B1:B60` (column B = ID)
+   - Scan for the first row whose ID cell is empty after all named treats
 2. Use `mcp__google-sheets__sheets_update_values` to write the full row:
-   - Range: `Treats!A<row>:M<row>`
-   - `valueInputOption`: `RAW`
+   - Range: `Treats!A<row>:N<row>` (covers Enabled through Status; columns O–P optional)
+   - `valueInputOption`: `USER_ENTERED` (so booleans render as TRUE/FALSE)
 
-**Review & approval flow:**
-- `Proposed` — designed; awaiting user review in sheet
-- `Approved` — user signed off; ready to implement
-- `WIP` — implementation in progress
+**Review & approval flow (matches existing sheet values):**
+- `Proposed` — designed; awaiting user review in sheet (Enabled stays `FALSE`)
+- `ToBeImplemented` — user signed off, code not yet written (Enabled stays `FALSE`)
+- `Approved` — code written and live (Enabled flipped to `TRUE`)
+- `Implemented` — same as Approved (some older rows use this label)
 
 ### 10. Implement (when approved)
 
@@ -301,7 +303,7 @@ TREAT_REGISTRY['<id>'] = {
 <script src="js/treats/<id>.js"></script>
 ```
 
-3. **Update sheet row** — change `Status` from `Proposed` to `Approved`, `Enabled` to `TRUE`
+3. **Update sheet row via MCP** — flip `Enabled` to `TRUE` and `Status` to `Approved`. Use `mcp__google-sheets__sheets_update_values`. Do not maintain any local CSV mirror.
 
 4. **Commit and push:**
 ```
@@ -351,9 +353,9 @@ return { scoreBonus: amt };
 
 **Concept:** Trophy treat that rewards the largest cat shape on the board
 
-Sheet row:
+Sheet row (post-approval, ready to ship):
 ```
-TRUE, Approved, cat shape, mul, chonk_champ, CHONK CHAMP, 🏆, epic, chonk, ×3 CHONK shaped cats, , , 8
+TRUE, chonk_champ, CHONK CHAMP, 🏆, cat shape, mul, epic, chonk, ×3 CHONK shaped cats, , , 8, fits big or goes home, Approved, , 
 ```
 
 Implementation:

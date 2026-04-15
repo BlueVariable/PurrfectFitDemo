@@ -14,13 +14,13 @@ The game is split across `index.html` (markup + inline styles) and multiple JS f
 
 | File | Responsibility |
 |------|---------------|
-| `js/utils.js` | `rotC` (shape rotation), `sfl` (shuffle), `mkDeck`, `dealHand`, helpers |
+| `js/utils.js` | `rotC` (shape rotation), `sfl` (shuffle), `weightedSample`, `cap`, `g`, `uid` |
 | `js/treat-effects.js` | Add/mul helper functions (`surrAdd`, `rowAdd`, `colAdd`, `allAdd`, `allMulCS`, `colMul`, `surrMulCS`, `shapeMul`) |
 | `js/treats/registry.js` | `TREAT_REGISTRY = {}` — named treats register here |
 | `js/treats/requirements.js` | `REQUIREMENT_FNS` map + `requirementFails(req)` |
 | `js/treats/<id>.js` | One file per treat with custom logic (see Treat System below) |
 | `js/config.js` | Fetches Google Sheets CSVs, parses into globals (`CFG`, `RCFG`, `COLS`, `EMS`, `TDEFS`, `CSHAPES`, `DECKS`, `BRANCHES`, `RARITY_WEIGHTS`), calls `buildTreatFn` |
-| `js/state.js` | Global mutable state `G` and `H` |
+| `js/state.js` | Global mutable state `G` and `H`, plus `mkDeck`, `dealHand`, `mkBoard`, board-dim helpers (`pickBoardDimsForPlayable`, `buildBlockedMask`), and modifier application |
 | `js/board.js` | Placement validation (`boardCanPlace`) and committing pieces |
 | `js/backpack.js` | Inventory grid management |
 | `js/held.js` | Mouse/touch drag-and-drop logic |
@@ -35,10 +35,16 @@ Script load order in `index.html` matters: utils → treat-effects → registry 
 
 **`G` (game state):**
 ```
-round, score, tgt, bsr/bsc (board dims), earn, hands, disc, cash,
-deckId, deck[], hand[], board[][] (2D grid of cells), bp[][] (backpack),
-bpGroups[], cats[], treats[]
+round, score, tgt, bsr/bsc (board dims), blockedMask (2D bool grid),
+earn, hands, disc, cash, deckId, deck[], hand[],
+board[][] (2D grid of cells), bp[][] (backpack), bpGroups[],
+cats[], treats[], usedTreats[], treatPlayCounts{},
+totalFits, totalPurrfects, purrfectRecordBuyFits, purrfectRecordBuyPurrfects,
+branchId, modifiers, purchasedTreatIds, lastScore, selBpGid, visitedShop
 ```
+Board dims (`bsr`,`bsc`) and `blockedMask` are recomputed each round from the
+sheet's `Board Size` (= playable cells) and `Blocked Cell Prob` (extra cells
+added beyond playable, randomly blocked).
 
 **`H` (held piece):**
 ```
@@ -47,9 +53,9 @@ cells (2D shape), rot (0-3), color, em, handIdx/boardGid/bpGid,
 grabDr/grabDc (grab offset within shape), dragging
 ```
 
-**Board cell:** `{ filled, col, kind, em, gid, shape, type }`
+**Board cell:** `{ filled, col, kind, em, gid, shape, type, blocked }`
 
-**TDEF (treat definition):** `{ id, nm, em, rar, col, phase, bpS, ef, req, pr, sp, fl, fn }`
+**TDEF (treat definition):** `{ id, nm, em, rar, col, phase, bpS, ef, addEf, req, pr, sp, enabled, fl, fn }`
 
 ## Screen Flow
 
@@ -125,57 +131,25 @@ TREAT_REGISTRY['id'] = {
 | Mul Type A | Gold pulse on each matching cat cell + gold badge |
 | Mul Type B | Old score number shrinks out → new number slams in gold |
 
-### All treats (from Google Sheet)
+### All treats
 
-| ID | Name | Phase | Type | Effect | Additional Effects | Requirement |
-|----|------|-------|------|--------|--------------------|-------------|
-| milk | WARM MILK | add | A | +10 to ALL cats | — | — |
-| catnip | CATNIP | add | A | +30 to cats in same ROW | — | — |
-| feather | FEATHER | add | A | +30 to cats in same COL | — | — |
-| big_bite | BIG BITE | add | B | +100 to score | −1 per cat already scored | — |
-| lone_kitty | LONE KITTY | mul | B | ×2 score | — | NO SAME TYPE ADJACENT |
-| purebred | PUREBRED | mul | B | ×2 score | — | ALL SAME TYPE |
-| brownies | BROWNIES | x | — | add duplicate of one random surrounding cat to deck | — | — |
-| sardine_tin | SARDINE TIN | x | — | destroy one random surrounding cat from deck | — | — |
-| laser | LASER POINTER | x | — | copies ability of one other random treat | — | — |
-| jumping_ball | JUMPING BALL | x | — | disable one random treat's requirement | — | — |
-| all_or_nothing | ALL OR NOTHING | mul | B | ×1.5 score | +0.1 per play | BOARD FULL |
-| encore | ENCORE | x | — | retrigger one random treat | — | — |
-| wild_dice | WILD DICE | mul | B | ×5 score | — | 1 in 6 trigger chance |
-| loaded_dice | LOADED DICE | x | — | trigger Wild Dice again | — | — |
-| second_breakfast | SECOND BREAKFAST | x | — | retrigger all cats | disappears after 3 uses | — |
-| treat_encore | TREAT ENCORE | x | — | retrigger all treats | disappears after 3 uses | — |
-| cotton_cloud | COTTON CLOUD | mul | A | ×2 all WHITE cats | — | — |
-| tabby_pack | TABBY PACK | mul | A | ×2 all TABBY cats | — | — |
-| tuna_can | TUNA CAN | mul | A | ×2 all ORANGE cats | — | — |
-| shadow_feast | SHADOW FEAST | mul | A | ×2 all BLACK cats | — | — |
-| catnado | CATNADO | mul | B | ×1 score | +0.1 per play | — |
+The Treats tab in the Google Sheet is the source of truth — do not maintain a list here.
+To inspect the current set, fetch `SHEET_URLS.Treats` (or use the `mcp__google-sheets__sheets_get_values` tool against `Treats!A1:P60`). Each enabled row needs a corresponding `js/treats/<id>.js` registry entry; treats without a file silently no-op via the warning in `buildTreatFn`.
 
 ## Configuration Data Source
 
 Live data is fetched from published Google Sheets CSV endpoints defined in `SHEET_URLS` in `js/config.js`. Tabs: General, Rounds, Treats, Cats, Shapes, Decks, Rarity, Branches.
 
-## Sheet Snapshots & Change Detection Workflow
+## Sheet Workflow
 
-Snapshots of all sheets are saved locally in `sheets/` (one CSV per tab):
+The Google Sheet is the single source of truth for all configuration. There is no local CSV mirror — do not create a `sheets/` directory.
 
-```
-sheets/General.csv
-sheets/Rounds.csv
-sheets/Treats.csv
-sheets/Cats.csv
-sheets/Shapes.csv
-sheets/Decks.csv
-sheets/Rarity.csv
-sheets/Branches.csv
-```
+**Editing the sheet:** use the `mcp__google-sheets__sheets_*` tools (spreadsheet ID `1qEr42p9HsQFPrBip1TqYB2DBehKPgyT_e0CwmNP_Cd4`). Reading via `sheets_get_values` and writing via `sheets_update_values` is the standard path. The runtime fetches the published-to-web CSV and falls back to in-memory cache; it does not consult any local files.
 
-**When the user says they added or changed a treat (or any sheet data):**
+**When the user changes a treat or other sheet data:**
 
-1. Re-fetch all sheets via the `SHEET_URLS` in `js/config.js` (follow the 307 redirects).
-2. Diff the new CSV against the saved snapshot to identify exactly what changed.
-3. Implement the required code changes (new treat file, updated registry entry, etc.).
-4. Overwrite the snapshot files with the new CSV content so they stay current.
-5. Commit and push.
+1. (Optional) Read the relevant range with `sheets_get_values` to confirm the current state.
+2. Implement the required code change (new treat file in `js/treats/<id>.js`, registry entry, script tag in `index.html`).
+3. Commit and push.
 
-This keeps `sheets/` as the source of truth for "last known sheet state" so diffs are always accurate.
+If a sheet edit is required as part of the implementation (e.g. flipping `Status` to `Approved`), do it via the MCP tool — never via a local CSV.
