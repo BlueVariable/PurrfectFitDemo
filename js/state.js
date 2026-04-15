@@ -11,7 +11,7 @@ let curDeck='classic';
 
 // ── Shared helpers ──
 function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};}
-function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null};}
+function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null,blocked:false};}
 
 // Touch drag tracking — true once finger has moved enough to constitute a drag
 let _touchMovedWhileHeld=false;
@@ -23,13 +23,49 @@ function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.chan
 // source: 'hand' | 'board' | 'bp'
 let H=resetH();
 
+// Pick a random (rows, cols) pair whose product equals size.
+// Prefers non-1 factors (rows>=2, cols>=2) so the board has real 2D shape.
+// Randomly orients the pair to allow asymmetric layouts like 2×11 or 11×2.
+function pickBoardDims(size){
+  const pairs=[];
+  for(let r=2;r<=Math.floor(Math.sqrt(size));r++){
+    if(size%r===0){const c=size/r;if(c>=2)pairs.push([r,c]);}
+  }
+  if(!pairs.length){
+    // Prime or too small — fall back to 1×size / size×1 if size>=2, else 1×1
+    if(size>=2)pairs.push([1,size]);else return{bsr:1,bsc:1};
+  }
+  const [a,b]=pairs[Math.floor(Math.random()*pairs.length)];
+  return Math.random()<0.5?{bsr:a,bsc:b}:{bsr:b,bsc:a};
+}
+
+// Build the blocked-cell mask for a round: each cell has `prob` chance of being blocked.
+function buildBlockedMask(rows,cols,prob){
+  const mask=[];
+  for(let r=0;r<rows;r++){
+    mask.push([]);
+    for(let c=0;c<cols;c++) mask[r].push(Math.random()<prob);
+  }
+  return mask;
+}
+
+// Configure the board for the current round: choose dims from Board Size and roll blocks.
+function setupRoundBoard(){
+  const c=rcfg(G.round);
+  const size=c.boardSize||16;
+  const dims=pickBoardDims(size);
+  G.bsr=dims.bsr;G.bsc=dims.bsc;
+  G.blockedMask=buildBlockedMask(G.bsr,G.bsc,c.blockedProb||0);
+}
+
 function newGame(deckId){
   // Restore cat_phone if it was transformed in a previous game
   const cp=TDEFS.find(td=>td.id==='cat_phone');
   if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
+  const dims=pickBoardDims(c.boardSize||16);
   G={
-    round:1,score:0,tgt:c.tgt,bsr:c.bsr,bsc:c.bsc,earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
+    round:1,score:0,tgt:c.tgt,bsr:dims.bsr,bsc:dims.bsc,blockedMask:buildBlockedMask(dims.bsr,dims.bsc,c.blockedProb||0),earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
@@ -126,4 +162,9 @@ function dealHand(){
 
 function mkBoard(){
   G.board=mk2d(G.bsr,G.bsc,()=>(emptyCell()));
+  if(G.blockedMask){
+    for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
+      if(G.blockedMask[r]&&G.blockedMask[r][c]) G.board[r][c].blocked=true;
+    }
+  }
 }

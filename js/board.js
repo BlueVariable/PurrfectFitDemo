@@ -92,6 +92,7 @@ function boardCanPlace(cells,r,c){
     const rr=r+dr,cc=c+dc;
     if(rr>=G.bsr||cc>=G.bsc||rr<0||cc<0)return false;
     if(G.board[rr][cc].filled)return false;
+    if(G.board[rr][cc].blocked)return false;
   }
   return true;
 }

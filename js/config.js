@@ -117,9 +117,9 @@ function applyConfigFromRaw(raw){
 
   const rndRows=parseCSV(raw['Rounds']||'');
   RCFG=rndRows.map(r=>{
-    const bsr=Number(r['Board Rows']||r['Board Size']||4);
-    const bsc=Number(r['Board Cols']||r['Board Size']||4);
-    return{tgt:Number(r['Target Score']),bsr,bsc,earn:Number(r['Earn']),h:Number(r['Hands per Round'])};
+    const boardSize=Number(r['Board Size']||16);
+    const blockedProb=Number(r['Blocked Cell Prob']||0);
+    return{tgt:Number(r['Target Score']),boardSize,blockedProb,earn:Number(r['Earn']),h:Number(r['Hands per Round'])};
   });
 
   const catRows=parseCSV(raw['Cats']||'');

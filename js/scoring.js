@@ -85,9 +85,9 @@ function doFit(){
 
   // Board fill bonus
   const filledCells=G.board.flat().filter(c=>c.filled).length;
-  const totalBoardCells=G.bsr*G.bsc;
-  const boardFull=filledCells===totalBoardCells;
-  const boardBonus=boardFull?totalBoardCells*(CFG.board_fill_bonus||5):0;
+  const playableCells=G.board.flat().filter(c=>!c.blocked).length;
+  const boardFull=filledCells===playableCells&&playableCells>0;
+  const boardBonus=boardFull?playableCells*(CFG.board_fill_bonus||5):0;
 
   const total=runningTotal+boardBonus;
   G.lastScore=total;
@@ -530,7 +530,8 @@ function goShop(){
     return;
   }
   const c=rcfg(G.round);
-  G.tgt=c.tgt;G.bsr=c.bsr;G.bsc=c.bsc;G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;
+  const dims=pickBoardDims(c.boardSize||16);
+  G.tgt=c.tgt;G.bsr=dims.bsr;G.bsc=dims.bsc;G.blockedMask=buildBlockedMask(dims.bsr,dims.bsc,c.blockedProb||0);G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();
   openRounds();
