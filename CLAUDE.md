@@ -88,6 +88,10 @@ Scoring processes all pieces in scan order (top-left → bottom-right). A runnin
 
 ## Treat System
 
+### Treat lifecycle (per round)
+
+A treat in the player's inventory (`G.bp`) can be placed on the board for a given fit. After the player triggers the fit and scoring runs, every treat that was on the board is moved to `G.usedTreats` and **removed from the inventory for the rest of the round** — it cannot be placed in subsequent fits in the same round. At the end of the round (`roundWin` in `scoring.js`), all non-expired treats in `usedTreats` are restored to the inventory via `bpAutoPlace`. Net effect: **each treat triggers at most once per round**, regardless of how many hands/fits a round has. This bounds scaling treats (e.g. `piggy_bank` `+$4 per trigger` fires up to 15 times across a 15-round run, not 60). Treats that mark `_expired` (e.g. `lone_kitty`, `purebred`, `one_shot`, `second_breakfast`, `treat_encore`) are filtered out and not restored after their final use.
+
 Every treat in the sheet has its own file at `js/treats/<id>.js`. Each file registers into `TREAT_REGISTRY`:
 
 ```js

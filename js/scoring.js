@@ -88,6 +88,8 @@ function doFit(){
   const playableCells=G.board.flat().filter(c=>!c.blocked).length;
   const boardFull=filledCells===playableCells&&playableCells>0;
   const boardBonus=boardFull?playableCells*(CFG.board_fill_bonus||5):0;
+  G.totalFits=(G.totalFits||0)+1;
+  if(boardFull)G.totalPurrfects=(G.totalPurrfects||0)+1;
 
   const total=runningTotal+boardBonus;
   G.lastScore=total;

@@ -1,23 +1,15 @@
 'use strict';
-// ══════════════════════════════════════════════════════
-//  TREAT: purrfect_record
-//  ×(1 + 0.2 per board fill this run) — grows each time
-//  the board is completely filled during scoring
-// ══════════════════════════════════════════════════════
 TREAT_REGISTRY['purrfect_record'] = {
   buildFn(ef, phase, addEf) {
     const baseM = extractMul(ef);
-    let increment = 0.2;
-    if (addEf) {
-      const im = addEf.match(/([\d.]+)/);
-      if (im) increment = parseFloat(im[1]);
-    }
     return (b, cats, ts, p, cs) => {
-      const fills = G.treatPlayCounts.board_fills || 0;
-      const filledCount = G.board.flat().filter(c => c.filled).length;
-      const boardFull = filledCount === G.bsr * G.bsc;
-      if (boardFull) G.treatPlayCounts.board_fills = fills + 1;
-      const m = Math.round((baseM + fills * increment) * 100) / 100;
+      const baseFits = G.purrfectRecordBuyFits || 0;
+      const basePurrfects = G.purrfectRecordBuyPurrfects || 0;
+      const fitsSince = (G.totalFits || 0) - baseFits;
+      const purrfectsSince = (G.totalPurrfects || 0) - basePurrfects;
+      const missesSince = Math.max(0, fitsSince - purrfectsSince);
+      const net = purrfectsSince - missesSince;
+      const m = Math.max(0.1, Math.round((baseM + 0.1 * net) * 100) / 100);
       return { scoreMultiplier: true, m };
     };
   },

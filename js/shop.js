@@ -233,6 +233,10 @@ function shopDropOnBP(r,c){
   G.cash-=td.pr;
   bpPlaceAt(td,H.cells,or,oc);
   shopBoughtIds.add(td.id);
+  if(td.id==='purrfect_record'&&G.purrfectRecordBuyFits===undefined){
+    G.purrfectRecordBuyFits=G.totalFits||0;
+    G.purrfectRecordBuyPurrfects=G.totalPurrfects||0;
+  }
   G.purchasedTreatIds.add(td.id);
   H=resetH();
   updateGhost();hideHUD();
