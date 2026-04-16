@@ -24,9 +24,10 @@ function getCoords(e){const t=(e.touches&&e.touches.length)?e.touches[0]:(e.chan
 let H=resetH();
 
 // Generate a random connected polyomino with exactly `targetCells` cells
-// using accretion: start with a center cell, then repeatedly add a random
-// cell adjacent to the existing shape until the size is reached. The bounding
-// box is trimmed to the polyomino's actual extents so bsr/bsc are tight.
+// using weighted accretion: frontier cells closer to the center are more
+// likely to be picked (controlled by CFG.pull_strength; 0 = uniform,
+// 1.5 = soft center cluster, 3+ = strong round core with ragged edges).
+// The bounding box is trimmed to the polyomino's actual extents.
 function generatePolyomino(targetCells){
   const N=Math.max(1,targetCells);
   const side=Math.max(3,Math.ceil(Math.sqrt(N))+3);
@@ -35,22 +36,33 @@ function generatePolyomino(targetCells){
   const startR=Math.floor(rows/2),startC=Math.floor(cols/2);
   inShape[startR][startC]=true;
   let count=1;
-  const frontier=new Set();
+  const pull=CFG.pull_strength||0;
+  // frontier stored as Map key→{r,c} for O(1) delete
+  const frontier=new Map();
   const key=(r,c)=>r*cols+c;
   const addFrontier=(r,c)=>{
     for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
       const rr=r+dr,cc=c+dc;
-      if(rr>=0&&rr<rows&&cc>=0&&cc<cols&&!inShape[rr][cc]) frontier.add(key(rr,cc));
+      if(rr>=0&&rr<rows&&cc>=0&&cc<cols&&!inShape[rr][cc]) frontier.set(key(rr,cc),{r:rr,c:cc});
     }
   };
   addFrontier(startR,startC);
   while(count<N&&frontier.size>0){
-    const arr=[...frontier];
-    const k=arr[Math.floor(Math.random()*arr.length)];
-    frontier.delete(k);
-    const r=Math.floor(k/cols),c=k%cols;
-    inShape[r][c]=true;count++;
-    addFrontier(r,c);
+    const arr=[...frontier.values()];
+    let chosen;
+    if(pull<=0){
+      chosen=arr[Math.floor(Math.random()*arr.length)];
+    }else{
+      // Weight each frontier cell by 1/(1+d)^pull where d = distance from start
+      const weights=arr.map(({r,c})=>{const d=Math.sqrt((r-startR)**2+(c-startC)**2);return 1/Math.pow(1+d,pull);});
+      const total=weights.reduce((a,b)=>a+b,0);
+      let rnd=Math.random()*total;
+      chosen=arr[arr.length-1];
+      for(let i=0;i<arr.length;i++){rnd-=weights[i];if(rnd<=0){chosen=arr[i];break;}}
+    }
+    frontier.delete(key(chosen.r,chosen.c));
+    inShape[chosen.r][chosen.c]=true;count++;
+    addFrontier(chosen.r,chosen.c);
   }
   let minR=rows,maxR=-1,minC=cols,maxC=-1;
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
