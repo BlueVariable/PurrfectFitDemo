@@ -326,6 +326,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         else if(result.destroyedCat)logLine+=`: removed ${result.destroyedCat.em} ${result.destroyedCat.name}`;
         else if(result.duplicatedTreat)logLine+=`: duplicated ${result.duplicatedTreat.em} ${result.duplicatedTreat.nm}`;
         else if(result.charging)logLine+=`: charging ${result.charging}`;
+        else if(result.cashGained)logLine+=`: +$${result.cashGained}`;
       }
 
       steps.push({
