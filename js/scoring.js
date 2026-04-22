@@ -537,7 +537,7 @@ function goShop(){
   }
   const c=rcfg(G.round);
   const layout=setupBoardLayout(G.round);
-  G.tgt=c.tgt;G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;
+  G.tgt=c.tgt;G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();
   openRounds();

@@ -127,6 +127,7 @@ function doDiscard(){
   if(H.kind!=='cat'||G.disc<=0)return;
   G.hand.splice(H.handIdx,1);
   G.disc--;
+  G.discUsedRound=(G.discUsedRound||0)+1;
   H=resetH();updateGhost();hideHUD();
   if(G.deck.length>0)G.hand.push(G.deck.shift());
   renderAll();
