@@ -153,3 +153,5 @@ The Google Sheet is the single source of truth for all configuration. There is n
 3. Commit and push.
 
 If a sheet edit is required as part of the implementation (e.g. flipping `Status` to `Approved`), do it via the MCP tool — never via a local CSV.
+
+**ToBeImplemented treats with empty fields:** When implementing treats marked `ToBeImplemented` that have empty fields (missing ID, name, emoji, phase, shape, price, or description), always design and fill in the missing fields directly — do not ask the user. Use the `design-purrfect-treats` skill for guidance, then update the sheet row via MCP with the complete data before implementing.

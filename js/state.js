@@ -117,7 +117,7 @@ function newGame(deckId){
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
-    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,discUsedRound:0,
+    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,discUsedRound:0,purrfectsThisRound:0,
   };
   mkDeck();dealHand();
 }
