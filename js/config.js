@@ -119,7 +119,8 @@ function applyConfigFromRaw(raw){
   RCFG=rndRows.map(r=>{
     const boardSize=Number(r['Board Size']||16);
     const blockedProb=Number(r['Blocked Cell Prob']||0);
-    return{tgt:Number(r['Target Score']),boardSize,blockedProb,earn:Number(r['Earn']),h:Number(r['Hands per Round'])};
+    const pullStrength=Number(r['Pull Strength']||0);
+    return{tgt:Number(r['Target Score']),boardSize,blockedProb,earn:Number(r['Earn']),h:Number(r['Hands per Round']),pullStrength};
   });
 
   const catRows=parseCSV(raw['Cats']||'');

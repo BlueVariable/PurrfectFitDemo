@@ -25,10 +25,9 @@ let H=resetH();
 
 // Generate a random connected polyomino with exactly `targetCells` cells
 // using weighted accretion: frontier cells closer to the center are more
-// likely to be picked (controlled by CFG.pull_strength; 0 = uniform,
-// 1.5 = soft center cluster, 3+ = strong round core with ragged edges).
-// The bounding box is trimmed to the polyomino's actual extents.
-function generatePolyomino(targetCells){
+// likely to be picked (pullStrength: 0 = uniform, 1.5 = soft center
+// cluster, 3+ = strong round core with ragged edges).
+function generatePolyomino(targetCells,pullStrength){
   const N=Math.max(1,targetCells);
   const side=Math.max(3,Math.ceil(Math.sqrt(N))+3);
   const rows=side,cols=side;
@@ -36,7 +35,7 @@ function generatePolyomino(targetCells){
   const startR=Math.floor(rows/2),startC=Math.floor(cols/2);
   inShape[startR][startC]=true;
   let count=1;
-  const pull=CFG.pull_strength||0;
+  const pull=pullStrength||0;
   // frontier stored as Map key→{r,c} for O(1) delete
   const frontier=new Map();
   const key=(r,c)=>r*cols+c;
@@ -97,7 +96,7 @@ function buildBlockedMaskFromShape(shape,prob){
 function setupBoardLayout(round){
   const c=rcfg(round||1);
   const playable=c.boardSize||16;
-  const poly=generatePolyomino(playable);
+  const poly=generatePolyomino(playable,c.pullStrength);
   return{
     rows:poly.rows,cols:poly.cols,shape:poly.shape,
     mask:buildBlockedMaskFromShape(poly.shape,c.blockedProb||0)
