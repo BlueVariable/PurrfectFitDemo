@@ -2,15 +2,23 @@
 // ══════════════════════════════════════════════════════
 //  HELD MECHANICS
 // ══════════════════════════════════════════════════════
+function snapGrab(cells,dr,dc){
+  if(cells[dr]&&cells[dr][dc])return[dr,dc];
+  let best=null,bestD=Infinity;
+  for(let r=0;r<cells.length;r++)for(let c=0;c<cells[0].length;c++)
+    if(cells[r][c]){const d=(r-dr)**2+(c-dc)**2;if(d<bestD){bestD=d;best=[r,c];}}
+  return best||[dr,dc];
+}
 function pickupCat(idx){
   // if already holding this cat, cancel
   if(H.kind==='cat'&&H.handIdx===idx){dropHeld();return;}
   dropHeld();
   const cat=G.hand[idx];
   const _cells0=rotC(cat.cells,0);
+  const[_gDr,_gDc]=snapGrab(_cells0,Math.floor(_cells0.length/2),Math.floor(_cells0[0].length/2));
   H={kind:'cat',source:'hand',data:cat,cells:_cells0,rot:0,
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
-     grabDr:Math.floor(_cells0.length/2),grabDc:Math.floor(_cells0[0].length/2),dragging:false};
+     grabDr:_gDr,grabDc:_gDc,dragging:false};
   updateGhost();showHUD();renderHand();renderBP();
   const _tb=g('trash-badge');if(_tb)_tb.textContent=G.disc;
   const _te=g('trash-drop');if(_te)_te.classList.toggle('no-disc',G.disc<=0);
@@ -21,9 +29,7 @@ function pickupCatWithGrab(idx,grabDr,grabDc){
   dropHeld();
   const cat=G.hand[idx];
   const cells=rotC(cat.cells,0);
-  // always snap to center of the shape
-  const cDr=Math.floor(cells.length/2);
-  const cDc=Math.floor(cells[0].length/2);
+  const[cDr,cDc]=snapGrab(cells,Math.floor(cells.length/2),Math.floor(cells[0].length/2));
   H={kind:'cat',source:'hand',data:cat,cells,rot:0,
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
      grabDr:cDr,grabDc:cDc,dragging:true};
@@ -61,9 +67,10 @@ function pickupTreat(){
   // remove from BP
   removeBpGid(G.selBpGid);
   G.selBpGid=null;hideTTP();
+  const[_tDr,_tDc]=snapGrab(grp.tdef.bpS,Math.floor(grp.tdef.bpS.length/2),Math.floor(grp.tdef.bpS[0].length/2));
   H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
      color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:grp.gid,
-     grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:false};
+     grabDr:_tDr,grabDc:_tDc,dragging:false};
   updateGhost();showHUD();renderBP();
 }
 
@@ -83,12 +90,10 @@ function rotate(){
   H.rot=(H.rot+1)%4;
   if(H.kind==='cat'){
     H.cells=rotC(H.data.cells,H.rot);
-    H.grabDr=Math.floor(H.cells.length/2);
-    H.grabDc=Math.floor(H.cells[0].length/2);
+    [H.grabDr,H.grabDc]=snapGrab(H.cells,Math.floor(H.cells.length/2),Math.floor(H.cells[0].length/2));
   } else if(H.kind==='treat'||H.kind==='shop-treat'){
     H.cells=rotC(H.data.bpS,H.rot);
-    H.grabDr=Math.floor(H.cells.length/2);
-    H.grabDc=Math.floor(H.cells[0].length/2);
+    [H.grabDr,H.grabDc]=snapGrab(H.cells,Math.floor(H.cells.length/2),Math.floor(H.cells[0].length/2));
   }
   updateGhost();
   clrBoardPrev();clrBPPrev();
