@@ -49,6 +49,7 @@ const REQUIREMENT_FNS = {
   },
   'All BOARD cells are FULL': () => G.board.flat().filter(c=>c.filled).length < G.bsr*G.bsc,
   'LAST HAND only': () => G.hands > 1,
+  'FIRST HAND only': () => G.hands !== G.maxHands,
 };
 
 function requirementFails(req) {

@@ -131,6 +131,7 @@ function applyModifiers(){
     if(mod.startsWith('hands+'))G.hands+=(parseInt(mod.slice(6))||0);
     if(mod==='no-discard')G.disc=0;
   });
+  G.maxHands=G.hands;
 }
 // Apply one-time modifiers (backpack size, starting cash). Called only at game start.
 function applyModifiersOnce(){
