@@ -158,6 +158,7 @@ function getMulFactorForCat(buf,cat){
     if(result.subPhase==='mul'&&result.result){
       if(result.result.gids&&result.result.gids.includes(cat.gid)&&result.result.m>1)return result.result.m;
     }
+    if(result.subPhase==='mirror'&&result.mulMap&&result.mulMap[cat.gid]>1)return result.mulMap[cat.gid];
     if(result.luckyGid===cat.gid)return 4;
     if(result.halvedGids&&result.halvedGids.includes(cat.gid))return 0.5;
   }

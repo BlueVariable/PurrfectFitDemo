@@ -1,17 +1,17 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: lone_kitty
-//  ×2 score multiplier — req: no same-type cats adjacent
-//  Expires after 3 uses
+//  ×1.2 score multiplier, +0.2 per trigger — req: no same-type adjacent
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['lone_kitty'] = {
-  buildFn(ef, phase) {
-    const m = extractMul(ef);
+  buildFn(ef, phase, addEf) {
+    const baseM = extractMul(ef);
+    let increment = 0;
+    if (addEf) { const im = addEf.match(/([\d.]+)/); if (im) increment = parseFloat(im[1]); }
     return (b, cats, ts, p, cs) => {
-      const selfTdef = ts.find(t => t.tdef.id === 'lone_kitty')?.tdef;
-      const plays = (G.treatPlayCounts.lone_kitty || 0) + 1;
-      G.treatPlayCounts.lone_kitty = plays;
-      if (plays >= 3 && selfTdef) selfTdef._expired = true;
+      const plays = G.treatPlayCounts.lone_kitty || 0;
+      const m = Math.round((baseM + plays * increment) * 100) / 100;
+      G.treatPlayCounts.lone_kitty = plays + 1;
       return { scoreMultiplier: true, m };
     };
   },

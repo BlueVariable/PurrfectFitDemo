@@ -1,17 +1,17 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: one_shot
-//  ×2 score multiplier — req: all cats same shape
-//  Expires after 3 uses
+//  ×1.2 score multiplier, +0.2 per trigger — req: all cats same shape
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['one_shot'] = {
-  buildFn(ef, phase) {
-    const m = extractMul(ef);
+  buildFn(ef, phase, addEf) {
+    const baseM = extractMul(ef);
+    let increment = 0;
+    if (addEf) { const im = addEf.match(/([\d.]+)/); if (im) increment = parseFloat(im[1]); }
     return (b, cats, ts, p, cs) => {
-      const selfTdef = ts.find(t => t.tdef.id === 'one_shot')?.tdef;
-      const plays = (G.treatPlayCounts.one_shot || 0) + 1;
-      G.treatPlayCounts.one_shot = plays;
-      if (plays >= 3 && selfTdef) selfTdef._expired = true;
+      const plays = G.treatPlayCounts.one_shot || 0;
+      const m = Math.round((baseM + plays * increment) * 100) / 100;
+      G.treatPlayCounts.one_shot = plays + 1;
       return { scoreMultiplier: true, m };
     };
   },
