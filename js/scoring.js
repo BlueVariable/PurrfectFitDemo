@@ -502,9 +502,7 @@ function endScoreSequence(total){
     if(slGrp){
       slGrp.tdef._expired=true;
       removeBpGid(slGrp.gid);
-      G.hands+=1;
-      if(G.deck.length===0&&G.hand.length===0)mkDeck();
-      dealHand();renderAll();
+      roundWin();
       return;
     }
     roundFail();return;
