@@ -493,8 +493,10 @@ function endScoreSequence(total){
   const scoreEl=g('g-score');
   if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
   _syncTbScore(G.score.toLocaleString());
-  // Treats stay in usedTreats until the round ends (restored in goShop/roundWin)
-  // No popup — go straight to next hand logic
+  // Restore treats flagged _reappear back to backpack mid-round
+  const reappearing=G.usedTreats.filter(td=>td._reappear);
+  reappearing.forEach(td=>{delete td._reappear;bpAutoPlace(td);});
+  G.usedTreats=G.usedTreats.filter(td=>!reappearing.includes(td));
   G.hands--;
   if(G.score>=G.tgt){roundWin();return;}
   if(G.hands<=0||(G.deck.length===0&&G.hand.length===0)){
