@@ -3,7 +3,7 @@ TREAT_REGISTRY['fence_sitter'] = {
   buildFn(ef, phase) {
     return (b, cats, ts, p, cs) => {
       const selfTdef = ts.find(t => t.tdef.id === 'fence_sitter')?.tdef;
-      if (selfTdef) { if (Math.random() >= 0.5) selfTdef._expired = true; else selfTdef._reappear = true; }
+      if (Math.random() >= 0.5 && selfTdef) selfTdef._expired = true;
       const bonus = extractNum(ef) * (G.discUsedRound || 0);
       return { scoreBonus: bonus };
     };

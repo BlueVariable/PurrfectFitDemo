@@ -3,7 +3,7 @@ TREAT_REGISTRY['crowd_pleaser'] = {
   buildFn(ef, phase) {
     return (b, cats, ts, p, cs) => {
       const selfTdef = ts.find(t => t.tdef.id === 'crowd_pleaser')?.tdef;
-      if (selfTdef) { if (Math.random() >= 0.5) selfTdef._expired = true; else selfTdef._reappear = true; }
+      if (Math.random() >= 0.5 && selfTdef) selfTdef._expired = true;
       const bonus = extractNum(ef) * G.cats.length;
       return { scoreBonus: bonus };
     };
