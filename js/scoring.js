@@ -497,7 +497,18 @@ function endScoreSequence(total){
   // No popup — go straight to next hand logic
   G.hands--;
   if(G.score>=G.tgt){roundWin();return;}
-  if(G.hands<=0||(G.deck.length===0&&G.hand.length===0)){roundFail();return;}
+  if(G.hands<=0||(G.deck.length===0&&G.hand.length===0)){
+    const slGrp=G.bpGroups.find(gr=>gr.tdef&&gr.tdef.id==='soft_landing');
+    if(slGrp){
+      slGrp.tdef._expired=true;
+      removeBpGid(slGrp.gid);
+      G.hands+=1;
+      if(G.deck.length===0&&G.hand.length===0)mkDeck();
+      dealHand();renderAll();
+      return;
+    }
+    roundFail();return;
+  }
   dealHand();renderAll();
 }
 
