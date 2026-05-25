@@ -89,7 +89,9 @@ function placeTreatOnBoard(r,c){
     G.board[rr][cc]={filled:true,col:H.color,kind:'treat',em:H.em,gid,shape:null,type:null};
     placed.push([rr,cc]);
   }));
-  G.treats.push({cells:placed,gid,tdef:H.data,or,oc,shapeGrid:H.cells});
+  const tInst={cells:placed,gid,tdef:H.data,or,oc,shapeGrid:H.cells};
+  G.treats.push(tInst);
+  if(H.data.onPlace) H.data.onPlace(tInst,G.board);
   H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();checkBoardFull();
 }
 

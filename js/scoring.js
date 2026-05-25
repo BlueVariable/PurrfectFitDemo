@@ -328,6 +328,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         else if(result.duplicatedTreat)logLine+=`: duplicated ${result.duplicatedTreat.em} ${result.duplicatedTreat.nm}`;
         else if(result.charging)logLine+=`: charging ${result.charging}`;
         else if(result.cashGained)logLine+=`: +$${result.cashGained}`;
+        else if(result.zoomiesCleared!==undefined)logLine+=`: cleared ${result.zoomiesCleared} blocked cell${result.zoomiesCleared!==1?'s':''}`;
       }
 
       steps.push({

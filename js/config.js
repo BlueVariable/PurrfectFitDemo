@@ -160,6 +160,7 @@ function applyConfigFromRaw(raw){
       enabled:String(r['Enabled']||'true').trim().toLowerCase()!=='false',
       fl:String(r['Flavor']||r['Flavour']||''),
       fn:buildTreatFn(id,ef,phase,addEf),
+      onPlace:TREAT_REGISTRY[id]&&TREAT_REGISTRY[id].onPlace||null,
     };
   });
 
