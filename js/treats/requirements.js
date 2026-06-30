@@ -5,7 +5,17 @@
 //  NOT currently met (treat should show warning).
 //  req is the string from the sheet's Requirement column.
 // ══════════════════════════════════════════════════════
+// A "purrfect" board = every PLAYABLE cell filled (off-shape/blocked cells
+// never fill, so comparing against the full grid would never be true).
+function _isPurrfect() {
+  const cells = G.board.flat();
+  const playable = cells.filter(c => !c.blocked && !c.offShape).length;
+  const filled = cells.filter(c => c.filled).length;
+  return playable > 0 && filled === playable;
+}
+
 const REQUIREMENT_FNS = {
+  'PURRFECT FIT!': () => !_isPurrfect(),
   'NO OTHER TREAT': () => G.treats.length > 1,
   'NO SAME TYPE ADJACENT': () => {
     for (const cat of G.cats) {
@@ -24,7 +34,7 @@ const REQUIREMENT_FNS = {
     const types = [...new Set(G.cats.map(c => c.type))];
     return types.length > 1;
   },
-  'BOARD FULL': () => G.board.flat().filter(c=>c.filled).length < G.bsr*G.bsc,
+  'BOARD FULL': () => !_isPurrfect(),
   'LAST HAND':            () => G.hands > 1,
   'NO DISCARDS REMAINING': () => G.disc > 0,
   "SAME TYPE cats can't be adjacent to each other": () => {
@@ -47,7 +57,7 @@ const REQUIREMENT_FNS = {
     const shapes = [...new Set(G.cats.map(c => c.shape))];
     return shapes.length > 1;
   },
-  'All BOARD cells are FULL': () => G.board.flat().filter(c=>c.filled).length < G.bsr*G.bsc,
+  'All BOARD cells are FULL': () => !_isPurrfect(),
   'LAST HAND only': () => G.hands > 1,
   'FIRST HAND only': () => G.hands !== G.maxHands,
 };

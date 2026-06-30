@@ -6,12 +6,8 @@
 TREAT_REGISTRY['shadow_feast'] = {
   buildFn(ef, phase) {
     const m = extractMul(ef);
-    return (b, cats, ts, p, cs) => {
-      const gids = Object.keys(cs).filter(gid => {
-        const grp = cats.find(c => c.gid === gid);
-        return grp && grp.type === 'black';
-      });
-      return { gids, m };
-    };
+    // Multiplies BLACK cats that fire at/after this treat in scan order.
+    // Place it early (top-left) to catch all of them.
+    return (b, cats) => typeMul(cats, ['black'], m);
   },
 };

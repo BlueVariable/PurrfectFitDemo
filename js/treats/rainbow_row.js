@@ -1,20 +1,21 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: personal_space
-//  +N per EMPTY cell on the entire board (flat score bonus)
+//  TREAT: rainbow_row
+//  +N per ROW that contains 3+ distinct CAT TYPES
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['personal_space'] = {
+TREAT_REGISTRY['rainbow_row'] = {
   buildFn(ef, phase) {
     const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {
-      let emptyCells = 0;
+      let rows = 0;
       for (let r = 0; r < G.bsr; r++) {
+        const types = new Set();
         for (let c = 0; c < G.bsc; c++) {
-          if (!b[r][c].filled && !b[r][c].blocked && !b[r][c].offShape) emptyCells++;
+          if (b[r][c].kind === 'cat' && b[r][c].type) types.add(b[r][c].type);
         }
+        if (types.size >= 3) rows++;
       }
-      if (!emptyCells) return { scoreBonus: 0 };
-      return { scoreBonus: emptyCells * amt };
+      return { scoreBonus: rows * amt };
     };
   },
 };

@@ -5,6 +5,10 @@
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['feather'] = {
   buildFn(ef, phase) {
-    return (b, c, ts, p) => colAdd(b, p, extractNum(ef));
+    // Type B (mirrors catnip): +N per cat in the treat's column, all counted.
+    return (b, c, ts, p) => {
+      const { bonus } = colAdd(b, p, extractNum(ef));
+      return { scoreBonus: bonus };
+    };
   },
 };

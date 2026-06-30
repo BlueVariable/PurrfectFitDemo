@@ -30,7 +30,9 @@
       "mcp__google-sheets__sheets_batch_update_values",
       "Bash(C:/Users/laurus/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/scripts/start-server.sh:*)",
       "Bash(bash:*)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "mcp__google-sheets__sheets_get_metadata",
+      "mcp__google-sheets__sheets_batch_get_values"
     ]
   },
   "enabledPlugins": {

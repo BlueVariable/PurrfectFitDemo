@@ -65,3 +65,7 @@ function shapeMul(cats,shapes,m){
   const gids=cats.filter(c=>shapes.includes(c.shape)).map(c=>c.gid);
   return{gids,m};
 }
+function typeMul(cats,types,m){
+  const gids=cats.filter(c=>types.includes(c.type)).map(c=>c.gid);
+  return{gids,m};
+}

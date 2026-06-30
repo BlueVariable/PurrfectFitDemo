@@ -9,7 +9,7 @@ function _purrfectRecordCurrentM() {
   const purrfectsSince = (G.totalPurrfects || 0) - basePurrfects;
   const missesSince = Math.max(0, fitsSince - purrfectsSince);
   const net = purrfectsSince - missesSince;
-  return Math.max(0.1, Math.round((baseM + 0.1 * net) * 100) / 100);
+  return Math.max(0.1, Math.round((baseM + 0.2 * net) * 100) / 100);
 }
 
 TREAT_REGISTRY['purrfect_record'] = {
