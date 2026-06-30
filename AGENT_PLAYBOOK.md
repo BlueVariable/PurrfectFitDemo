@@ -243,5 +243,121 @@ buy 1–2 flat/multiplier treats, full-fill with the solver, keep discards.
 
 ---
 
+# PART II — Scan order, intelligent play, and a fast autopilot
+
+Added after playing through Round 6. Two big themes: (a) **scan order is the
+core of high scoring**, and (b) there are **two ways to drive the game** — a fast
+heuristic autopilot, and an agent-in-the-loop decision API. Use the latter when
+choices actually require judgment (shop value, multiplier timing, discards).
+
+## 10. Scoring, refined (this changes how you place)
+
+Pieces score in **scan order: top-left → bottom-right (row-major)**. A running
+total accumulates. Critically:
+
+- **The purrfect (board-fill) bonus is added at the very END and is NOT
+  multiplied.** Multipliers only act on the running total of cats + flat treats
+  that scanned *before* them.
+- So the optimal layout is **positional**:
+  - **Flat "+N" treats that scan-first → top-left.** `big_bite` (+200 −10 per cat
+    scored before it) specifically wants to be the *first* piece → cover the
+    top-left-most cell.
+  - **Multiplier treats (×N) → bottom-right.** They multiply everything before
+    them, so you want max base + flats already counted. Two `morning_stretch`
+    (×1.5) stacked bottom-right compound to ×2.25 over the whole board.
+  - **Other flats (`copycat` +100, `quick_paws` +50/hand, `catnip`) go in the
+    middle** — before the multipliers so they get multiplied too.
+  - **`catnip` (+50 per cat in its ROW) → a row you pack with cats.** Placed in a
+    5-cat row that's +250 for one cell. Placed in a treat-only row it's +0
+    (watch for this).
+- **Counter-intuitive but verified:** one ×1.5 on a *full* board often beats two
+  ×1.5 on a *partial* board, because the purrfect bonus is a large flat term and
+  the extra cats add multiplied base. In Round 6, `big_bite`+`quick_paws`+`catnip`
+  + one `morning_stretch` on a full 26-cell board scored **+1415 in a single
+  hand** (target 1200) — and saved the 2nd multiplier + 2nd big_bite + copycat
+  for later. Always compare "stack multipliers" vs "one multiplier + full board".
+
+## 11. More mechanics learned
+
+- **Treats carry over between rounds.** At round end, non-expired used treats are
+  restored to the backpack (`goShop` → `bpAutoPlace`). So your arsenal compounds
+  across a run — **don't re-buy duplicates**, and don't treat each shop as a blank
+  slate. By Round 6 the bp held 7 treats from earlier rounds.
+- **You can't place your whole arsenal in one hand** (treats eat cells and you
+  need cats). Each treat triggers once per round, so **spread deployment across
+  the round's hands**, using each where it's strongest (multipliers on the
+  highest-base hand; `quick_paws` early when "hands remaining" is highest).
+- **Reroll the shop** for **$3** (`getRerollCost()` / `rerollTreats()`) when the
+  offerings don't fit your build — cheaper than buying a treat you won't use.
+- **Discards** (`doDiscard`, 3/round) swap a held cat for a fresh draw. Worth it
+  to *complete* a fill (purrfect ≈ +playable×10) but remember `poker_face` pays
+  +50 per *unused* discard, so there's a real cost.
+
+## 12. Two ways to drive the game
+
+### (A) Fast autopilot — `AUTO_ROUND()` (speed)
+A self-contained function that plays an **entire round per call**: advances past
+the win screen, auto-buys by a priority table, then loops hands solving +
+placing + fitting with the **score animation bypassed** (temporarily stub
+`runScoreSequence` → `endScoreSequence(total)`; the score is already computed, the
+animation is purely visual). Whole round resolves in‑page in **~75 ms**. Treats
+are **optional pieces** in a single max-coverage solve (never mandatory — making
+them mandatory clogs the board and starves cats; `doFit` needs ≥1 cat). This is
+"good, fast, and dumb": fixed heuristics, no judgment.
+
+### (B) Agent-in-the-loop — the `PF` decision API (intelligence)
+Thin layer that **surfaces the situation + candidate plans and executes the
+agent's choices**, so *you* make the calls:
+- `PF.state()` → phase, round, target, score, need, hands, discards, cash,
+  `bpTreats` (with **effect text**), `hand`, `shop` (when in prep, with
+  effect/price/affordable/owned), `boardAscii`.
+- `PF.candidates()` → ready plans (`fill`, `fillNoTreats`, `bigbiteFirst`) each
+  with an ASCII preview + filled/total/treatsUsed.
+- `PF.smart({early:[ids], late:[ids], fillTreats:'all'|[ids]})` → scan-order-aware
+  plan: `early` treats pinned top-left (scan first), `late` pinned bottom-right
+  (multipliers), the rest filled with cats + chosen treats. Returns ASCII preview.
+- `PF.commit(key)` / `PF.commitSmart()` → apply a previewed plan + fit (instant).
+- `PF.buy(id)`, `PF.sell(id)`, `PF.reroll()`, `PF.play()` (start round),
+  `PF.nextRound()` (goShop), `PF.discard(pieceId)`.
+
+Loop: `state()` → reason about shop (buy/reroll) → `play()` → per hand,
+`smart(...)` with your scan-order intent → eyeball the ASCII → `commitSmart()`.
+This costs more round-trips than the autopilot but every decision is yours.
+
+### The fast solver core (used by both)
+Branch-and-bound max-coverage. Two changes made it ~175× faster (13 s → 75 ms):
+1. **Group identical cat shapes** (same rotation-set) into one piece with a count
+   — kills duplicate-permutation branching.
+2. **Prune hard:** stop the moment `best.filled === total` (perfect fill found);
+   and bound with `if (total - skipped <= best.filled) return` (remaining open
+   cells can't beat the best). Try **larger pieces first** so a high `best` is
+   found early and prunes more.
+
+## 13. Gotchas added in Part II
+
+- Treats as **mandatory** solver pieces → board clogs, no room for cats →
+  `doFit` aborts (it early-returns on `!G.cats.length`). Keep treats **optional**;
+  if you want a specific treat placed, pre-place it (`PF.smart` early/late) rather
+  than marking it mandatory.
+- Autobuy must **dedupe against carried-over treats** and cap total, or it
+  re-buys what you already own.
+- After bypassing the animation, `endScoreSequence` runs synchronously and itself
+  calls `dealHand()` (next hand) or `roundWin()`. Detect round end via
+  `G.score >= G.tgt` or `#win-inline.classList.contains('visible')`.
+
+## 14. Run log (cont.)
+
+| Round | Target | Final | How |
+|------:|-------:|------:|-----|
+| 3 | 900 | **980** | `AUTO_ROUND()` — full round in 1 call, 213 ms |
+| 4 | 1000 | **1228** | autopilot; exposed the "treats mandatory" bug → fixed to optional |
+| 5 | 1100 | **1285** | autopilot after solver speed-up (74 ms, both hands PURRFECT) |
+| 6 | 1200 | **1415** | **agent-driven** (`PF`): reasoned shop buys + scan-order placement, 1-hand win |
+
+Run record so far: **6/6 rounds won** on London (`eu_1`), every round cleared
+with hands to spare.
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
