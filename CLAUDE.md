@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Asked to _play_ the game (not edit it)?** Read [`AGENT_PLAYBOOK.md`](AGENT_PLAYBOOK.md)
+> first — it documents launching via a local server, the verified scoring
+> formula, the per-hand board reshaping ("Wildcat Chaos"), treat tactics, and a
+> ready-to-run board-packing solver/applier driven through the game's own functions.
+
 ## Running the Application
 
 No build step required. Open `index.html` directly in a modern browser. There are no npm packages, build tools, or dependencies.
