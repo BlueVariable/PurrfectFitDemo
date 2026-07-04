@@ -35,6 +35,46 @@ function bpAutoPlace(tdef){
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c);return true;}
   return false;
 }
+
+// ── Rotation-aware auto-place: tries all 4 rotations of the stored shape
+//    before giving up. Used by the round-end restore path so a treat isn't
+//    lost just because its default orientation no longer fits. ──
+function bpAutoPlaceRot(tdef){
+  for(let rot=0;rot<4;rot++){
+    const shape=rotC(tdef.bpS,rot);
+    for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c);return true;}
+  }
+  return false;
+}
+function bpShapeCellCount(shape){return shape.reduce((s,row)=>s+row.filter(Boolean).length,0);}
+
+// ── Full repack: clear the backpack and re-place every current group's tdef
+//    plus `extraTdefs`, largest-first, with rotation support. Returns the
+//    tdefs (from either source) that still would not fit anywhere. ──
+function bpRepackAll(extraTdefs){
+  const all=[...G.bpGroups.map(gr=>gr.tdef),...extraTdefs];
+  all.sort((a,b)=>bpShapeCellCount(b.bpS)-bpShapeCellCount(a.bpS));
+  G.bp=mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null}));
+  G.bpGroups=[];
+  const failed=[];
+  all.forEach(td=>{if(!bpAutoPlaceRot(td))failed.push(td);});
+  return failed;
+}
+
+// ── Round-end restore: rotation-aware placement first; if a treat still
+//    doesn't fit, repack the whole backpack (a valid packing existed before
+//    the round started, so this should nearly always succeed); if it STILL
+//    can't fit, refund its sell price rather than silently destroying it. ──
+function bpRestoreUsedTreats(tdefs){
+  const unplaced=[];
+  tdefs.forEach(td=>{if(!bpAutoPlaceRot(td))unplaced.push(td);});
+  if(!unplaced.length)return;
+  const stillFailed=bpRepackAll(unplaced);
+  stillFailed.forEach(td=>{
+    G.cash+=td.sp||0;
+    console.warn(`[bpRestoreUsedTreats] "${td.nm||td.id}" would not fit back into the backpack even after a full repack — refunded $${td.sp||0} instead of destroying it.`);
+  });
+}
 function bpCanAt(cells,r,c){
   for(let dr=0;dr<cells.length;dr++) for(let dc=0;dc<cells[dr].length;dc++){
     if(!cells[dr][dc])continue;

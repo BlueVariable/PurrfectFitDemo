@@ -14,6 +14,8 @@ TREAT_REGISTRY['treat_encore'] = {
       const bonusMap = {};
       const mulMap = {};
       cats.forEach(grp => { bonusMap[grp.gid] = 0; mulMap[grp.gid] = 1; });
+      let scoreBonusSum = 0; // retriggered Type B adds (e.g. big_bite, catnip) — {scoreBonus:N}
+      let scoreMulProd = 1; // retriggered Type B muls — {scoreMultiplier:true, m:N}
       const savedPlayCounts = Object.assign({}, G.treatPlayCounts);
       pool.forEach(t => {
         const res = t.tdef.fn(b, cats, ts, t.cells, cs);
@@ -37,16 +39,25 @@ TREAT_REGISTRY['treat_encore'] = {
               else hit = true;
               if (hit && bonusMap[grp.gid] !== undefined) bonusMap[grp.gid] += amt2;
             });
+          } else if (res.scoreBonus !== undefined) {
+            scoreBonusSum += res.scoreBonus;
           }
         } else if (t.tdef.phase === 'mul') {
           if (res.gids && res.m) {
             res.gids.forEach(gid => { if (mulMap[gid] !== undefined) mulMap[gid] *= res.m; });
+          } else if (res.scoreMultiplier) {
+            scoreMulProd *= res.m;
           }
         }
       });
       Object.assign(G.treatPlayCounts, savedPlayCounts);
       const totalBonus = Object.values(bonusMap).reduce((a, b) => a + b, 0);
-      return { type: 'x', subPhase: 'mirror', bonusMap, mulMap, totalBonus };
+      // _alsoBuffer tells doFit to keep buffering bonusMap/mulMap for future cats even
+      // though this result may ALSO carry an immediate scoreBonus/scoreMultiplier below.
+      const result = { type: 'x', subPhase: 'mirror', bonusMap, mulMap, totalBonus, _alsoBuffer: true };
+      if (scoreBonusSum !== 0) result.scoreBonus = scoreBonusSum;
+      if (scoreMulProd !== 1) { result.scoreMultiplier = true; result.m = scoreMulProd; }
+      return result;
     };
   },
 };

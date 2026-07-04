@@ -60,18 +60,24 @@ function doFit(){
       const csCopy=Object.assign({},catScores);
       const result=treat.tdef.fn(G.board,futureCats,G.treats,treat.cells,csCopy)||{};
 
+      const hasImmediate=result.scoreMultiplier||result.scoreBonus!==undefined;
       if(result.scoreMultiplier){
-        // Type B mul: apply to running total directly, do not buffer
+        // Type B mul: apply to running total directly
         result.prevTotal=runningTotal;
         runningTotal=Math.round(runningTotal*result.m);
         result.newTotal=runningTotal;
-      }else if(result.scoreBonus!==undefined){
-        // Type B add: apply to running total directly, do not buffer
-        result.prevTotal=runningTotal;
+      }
+      if(result.scoreBonus!==undefined){
+        // Type B add: apply to running total directly
+        if(result.prevTotal===undefined)result.prevTotal=runningTotal;
         runningTotal+=result.scoreBonus;
         result.newTotal=runningTotal;
-      }else{
-        // Type A: buffer for future cats; compute affectedGids for animation
+      }
+      // Buffer for future cats unless this is a pure Type B result with nothing
+      // else to buffer. treat_encore sets _alsoBuffer because it can carry an
+      // immediate scoreBonus/scoreMultiplier (from retriggered Type B treats)
+      // AND a bonusMap/mulMap (from retriggered Type A treats) at the same time.
+      if(!hasImmediate||result._alsoBuffer){
         if(treat.tdef.phase==='add'){
           result._affectedGids=futureCats
             .filter(cat=>getAddBonusForCat({treat,result,phase:treat.tdef.phase},cat)>0)
@@ -291,10 +297,9 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
         return;
       }
 
-      // Sync local runningTotal for Type B treats so subsequent cat animateCounter calls don't drop
-      if(result.scoreBonus!==undefined){
-        runningTotal+=result.scoreBonus;
-      }else if(result.scoreMultiplier&&result.newTotal!==undefined){
+      // Sync local runningTotal for Type B treats so subsequent cat animateCounter calls don't drop.
+      // result.newTotal (set by doFit) already reflects mul-then-add combined, so trust it directly.
+      if(result.newTotal!==undefined){
         runningTotal=result.newTotal;
       }
 
@@ -316,9 +321,14 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
           logLine+=`: +${result.scoreBonus}`;
       }else if(phase==='x'){
         if(result.scoreMultiplier&&result.m>1)logLine+=`: copied ${result.copiedFrom?.em||''} ×${result.m}`;
+        else if(result.scoreBonus!==undefined&&result.copiedFrom)logLine+=`: copied ${result.copiedFrom.em} +${result.scoreBonus}`;
         else if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
         else if(result.subPhase==='mul'&&result.result?.m>1)logLine+=`: copied ${result.copiedFrom.em} ×${result.result.m}`;
-        else if(result.subPhase==='mirror')logLine+=`: mirror +${result.totalBonus||0}`;
+        else if(result.subPhase==='mirror'){
+          logLine+=`: mirror +${result.totalBonus||0}`;
+          if(result.scoreBonus)logLine+=` +${result.scoreBonus}`;
+          if(result.scoreMultiplier&&result.m!==1)logLine+=` ×${result.m}`;
+        }
         else if(result.luckyGid)logLine+=`: ×4 lucky, ×½ others`;
         else if(result.disabledTreat)logLine+=`: disabled req for ${result.disabledTreat.em} ${result.disabledTreat.nm}`;
         else if(result.addedCatEm!==undefined)logLine+=`: added ${result.addedCatEm} ${result.addedCatName} to deck`;
@@ -338,23 +348,28 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
           flashTreat(seq,boardEl,treat,G.bsc);
           addLogLine(logDiv,logLine);
 
-          if(result.scoreMultiplier){
+          // These are independent ifs (not else-if) because treat_encore can carry both an
+          // immediate scoreMultiplier AND scoreBonus at once (compounded from retriggered
+          // Type B treats) — both animations should play, in that order.
+          if(result.scoreMultiplier&&result.m!==1){
             // Type B mul: score slam (any phase — x-phase treats like laser/encore/loaded_dice may propagate this)
-            if(result.m!==1){
-              animateScoreSlam(scoreEl,result.newTotal,baseScoreBeforeHand);
-              displayedScore=result.newTotal;
-            }
-          }else if(result.scoreBonus!==undefined){
+            animateScoreSlam(scoreEl,result.newTotal,baseScoreBeforeHand);
+            displayedScore=result.newTotal;
+          }
+          if(result.scoreBonus!==undefined){
             // Type B add: floating badge (any phase — e.g. big_bite is x-phase)
             const sign=result.scoreBonus>=0?'+':'';
             animateScoreFloatBadge(seq,scoreEl,sign+result.scoreBonus,baseScoreBeforeHand,result.newTotal);
             displayedScore=result.newTotal;
-          }else if(phase==='mul'&&result.gids&&result.gids.length){
-            // Type A mul: gold pulse on matching cats
-            flashCatCells(seq,boardEl,result.gids,catsSnapshot,G.bsc,'mul');
-          }else if(phase==='add'&&result._affectedGids&&result._affectedGids.length){
-            // Type A add: cyan pulse on affected cats
-            flashCatCells(seq,boardEl,result._affectedGids,catsSnapshot,G.bsc,'add');
+          }
+          if(!result.scoreMultiplier&&result.scoreBonus===undefined){
+            if(phase==='mul'&&result.gids&&result.gids.length){
+              // Type A mul: gold pulse on matching cats
+              flashCatCells(seq,boardEl,result.gids,catsSnapshot,G.bsc,'mul');
+            }else if(phase==='add'&&result._affectedGids&&result._affectedGids.length){
+              // Type A add: cyan pulse on affected cats
+              flashCatCells(seq,boardEl,result._affectedGids,catsSnapshot,G.bsc,'add');
+            }
           }
         }
       });
@@ -533,7 +548,7 @@ function goShop(){
   const wi=g('win-inline');
   wi.classList.remove('visible');
   wi.style.display='none';
-  (G.usedTreats||[]).filter(tdef=>!tdef._expired).forEach(tdef=>bpAutoPlace(tdef));
+  bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
   G.usedTreats=[];
   G.round++;
   if(G.round>RCFG.length){
