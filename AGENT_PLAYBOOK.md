@@ -359,5 +359,73 @@ with hands to spare.
 
 ---
 
+# PART III — Post-nerf full run (2026-07-05), duplicate stacking, and bug traps
+
+Config changed: **deep_deck nerfed +15 → +8 per deck card** (sheet-only; code
+parses the number from the effect text). **all_or_nothing increment reduced
++0.2 → +0.1 per trigger** (user edit). Round targets were rebalanced before
+this session too (R1 = 450, R15 = 1900) — ignore Part I/II target numbers.
+
+## 15. Full-run log (London `eu_1`, all 15 rounds WON, optimal-solver play)
+
+| R | Target | Final | Hands | Notes |
+|--:|-------:|------:|:-----:|-------|
+| 1 | 450 | 580 | 2 | Perfect hand 1 = 430 — **one-hand clear now impossible** |
+| 2 | 550 | 580 | 2 | crowd_pleaser died on first reappear flip |
+| 3 | 650 | 670 | 2 | gold_star paid +0 on a purrfect (see §16) |
+| 4 | 750 | 984 | 3 | nerfed deep_deck = +184; wild_dice missed (×1) |
+| 5 | 875 | 1184 | 3 | catnip +150; encore did nothing visible |
+| 6 | 1000 | 1034 | 1 | flat-add stack online: bb+qp+dd+catnip = +684 |
+| 7 | 1100 | 1488 | 2 | **duplicate deep_deck bought & stacked: +184 ×2** |
+| 8 | 1200 | 1678 | 2 | hand 1 = 1198/1200, so close |
+| 9 | 1300 | 1466 | 1 | bought all_or_nothing (+0.1 era) |
+| 10 | 1350 | 1504 | 1 | aon ×1.3 |
+| 11 | 1450 | 1689 | 1 | treat_encore placed with 5 add treats: **+0** (see §16) |
+| 12 | 1500 | 1692 | 1 | aon ×1.5 |
+| 13 | 1600 | 1678 | 3 | 9% blocked cells → 2 imperfect boards; aon correctly SKIPPED |
+| 14 | 1750 | 1905 | 1 | aon ×1.6 |
+| 15 | 1900 | 1985 | 1 | aon ×1.7 — final margin only 4.5% vs maxed engine |
+
+Economy: $10 start → **$245 end** with everything I wanted bought. Cash is
+never the constraint — the **backpack is** (see §16).
+
+## 16. Bug traps & mechanics discovered this run (verify before relying on)
+
+- **Shop sells duplicates of treats you own.** Two deep_decks both trigger
+  (+184 each, same hand). Best stacking line in the game right now.
+- **Silent treat loss at round end.** `goShop` restores used treats via
+  `bpAutoPlace`, which scans greedily with **no rotations** and **ignores
+  failure** — a fragmented backpack ate my $10 wild_dice with zero feedback.
+  Keep the backpack tidy; sell dead treats before round end. Buys also fail
+  (`no-bp-room`) even with enough total free cells if they're fragmented.
+- **gold_star can never count the purrfect fit it's placed in** — the
+  purrfect counter increments in `doFit` *after* the treat scan runs (the
+  sheet Explanation claims otherwise). Placed hand 1 it pays +0; place it
+  hand 2+ after banking purrfects.
+- **encore / treat_encore ignore Type B results.** Their re-fire wrappers
+  handle `bonus`/`bonusMap`/`gids` (Type A) but not `scoreBonus` (Type B) —
+  and nearly all flat adds (big_bite, deep_deck, quick_paws, catnip, milk,
+  feather) are Type B. Both cards visibly did nothing across multiple hands.
+- **50% reappear flips are brutal:** 4 of 6 flips this run killed the treat
+  on first use (poker_face, crowd_pleaser, gold_star eventually).
+- Blocked-cell probability (up to ~10% late) genuinely breaks perfect fills —
+  hand shapes + blocked geometry made 2 of 3 hands imperfect in R13.
+
+## 17. Post-nerf strategy that won 15/15
+
+1. Rounds 1–5: buy the best cheap flat add each shop (poker_face, catnip,
+   bench_warmer class); expect 2–3 hands per round; margins are thin — a
+   perfect fill every hand matters (fill bonus ≈ 30–60% of a hand's value).
+2. Round 6+: assemble the **flat-add stack** — big_bite (+200), quick_paws
+   (+250 on hand 1 with London's 5 hands), deep_deck ×2 (+368), catnip — all
+   pinned early/top-left, then **all_or_nothing pinned bottom-right** (×1.2
+   growing +0.1/purrfect-trigger; it skips safely on imperfect boards).
+3. Sell treats that don't earn their backpack cells (rainbow_row paid +0 in
+   every single fit across both runs; encore/treat_encore are broken — skip).
+4. The `PF` harness (v2, this session) handles duplicate treat ids in
+   early/late/use lists and auto-schedules FIRST/LAST-HAND treats.
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
