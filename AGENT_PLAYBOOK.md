@@ -513,5 +513,29 @@ purchase of a shop visit.
 
 ---
 
+# PART VI — Boss rounds, score preview, and the current difficulty photo
+
+New systems (2026-07-05, latest): **per-round modifiers** on rounds 4/8/12/15
+(Modifiers sheet tab; shown on the prep screen BEFORE you commit — shop with
+the modifier in mind), a **projected-score chip** next to FIT (side-effect-free
+projection in js/projection.js — `projectScore(null).total` equals the next
+doFit total exactly; useful for scripted play too), **paw-rating treat
+feedback** on hover (0-3 paws = this spot vs the treat's best spot), and
+**purrfect-streak / near-miss callouts** (G.purrfectStreak tracks consecutive
+purrfect fits, works under the sim's animation stub).
+
+Current difficulty photo (30 games/profile, seed 1, full 59-treat pool +
+modifiers): solver bot 6.7% full-run win rate (deaths R8-15), greedy dies
+R4-6, casual R2-4. Expert manual play (rerolls + dup-stacking): 1 win and
+deaths at R15/R11 across three post-retune runs — build RNG decides which
+wall kills you. Boss round 4 is the first real gate for mid play.
+
+Scripted-play notes: modifiers are drawn in goShop — read G.roundModifier
+after advancing; NIGHT SHIFT's chosen type matters for placement value;
+ROCKSLIDE/TIGHT SQUEEZE shrink solvable space (expect imperfect fills);
+projectScore is the cheap way to compare candidate plans without committing.
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
