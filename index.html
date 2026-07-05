@@ -268,6 +268,10 @@
 
 <!-- Floating dev mode button (all pages) -->
 <button id="btn-dev-float" class="btn-dev-float" onclick="toggleDevMode()">⚙ Dev</button>
+<!-- Floating dev-mode Auto-fit button — game screen only, shown via CSS
+     (body:has(#s-game.on) + #btn-dev-float.active) so no extra JS hook is
+     needed to track screen changes. See js/devfit.js. -->
+<button id="btn-dev-autofit" class="btn-dev-float btn-dev-autofit" onclick="devAutoFit()">🐾 Auto-fit</button>
 
 <script src="js/utils.js"></script>
 <script src="js/treat-effects.js"></script>
@@ -378,6 +382,7 @@
 <script src="js/board.js"></script>
 <script src="js/backpack.js"></script>
 <script src="js/held.js"></script>
+<script src="js/devfit.js"></script>
 <script src="js/render.js"></script>
 <script src="js/scoring.js"></script>
 <script src="js/projection.js"></script>

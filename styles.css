@@ -629,6 +629,15 @@ body::before{display:none;}
 .btn-dev-float:hover{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.65);}
 .btn-dev-float.active{border-color:rgba(245,194,0,.6);color:rgba(245,194,0,.9);background:rgba(245,194,0,.12);}
 
+/* floating dev-mode Auto-fit button — game screen only, DEV_MODE only */
+.btn-dev-autofit{
+  display:none;bottom:48px;
+  border-color:rgba(245,194,0,.5);color:rgba(245,194,0,.85);background:rgba(245,194,0,.1);
+}
+.btn-dev-autofit:hover{border-color:rgba(245,194,0,.75);color:rgba(245,194,0,1);background:rgba(245,194,0,.18);}
+.btn-dev-autofit.devfit-err{border-color:rgba(208,69,69,.7);color:#ffb0b0;background:rgba(208,69,69,.18);}
+body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-flex;align-items:center;gap:4px;}
+
 /* ── TRASH CAN DROP ZONE ── */
 .trash-zone{position:relative;display:flex;align-items:center;justify-content:center;
   width:52px;height:52px;border-radius:12px;
