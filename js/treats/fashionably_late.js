@@ -1,13 +1,14 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: nine_lives
-//  +N — LAST HAND only (requirement enforced centrally)
+//  TREAT: fashionably_late
+//  +N per cat SCORED BEFORE this treat
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['nine_lives'] = {
+TREAT_REGISTRY['fashionably_late'] = {
   buildFn(ef, phase) {
     const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {
-      return { scoreBonus: amt };
+      const alreadyScored = G.cats.length - cats.length;
+      return { scoreBonus: amt * alreadyScored };
     };
   },
 };

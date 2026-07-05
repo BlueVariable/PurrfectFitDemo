@@ -1,9 +1,9 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: nine_lives
-//  +N — LAST HAND only (requirement enforced centrally)
+//  TREAT: clean_plate
+//  +N — requires PURRFECT FIT! (requirement enforced centrally)
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['nine_lives'] = {
+TREAT_REGISTRY['clean_plate'] = {
   buildFn(ef, phase) {
     const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {

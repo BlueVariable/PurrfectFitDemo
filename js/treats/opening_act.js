@@ -1,13 +1,14 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: nine_lives
-//  +N — LAST HAND only (requirement enforced centrally)
+//  TREAT: opening_act
+//  ×N the NEXT cat in SCAN ORDER
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['nine_lives'] = {
+TREAT_REGISTRY['opening_act'] = {
   buildFn(ef, phase) {
-    const amt = extractNum(ef);
+    const m = extractMul(ef);
     return (b, cats, ts, p, cs) => {
-      return { scoreBonus: amt };
+      if (!cats.length) return {};
+      return { gids: [cats[0].gid], m };
     };
   },
 };
