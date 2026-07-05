@@ -124,7 +124,65 @@ function renderTopbarModifier(){
   const em=g('g-topbar-mod-em');if(em)em.textContent=rm.em;
   const nm=g('g-topbar-mod-name');if(nm)nm.textContent=rm.name;
 }
-function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();}
+function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();updateProjectedScoreUI();}
+
+// ── Feature 2a: live projected score readout near the FIT button ──
+// Recomputed wherever renderAll() already runs (every placement/removal/
+// pickup-from-board already calls it) — no extra hooks needed.
+function updateProjectedScoreUI(){
+  const el=g('fit-proj');
+  if(!el)return;
+  if(typeof G==='undefined'||!G.board||!G.board.length){el.textContent='';return;}
+  let proj;
+  try{ proj=projectScore(null); }catch(e){ return; } // never let a preview crash the game
+  const val=proj.total;
+  el.textContent='~ '+val.toLocaleString();
+  const stillNeeded=(G.tgt||0)-(G.score||0);
+  const clears=val>=stillNeeded;
+  el.classList.toggle('fit-proj-ready',clears);
+  el.title=clears
+    ?`Projected +${val.toLocaleString()} — clears the round!`
+    :`Projected +${val.toLocaleString()} — need ${Math.max(0,stillNeeded-val).toLocaleString()} more`;
+}
+
+// ── Feature 2b: treat spot-rating (paw tooltip + affected-cell pulse) ──
+// Called from board.js's onBoardEnter while H.kind==='treat' hovers a legal
+// board position. `hoverR/hoverC` are the raw hovered cell (used only to
+// anchor the tooltip visually); `or/oc` are the shape's top-left anchor,
+// matching sweepTreatPositions()'s {rot,r,c} coordinates.
+function showTreatSpotPreview(tdef,rot,or,oc,hoverR,hoverC){
+  let entry;
+  try{ entry=findSweepEntry(tdef,rot,or,oc); }catch(e){ entry=null; }
+  if(!entry){hidePawTip();return;}
+  entry.affectedGids.forEach(gid=>{
+    const grp=G.cats.find(c=>c.gid===gid);
+    if(!grp)return;
+    grp.cells.forEach(([rr,cc])=>{
+      const el=getBCell(rr,cc);
+      if(el)el.classList.add('treat-affect-preview');
+    });
+  });
+  const anchorEl=getBCell(hoverR,hoverC);
+  if(anchorEl) showPawTip(anchorEl.getBoundingClientRect(),entry.paws,entry.delta);
+}
+function showPawTip(rect,paws,delta){
+  const tip=g('paw-tip');
+  if(!tip||!rect)return;
+  const sign=delta>0?'+':'';
+  if(paws<=0){
+    tip.innerHTML=`<div class="paw-tip-paws zero">won't score here</div><div class="paw-tip-delta">${sign}${delta} pts</div>`;
+  }else{
+    tip.innerHTML=`<div class="paw-tip-paws">${'🐾'.repeat(paws)}</div><div class="paw-tip-delta">${sign}${delta} pts here</div>`;
+  }
+  tip.style.left=(rect.left+rect.width/2)+'px';
+  tip.style.top=(rect.top-10)+'px';
+  tip.style.display='block';
+}
+function hidePawTip(){const tip=g('paw-tip');if(tip)tip.style.display='none';}
+function clrTreatPreviewExtras(){
+  document.querySelectorAll('.cell.treat-affect-preview').forEach(c=>c.classList.remove('treat-affect-preview'));
+  hidePawTip();
+}
 
 function checkBoardFull(){
   const filled=G.board.flat().filter(c=>c.filled).length;

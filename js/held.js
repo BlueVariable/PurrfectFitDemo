@@ -81,6 +81,7 @@ function dropHeld(){
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
+  clrBoardPrev(); // also clears the Feature 2b paw tip / affected-cell pulse (e.g. ESC-cancel mid-hover)
   if(g('shop-bpg'))renderShopFull();
   const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}
 }

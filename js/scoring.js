@@ -111,6 +111,14 @@ function doFit(){
   G.totalFits=(G.totalFits||0)+1;
   if(boardFull){G.totalPurrfects=(G.totalPurrfects||0)+1;G.purrfectsThisRound=(G.purrfectsThisRound||0)+1;}
 
+  // Feature 3 — purrfect streak + near-miss TRACKING lives here (not in
+  // runScoreSequence) so it still advances when the sim replaces
+  // runScoreSequence with a stub that calls endScoreSequence(total) directly.
+  // Resets to 0 on any non-purrfect fit; not persisted across games since
+  // newGame() (state.js) replaces G wholesale rather than merging into it.
+  G.purrfectStreak=boardFull?(G.purrfectStreak||0)+1:0;
+  const cellsUnfilled=playableCells-filledCells;
+
   const total=runningTotal+boardBonus;
   G.lastScore=total;
 
@@ -122,7 +130,7 @@ function doFit(){
   });
   G.treats=[];
 
-  runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot);
+  runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,cellsUnfilled);
 }
 
 // ── Compute add bonus from one buffered treat for a specific future cat ──
@@ -186,7 +194,7 @@ function getMulFactorForCat(buf,cat){
 }
 
 // ── Scan-order animation ──
-function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
+function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,cellsUnfilled){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.add('active');
@@ -398,6 +406,14 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
     explain:`🏆 Final total: +${total.toLocaleString()} pts this hand.`,
     endDelay:finalEndDelay,
     run(){
+      // Feature 3 — visual-only celebration/consolation callout. Tracking
+      // (G.purrfectStreak / boardFull / cellsUnfilled) already happened in
+      // doFit(); this just decides which banner (if any) to pop.
+      if(boardFull&&G.purrfectStreak>=2){
+        showStreakCallout(seq,G.purrfectStreak);
+      }else if(!boardFull&&cellsUnfilled===1){
+        showNearMissCallout(seq);
+      }
       if(boardBonus>0){
         addLogLine(logDiv,`✨ Board Filled! +${boardBonus}`);
         animateCounter(finalCatTotal+boardBonus,700);
@@ -428,6 +444,27 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot){
     }
   }
   runNextStep();
+}
+
+// Feature 3 — escalating "PURRFECT xN!" callout for a streak of >=2 consecutive
+// purrfect fits. Guarded by callers checking `seq` already exists.
+function showStreakCallout(seq,streak){
+  const el=document.createElement('div');
+  el.className='streak-callout';
+  const bangs='!'.repeat(Math.min(3,1+Math.floor((streak-2)/2)));
+  el.textContent=`PURRFECT x${streak}${bangs}`;
+  seq.appendChild(el);
+  setTimeout(()=>el.classList.add('show'),20);
+  setTimeout(()=>el.remove(),1500);
+}
+// Feature 3 — "one cell left" near-miss consolation callout.
+function showNearMissCallout(seq){
+  const el=document.createElement('div');
+  el.className='near-miss-callout';
+  el.innerHTML='😿 SO CLOSE — one cell left!';
+  seq.appendChild(el);
+  setTimeout(()=>el.classList.add('show'),20);
+  setTimeout(()=>el.remove(),1500);
 }
 
 function flashTreat(seq,boardEl,treat,bsc){

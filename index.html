@@ -19,6 +19,7 @@
 </div>
 <div id="ghost"><div id="gh-grid" class="gh-grid"></div></div>
 <div id="board-tip" style="position:fixed;display:none;z-index:9990;pointer-events:none;background:rgba(45,27,105,.94);color:#fff;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:700;max-width:180px;border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(45,27,105,.4);line-height:1.5;"></div>
+<div id="paw-tip"></div>
 <div id="ihud">
   <div class="ik">R</div><span>or</span><div class="ik">RMB</div><span>Rotate</span>
   <div class="isep">|</div>
@@ -177,6 +178,7 @@
       <div class="bbtns">
         <button class="btn-clr" onclick="clearBoard()">CLEAR</button>
         <button class="btn-fit" id="btn-fit" onclick="doFit()" disabled>FIT!</button>
+        <div class="fit-proj" id="fit-proj" title="Projected score if you FIT now">~0</div>
       </div>
       <div></div>
       <div></div>
@@ -378,6 +380,7 @@
 <script src="js/held.js"></script>
 <script src="js/render.js"></script>
 <script src="js/scoring.js"></script>
+<script src="js/projection.js"></script>
 <script src="js/shop.js"></script>
 </body>
 </html>

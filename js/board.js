@@ -18,6 +18,9 @@ function onBoardEnter(r,c){
         if(el) el.classList.add(ok&&!bd.filled?'ok':'bad');
       }
     }));
+    // Feature 2b — treat spot-rating: paw tooltip + affected-cell highlight.
+    // Cats never get this (only reachable when H.kind==='treat').
+    if(ok) showTreatSpotPreview(H.data,H.rot,or,oc,r,c);
     return;
   }
   // offset placement by grab position
@@ -107,7 +110,13 @@ function boardCanPlace(cells,r,c){
   return true;
 }
 
-function clrBoardPrev(){document.querySelectorAll('.cell.ok,.cell.bad').forEach(c=>c.classList.remove('ok','bad'));}
+function clrBoardPrev(){
+  document.querySelectorAll('.cell.ok,.cell.bad').forEach(c=>c.classList.remove('ok','bad'));
+  // Folded in here (rather than touching every one of clrBoardPrev's many
+  // existing call sites individually) so every hover/drop/rotate/cancel path
+  // that already clears ok/bad also clears the Feature 2b paw tip + pulse.
+  clrTreatPreviewExtras();
+}
 function getBCell(r,c){return g('board').querySelectorAll('.cell')[r*G.bsc+c]||null;}
 
 // ══════════════════════════════════════════════════════
