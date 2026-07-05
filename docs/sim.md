@@ -33,6 +33,24 @@ becomes ready to run batches.
    stamp (export time + the game's config-cache hash, so you can tell which
    Google Sheet config a run was against) — useful for diffing before/after
    a balance change.
+6. **Auto-save**: click **Choose results folder** to pick a directory
+   (Chrome-only — File System Access API / `showDirectoryPicker`); every
+   completed batch then writes the same JSON the Export button produces
+   into that folder as
+   `sim_<branch>_<profileInitials>_<games>x_seed<seed>_<hash8>_<YYYYMMDD-HHMMSS>[_partial].json`
+   (`_partial` = the batch was stopped early). The chosen folder handle is
+   persisted in IndexedDB, so it survives page reloads. With **Auto-save
+   results** checked but no folder chosen (or in a non-Chrome browser),
+   the file is auto-downloaded to the browser's Downloads directory
+   instead; any write failure also falls back to a download. The status
+   line confirms each save with its filename.
+
+   Chrome drops write permission on the stored handle across browser
+   restarts, and re-granting requires a user gesture — so the sim never
+   prompts mid-batch. If permission has lapsed at save time, that batch
+   falls back to a download and the folder label turns orange; click
+   **Choose results folder** once to re-grant in place (the picker only
+   reopens if you decline the re-grant).
 
 Large batches can take a couple of minutes at 500 games — the game's own
 DOM rendering still runs every hand (only the score-sequence *animation* is

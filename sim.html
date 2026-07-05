@@ -24,6 +24,10 @@
   button.sim-btn{background:var(--or);color:#1a1a2a;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;}
   button.sim-btn:disabled{opacity:.4;cursor:not-allowed;}
   button.sim-btn.secondary{background:#31335a;color:var(--tx);}
+  .sim-save-row{margin-top:12px;align-items:center;gap:12px;}
+  .sim-folder-name{font-size:12px;color:var(--mu);}
+  .sim-folder-name.warn{color:var(--or);}
+  .sim-autosave{font-size:13px;display:flex;align-items:center;gap:5px;color:var(--tx);}
   #sim-status{font-size:12px;color:var(--mu);margin-top:8px;}
   #sim-progress{font-size:12px;color:var(--bl);margin-top:2px;font-family:monospace;}
   #sim-dashboard{display:flex;flex-direction:column;gap:14px;}
@@ -72,6 +76,13 @@
       <button class="sim-btn secondary" id="btn-export">Export JSON</button>
     </div>
   </div>
+  <div class="sim-controls sim-save-row">
+    <div class="sim-btns">
+      <button class="sim-btn secondary" id="btn-folder">Choose results folder</button>
+    </div>
+    <span id="folder-name" class="sim-folder-name">no folder chosen — auto-save downloads instead</span>
+    <label class="sim-autosave"><input type="checkbox" id="chk-autosave"> Auto-save results</label>
+  </div>
   <div id="sim-status">Loading...</div>
   <div id="sim-progress"></div>
 </div>
@@ -88,6 +99,7 @@
 <script src="js/sim/bots.js"></script>
 <script src="js/sim/engine.js"></script>
 <script src="js/sim/dashboard.js"></script>
+<script src="js/sim/store.js"></script>
 <script src="js/sim/main.js"></script>
 </body>
 </html>
