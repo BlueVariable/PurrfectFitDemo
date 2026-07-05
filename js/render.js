@@ -436,10 +436,23 @@ function renderHand(){
 
 function renderBP(){
   const grid=g('bpg');
-  const cs=window._boardCellSize||46;
-  grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
+  const cols=getBPC(),rows=getBPR();
+  // Cell size must fit the backpack panel's OWN container width, not just
+  // mirror the board's cell size — the board is sized for G.bsc columns,
+  // which can differ from getBPC() (inventory_cols, from the General sheet
+  // tab). Reusing the board's size unmodified overflows the fixed-width
+  // .rc/.bpcard panel whenever cols*cellSize > the panel's inner width
+  // (e.g. inventory_cols=5 no longer fits the 4-column size the CSS was
+  // tuned for), pushing/clipping the panel instead of shrinking to fit.
+  const wrap=document.querySelector('.bpgw');
+  const wrapInnerW=wrap?wrap.clientWidth-10:299; // .bpgw padding:5px each side
+  const bpgPad=4,bpgGap=3; // must mirror .bpg's CSS padding/gap
+  const fitW=Math.floor((wrapInnerW-bpgPad*2-bpgGap*(cols-1))/cols);
+  const boardCs=window._boardCellSize||46;
+  const cs=Math.max(18,Math.min(fitW,boardCs,78));
+  grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.innerHTML='';
-  for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
     const div=document.createElement('div');
     div.className='bpc';
     div.style.width=cs+'px';div.style.height=cs+'px';
