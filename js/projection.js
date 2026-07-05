@@ -3,9 +3,10 @@
 //  PROJECTION — side-effect-free score preview engine
 //
 //  projectScore(hypothetical) replicates doFit()'s scan computation exactly
-//  (same trigger-cell sort, same getAddBonusForCat/getMulFactorForCat
-//  buffering, same Type B mul-then-add ordering, same requirementFails
-//  skips, same catBaseScore/boardFillBonus + G.roundModifier) but commits
+//  (same trigger-cell sort via the shared scanCompare() — reversed under
+//  mirror_mood/scan_reverse exactly like doFit() — same getAddBonusForCat/
+//  getMulFactorForCat buffering, same Type B mul-then-add ordering, same
+//  requirementFails skips, same catBaseScore/boardFillBonus + G.roundModifier) but commits
 //  NOTHING: every persistent global it touches (directly, or indirectly via
 //  a treat's tdef.fn side effects) is snapshotted before the scan and
 //  restored in a finally block. See AGENT report for the full inventory.
@@ -139,7 +140,7 @@ function projectScore(hypothetical){
       ...G.cats.map(cat=>({kind:'cat',piece:cat,trigger:_projTriggerCell(cat.cells)})),
       ...G.treats.map(treat=>({kind:'treat',piece:treat,trigger:_projTriggerCell(treat.cells)})),
     ];
-    allPieces.sort((a,b)=>a.trigger[0]-b.trigger[0]||a.trigger[1]-b.trigger[1]);
+    allPieces.sort((a,b)=>scanCompare(a,b,G.roundModifier));
 
     const catScores={};
     const scoredGids=new Set();

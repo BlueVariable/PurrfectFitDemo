@@ -114,6 +114,14 @@ function applyHandSizeDelta(baseCount,mod){
 function applyDiscardsZero(disc,mod){
   return(mod&&mod.effect==='discards_zero')?0:disc;
 }
+function applyTargetMult(baseTgt,mod){
+  if(mod&&mod.effect==='target_mult')return Math.round(baseTgt*(mod.mag||1));
+  return baseTgt;
+}
+function applyEarnMult(baseEarn,mod){
+  if(mod&&mod.effect==='earn_mult')return Math.round(baseEarn*(mod.mag||1));
+  return baseEarn;
+}
 
 // Single source of truth for round/hand board layout: irregular polyomino
 // shape + stochastic blocking inside it. `mod` is the active G.roundModifier

@@ -19,6 +19,15 @@ function boardFillBonus(playableCells,perCell,mod){
   if(mod&&mod.effect==='fill_bonus_mult')return Math.round(base*(mod.mag||1));
   return base;
 }
+// Comparator for allPieces.sort — normally row-major ascending (topmost-then-
+// leftmost trigger cell fires first). mirror_mood (scan_reverse) inverts it so
+// the scan runs bottom-right → top-left instead. Shared verbatim by doFit() and
+// projection.js's projectScore() so the two stay in sync under the modifier.
+function scanCompare(a,b,mod){
+  if(mod&&mod.effect==='scan_reverse')
+    return(b.trigger[0]-a.trigger[0])||(b.trigger[1]-a.trigger[1]);
+  return(a.trigger[0]-b.trigger[0])||(a.trigger[1]-b.trigger[1]);
+}
 
 function doFit(){
   if(!G.cats.length)return;
@@ -38,7 +47,7 @@ function doFit(){
     ...G.cats.map(cat=>({kind:'cat',piece:cat,trigger:triggerCell(cat.cells)})),
     ...G.treats.map(treat=>({kind:'treat',piece:treat,trigger:triggerCell(treat.cells)}))
   ];
-  allPieces.sort((a,b)=>a.trigger[0]-b.trigger[0]||a.trigger[1]-b.trigger[1]);
+  allPieces.sort((a,b)=>scanCompare(a,b,G.roundModifier));
 
   const catScores={};
   const scoredGids=new Set();
@@ -615,7 +624,7 @@ function goShop(){
   G.roundModifier=pickRoundModifier(G.round);
   const c=rcfg(G.round);
   const layout=setupBoardLayout(G.round,G.roundModifier);
-  G.tgt=c.tgt;G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
+  G.tgt=applyTargetMult(c.tgt,G.roundModifier);G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=applyEarnMult(c.earn,G.roundModifier);G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();
   openRounds();

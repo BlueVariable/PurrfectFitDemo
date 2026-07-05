@@ -92,11 +92,14 @@ function renderRoundsTrack(){
       pips.appendChild(p);
     }
   }
-  // Update round card stats
+  // Update round card stats. Target/earn read off G (not the raw rcfg row)
+  // because target_mult/earn_mult modifiers (picky_judge/tax_season) already
+  // baked their multiplier into G.tgt/G.earn at round setup (goShop) — the
+  // prep screen must show the modified number, not the sheet's raw value.
   const cfg=rcfg(G.round);
   const rn=g('rds-play-num');if(rn)rn.textContent=G.round;
-  const rt=g('rds-tgt');if(rt)rt.textContent=cfg.tgt.toLocaleString();
-  const re=g('rds-earn');if(re)re.textContent='+$'+cfg.earn;
+  const rt=g('rds-tgt');if(rt)rt.textContent=G.tgt.toLocaleString();
+  const re=g('rds-earn');if(re)re.textContent='+$'+G.earn;
   const rb=g('rds-board');if(rb)rb.textContent=(cfg.boardSize||(G.bsr*G.bsc))+' cells';
   renderRoundModifierCard();
 }
