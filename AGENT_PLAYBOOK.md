@@ -427,5 +427,56 @@ never the constraint — the **backpack is** (see §16).
 
 ---
 
+# PART IV — Difficulty retune (2026-07-05, later), dup-ladder fix, simulator
+
+Config changed again in this session — re-read the sheet, don't trust Part III
+numbers: **targets steepened R6–15** (now 450, 550, 650, 750, 875, 1050, 1200,
+1350, 1500, 1650, 1850, 2050, 2300, 2600, **3000**), **earn flattened to $10
+every round**, bench_warmer +50 → **+30**/hand-cat, rainbow_row redesigned
+(**+30 per row with 2+ types, duo shape** — finally pays), and
+**all_or_nothing scales once per ROUND** (dup copies read the same m; the old
+per-trigger counter let two copies ladder to ×2.7 × ×2.8 by R14).
+
+## 18. Run logs 3 & 4 (both 15/15 at solver level, but the texture changed)
+
+- Run 3 (pre-retune, flat earn): R1 one-handed 484/450 with deep_deck +184 —
+  34-point margin. Dup big_bite (3 copies = +600/hand) + bench_warmer(+300 old
+  numbers) + morning_stretch made R7+ one-hand wins. Treat-flooding line
+  discovered: 6-7 treats + 1 cat, skip the packing puzzle entirely.
+- Run 4 (post-retune): **R6 and R15 went to the LAST HAND** (1084/1050 and
+  3488/3000, zero hands left) — the target curve now bites even optimal play
+  when shop RNG runs cold. R14 hit 5356 in one hand via the aon dup ladder
+  (since fixed). Late-round blocked cells (9-10%) are the design's quiet MVP:
+  they veto purrfect fills, which zeroes the aon stack AND the fill bonus, and
+  hand values crash from ~2000 to ~400.
+- Economy after retune: cash hovers $33-45 all run (was $104-245). Reroll
+  digging ($4/$5 escalating) is now a real spend decision.
+
+## 19. Balance facts for playing well post-retune
+
+- quick_paws pays +250 on hand 1 of a 5-hand round — biggest clean flat now.
+- Dup-stacking still works for flats (2× big_bite = +400) and dup Type B muls
+  still multiply together (×m each) — but aon copies share one per-round
+  scaler, so the second copy adds ×m, not a ladder.
+- bench_warmer synergizes with treat-flooding (fewer cats placed = more in
+  hand) but at +30 the max is +180 — no longer carries a round alone.
+- New treats pending review (Enabled=FALSE, ToBeImplemented, rows 48-60 of the
+  Treats tab): ten "bet everything on the board" spatial treats + empty_bowl
+  (poverty scaling), nine_lives (last-hand flat), clean_plate (flat purrfect
+  reward). If they're Approved, the flat-add meta gets real competition.
+
+## 20. The balance simulator (sim.html)
+
+`sim.html` + `js/sim/` batch-runs the REAL game in a hidden iframe with three
+bot profiles (solver / greedy / casual), seeded RNG, and a dashboard (clear
+rate per round × profile, hands used, cash curves, treat pick rates) + JSON
+export. Key implementation fact: the game's `let/const` globals (G, TDEFS,
+RCFG…) are NOT on `window` — the sim injects `js/sim/bridge.js` INTO the
+iframe document to reach them; plain function declarations (doFit, goShop,
+selectBranch…) are reachable as `iframe.contentWindow.fn` directly. Run a
+batch before and after any sheet tuning change and diff the exported JSON.
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
