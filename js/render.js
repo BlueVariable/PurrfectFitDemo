@@ -98,6 +98,31 @@ function renderRoundsTrack(){
   const rt=g('rds-tgt');if(rt)rt.textContent=cfg.tgt.toLocaleString();
   const re=g('rds-earn');if(re)re.textContent='+$'+cfg.earn;
   const rb=g('rds-board');if(rb)rb.textContent=(cfg.boardSize||(G.bsr*G.bsc))+' cells';
+  renderRoundModifierCard();
+}
+
+// Prep-screen "boss round" card — shown only when the upcoming round has a modifier.
+function renderRoundModifierCard(){
+  const card=g('rds-mod-card');
+  if(!card)return;
+  const rm=G.roundModifier;
+  if(!rm){card.style.display='none';return;}
+  card.style.display='';
+  const em=g('rds-mod-em');if(em)em.textContent=rm.em;
+  const nm=g('rds-mod-name');if(nm)nm.textContent=rm.name;
+  const ds=g('rds-mod-desc');if(ds)ds.textContent=rm.desc;
+}
+
+// In-game topbar chip — mirrors the prep-screen card while G.roundModifier is active.
+function renderTopbarModifier(){
+  const pill=g('g-topbar-mod');
+  if(!pill)return;
+  const rm=G.roundModifier;
+  if(!rm){pill.style.display='none';return;}
+  pill.style.display='';
+  pill.title=rm.desc;
+  const em=g('g-topbar-mod-em');if(em)em.textContent=rm.em;
+  const nm=g('g-topbar-mod-name');if(nm)nm.textContent=rm.name;
 }
 function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();}
 
@@ -156,6 +181,7 @@ function renderStats(){
   }
   if (g('g-topbar-round')) g('g-topbar-round').textContent = 'Round ' + G.round;
   if (g('g-topbar-cash'))  g('g-topbar-cash').querySelector('span:last-child').textContent = G.cash;
+  renderTopbarModifier();
 }
 
 function treatReqFails(td){

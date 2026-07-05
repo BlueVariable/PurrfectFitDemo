@@ -6,6 +6,20 @@
 //  When a cat fires: buffered treat effects are applied, score locked in.
 //  When a treat fires: its result is buffered for future cats.
 // ══════════════════════════════════════════════════════
+
+// ── Round-modifier (boss round) pure effect helpers used by doFit() ──
+// Kept pure (mod passed explicitly) so they're easy to unit-test in isolation.
+function catBaseScore(cellCount,catType,mod){
+  if(mod&&mod.effect==='type_mult'&&mod.type&&catType===mod.type)
+    return cellCount*10*(mod.mag||2);
+  return cellCount*10;
+}
+function boardFillBonus(playableCells,perCell,mod){
+  const base=playableCells*perCell;
+  if(mod&&mod.effect==='fill_bonus_mult')return Math.round(base*(mod.mag||1));
+  return base;
+}
+
 function doFit(){
   if(!G.cats.length)return;
 
@@ -35,7 +49,7 @@ function doFit(){
   for(const item of allPieces){
     if(item.kind==='cat'){
       const cat=item.piece;
-      const base=cat.cells.length*10;
+      const base=catBaseScore(cat.cells.length,cat.type,G.roundModifier);
       let addBonus=0;
       let mulFactor=1;
       // Apply buffered treats: sum all add bonuses, then compound all mul factors
@@ -93,7 +107,7 @@ function doFit(){
   const filledCells=G.board.flat().filter(c=>c.filled).length;
   const playableCells=G.board.flat().filter(c=>!c.blocked&&!c.offShape).length;
   const boardFull=filledCells===playableCells&&playableCells>0;
-  const boardBonus=boardFull?playableCells*(CFG.board_fill_bonus||5):0;
+  const boardBonus=boardFull?boardFillBonus(playableCells,CFG.board_fill_bonus||5,G.roundModifier):0;
   G.totalFits=(G.totalFits||0)+1;
   if(boardFull){G.totalPurrfects=(G.totalPurrfects||0)+1;G.purrfectsThisRound=(G.purrfectsThisRound||0)+1;}
 
@@ -558,8 +572,12 @@ function goShop(){
     showBranchWin();
     return;
   }
+  // Pick this round's modifier (if any) BEFORE board layout / dealHand so
+  // board_size_delta, blocked_mult, hand_size_delta etc. are already in
+  // effect for every board/hand generation that happens this round.
+  G.roundModifier=pickRoundModifier(G.round);
   const c=rcfg(G.round);
-  const layout=setupBoardLayout(G.round);
+  const layout=setupBoardLayout(G.round,G.roundModifier);
   G.tgt=c.tgt;G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=c.earn;G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();

@@ -20,6 +20,7 @@ const SHEET_URLS = {
   'Decks':   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2016141493&single=true&output=csv',
   'Rarity':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1377980715&single=true&output=csv',
   'Branches':'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1831058342&single=true&output=csv',
+  'Modifiers':'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2116361504&single=true&output=csv',
 };
 const SHEET_NAMES = Object.keys(SHEET_URLS);
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -35,6 +36,7 @@ let RCFG  = [];
 let CFG   = {};
 let RARITY_WEIGHTS = {};
 let BRANCHES = [];
+let MODIFIERS = []; // per-round "boss round" modifiers — Modifiers sheet tab (failure-tolerant)
 let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
 const DECK_META={};
 
@@ -102,7 +104,7 @@ async function fetchAllSheetsRaw(onStatus){
         raw[name]=await local.text();
         console.warn(`[Config] ${name}: using local fallback (sheets/${name}.csv)`);
       }catch(e2){
-        if(name==='Shapes'||name==='Rarity'){raw[name]='';}
+        if(name==='Shapes'||name==='Rarity'||name==='Modifiers'){raw[name]='';}
         else throw new Error(`Sheet "${name}" failed and no local fallback`);
       }
     }
@@ -201,6 +203,32 @@ function applyConfigFromRaw(raw){
     };
   }).sort((a,b)=>a.order-b.order);
   console.log('[Config] BRANCHES loaded:', BRANCHES.length, BRANCHES.map(b=>b.id));
+
+  // ── Modifiers (per-round "boss round" effects) — failure-tolerant: bad/missing tab → no modifiers ──
+  try{
+    const modRows=parseCSV(raw['Modifiers']||'');
+    MODIFIERS=modRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>({
+      id:String(r['ID']).trim(),
+      name:String(r['Name']||r['ID']).trim(),
+      em:String(r['Emoji']||'⚠️').trim(),
+      desc:String(r['Description']||'').trim(),
+      effect:String(r['Effect']||'').trim().toLowerCase(),
+      mag:Number(r['Magnitude'])||0,
+      weight:Number(r['Weight'])||1,
+      enabled:String(r['Enabled']||'true').trim().toLowerCase()!=='false',
+    }));
+  }catch(e){console.warn('Modifiers parse failed:',e.message);MODIFIERS=[];}
+  console.log('[Config] MODIFIERS loaded:', MODIFIERS.length, MODIFIERS.map(m=>m.id));
+}
+
+// ── Round-modifier scheduling: which rounds get a modifier (General!modifier_rounds, e.g. "4,8,12,15") ──
+function modifierRoundsList(){
+  const raw=CFG.modifier_rounds;
+  if(raw===undefined||raw===null||raw==='')return[];
+  return String(raw).split(',').map(s=>parseInt(s.trim(),10)).filter(n=>!isNaN(n));
+}
+function isModifierRound(round){
+  return modifierRoundsList().includes(round);
 }
 
 function setLoadStatus(msg){

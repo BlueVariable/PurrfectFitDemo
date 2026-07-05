@@ -91,16 +91,64 @@ function buildBlockedMaskFromShape(shape,prob){
   return mask;
 }
 
+// ── Round-modifier (boss round) pure effect helpers ──
+// Each takes the plain base value plus G.roundModifier (or null) and is
+// side-effect free, so they're reusable at every call site and easy to
+// unit-test in isolation.
+function modifiedBoardSize(baseSize,mod){
+  if(mod&&mod.effect==='board_size_delta')return Math.max(12,baseSize+(mod.mag||0));
+  return baseSize;
+}
+function modifiedBlockedProb(baseProb,mod){
+  if(mod&&mod.effect==='blocked_mult')return baseProb*(mod.mag||1);
+  return baseProb;
+}
+function applyHandsDelta(hands,mod){
+  if(mod&&mod.effect==='hands_delta')return Math.max(1,hands+(mod.mag||0));
+  return hands;
+}
+function applyHandSizeDelta(baseCount,mod){
+  if(mod&&mod.effect==='hand_size_delta')return baseCount+(mod.mag||0);
+  return baseCount;
+}
+function applyDiscardsZero(disc,mod){
+  return(mod&&mod.effect==='discards_zero')?0:disc;
+}
+
 // Single source of truth for round/hand board layout: irregular polyomino
-// shape + stochastic blocking inside it.
-function setupBoardLayout(round){
+// shape + stochastic blocking inside it. `mod` is the active G.roundModifier
+// (or null) — passed explicitly rather than read off G so callers before G
+// is (re)initialized (e.g. newGame's first board) can't pick up stale state.
+function setupBoardLayout(round,mod){
   const c=rcfg(round||1);
-  const playable=c.boardSize||16;
+  const playable=modifiedBoardSize(c.boardSize||16,mod);
+  const blockedProb=modifiedBlockedProb(c.blockedProb||0,mod);
   const poly=generatePolyomino(playable,c.pullStrength);
   return{
     rows:poly.rows,cols:poly.cols,shape:poly.shape,
-    mask:buildBlockedMaskFromShape(poly.shape,c.blockedProb||0)
+    mask:buildBlockedMaskFromShape(poly.shape,blockedProb)
   };
+}
+
+// Pick a random enabled modifier (weighted by sheet "Weight") for a round
+// that's listed in General!modifier_rounds; null otherwise. night_shift
+// (type_mult) additionally rolls a random cat TYPE from the current deck
+// and substitutes it into the "{TYPE}" placeholder of the description.
+function pickRoundModifier(round){
+  if(!isModifierRound(round))return null;
+  const pool=(typeof MODIFIERS!=='undefined'?MODIFIERS:[]).filter(m=>m.enabled);
+  if(!pool.length)return null;
+  const picked=weightedSample(pool,1,m=>m.weight||1)[0];
+  if(!picked)return null;
+  const mod={id:picked.id,name:picked.name,em:picked.em,desc:picked.desc,effect:picked.effect,mag:picked.mag};
+  if(mod.effect==='type_mult'){
+    const deck=DECKS[G.deckId];
+    const types=(deck&&deck.ty&&deck.ty.length)?deck.ty:['orange'];
+    const type=types[Math.floor(Math.random()*types.length)];
+    mod.type=type;
+    mod.desc=mod.desc.replace(/\{TYPE\}/g,type.toUpperCase());
+  }
+  return mod;
 }
 
 
@@ -109,7 +157,7 @@ function newGame(deckId){
   const cp=TDEFS.find(td=>td.id==='cat_phone');
   if(cp&&cp._origCatPhone){const o=cp._origCatPhone;cp.phase=o.phase;cp.ef=o.ef;cp.fn=o.fn;cp.req=o.req;cp.addEf=o.addEf;delete cp._origCatPhone;}
   const c=rcfg(1);
-  const layout=setupBoardLayout(1);
+  const layout=setupBoardLayout(1,null); // round 1 is never in modifier_rounds — explicit null, not ambient G
   G={
     round:1,score:0,tgt:c.tgt,bsr:layout.rows,bsc:layout.cols,boardShape:layout.shape,blockedMask:layout.mask,earn:c.earn,hands:c.h||CFG.hand_count||3,disc:CFG.discard_count||3,cash:CFG.starting_cash||5,
     deckId,deck:[],hand:[],
@@ -118,19 +166,26 @@ function newGame(deckId){
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
     branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,discUsedRound:0,purrfectsThisRound:0,
+    roundModifier:null,
   };
   mkDeck();dealHand();
 }
 
 // Apply per-round modifiers (hands, discard). Called each round after stats reset.
+// NOTE: no longer early-returns when G.modifiers is empty — G.maxHands must
+// still get set (and the round modifier's hands_delta/discards_zero still
+// need to run) even for branches/rounds with no branch-level modifier string.
 function applyModifiers(){
-  if(!G.modifiers)return;
-  const mods=G.modifiers.split('|').map(m=>m.trim()).filter(Boolean);
+  const mods=G.modifiers?G.modifiers.split('|').map(m=>m.trim()).filter(Boolean):[];
   mods.forEach(mod=>{
     if(mod==='hands-1')G.hands=Math.max(1,G.hands-1);
     if(mod.startsWith('hands+'))G.hands+=(parseInt(mod.slice(6))||0);
     if(mod==='no-discard')G.disc=0;
   });
+  // Round modifier (boss round) composes AFTER branch modifiers, e.g.
+  // London's hands+1 then short_shift's -1 nets to +0.
+  G.hands=applyHandsDelta(G.hands,G.roundModifier);
+  G.disc=applyDiscardsZero(G.disc,G.roundModifier);
   G.maxHands=G.hands;
 }
 // Apply one-time modifiers (backpack size, starting cash). Called only at game start.
@@ -195,8 +250,10 @@ function dealHand(){
   const noDiscard=mods.includes('no-discard');
   const discPlus=mods.filter(m=>m.startsWith('discards+')).reduce((s,m)=>s+parseInt(m.slice(9))||0,0);
   G.disc=noDiscard?0:((CFG.discard_count||3)+discPlus);
+  G.disc=applyDiscardsZero(G.disc,G.roundModifier); // re-enforced every hand — dealHand() re-derives G.disc each time
   G.newCardIndices=new Set();
-  while(G.hand.length<(CFG.hand_dealt_count||7)&&G.deck.length>0){
+  const handTarget=applyHandSizeDelta(CFG.hand_dealt_count||7,G.roundModifier);
+  while(G.hand.length<handTarget&&G.deck.length>0){
     G.newCardIndices.add(G.hand.length);
     G.hand.push(G.deck.shift());
   }
@@ -205,7 +262,7 @@ function dealHand(){
   G.cats=[];G.treats=[];
   H=resetH();
   // Re-roll the polyomino board shape and stochastic block mask each hand.
-  const layout=setupBoardLayout(G.round);
+  const layout=setupBoardLayout(G.round,G.roundModifier);
   G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;
   mkBoard();
 }
