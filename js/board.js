@@ -139,6 +139,7 @@ function doDiscard(){
   G.hand.splice(H.handIdx,1);
   G.disc--;
   G.discUsedRound=(G.discUsedRound||0)+1;
+  G.discUsedHand=(G.discUsedHand||0)+1;
   H=resetH();updateGhost();hideHUD();
   if(G.deck.length>0)G.hand.push(G.deck.shift());
   renderAll();

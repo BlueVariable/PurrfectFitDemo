@@ -1,13 +1,14 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: lucky_penny
-//  +$2 cash each trigger, 50% chance to reappear after use
+//  TREAT: head_scritches
+//  ×N the NEXT cat in SCAN ORDER
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['lucky_penny'] = {
+TREAT_REGISTRY['head_scritches'] = {
   buildFn(ef, phase) {
+    const m = extractMul(ef);
     return (b, cats, ts, p, cs) => {
-      G.cash += 2;
-      return { type: 'x', cashGained: 2 };
+      if (!cats.length) return {};
+      return { gids: [cats[0].gid], m };
     };
   },
 };

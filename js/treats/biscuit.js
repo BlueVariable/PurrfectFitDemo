@@ -1,13 +1,19 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: lucky_penny
-//  +$2 cash each trigger, 50% chance to reappear after use
+//  TREAT: biscuit
+//  +N per FILLED cell on the entire board (any kind, including itself)
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['lucky_penny'] = {
+TREAT_REGISTRY['biscuit'] = {
   buildFn(ef, phase) {
+    const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {
-      G.cash += 2;
-      return { type: 'x', cashGained: 2 };
+      let filled = 0;
+      for (let r = 0; r < G.bsr; r++) {
+        for (let c = 0; c < G.bsc; c++) {
+          if (b[r][c].filled) filled++;
+        }
+      }
+      return { scoreBonus: filled * amt };
     };
   },
 };

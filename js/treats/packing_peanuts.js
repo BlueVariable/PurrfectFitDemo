@@ -1,13 +1,11 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: lucky_penny
-//  +$2 cash each trigger, 50% chance to reappear after use
+//  TREAT: packing_peanuts
+//  +N flat score bonus (trio shape is the point; nothing
+//  special in the scoring code).
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['lucky_penny'] = {
+TREAT_REGISTRY['packing_peanuts'] = {
   buildFn(ef, phase) {
-    return (b, cats, ts, p, cs) => {
-      G.cash += 2;
-      return { type: 'x', cashGained: 2 };
-    };
+    return (b, cats, ts, p, cs) => ({ scoreBonus: extractNum(ef) });
   },
 };

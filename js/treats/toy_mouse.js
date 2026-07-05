@@ -1,13 +1,11 @@
 'use strict';
 // ══════════════════════════════════════════════════════
-//  TREAT: lucky_penny
-//  +$2 cash each trigger, 50% chance to reappear after use
+//  TREAT: toy_mouse
+//  +N per cat SCORED AFTER this treat in scan order
 // ══════════════════════════════════════════════════════
-TREAT_REGISTRY['lucky_penny'] = {
+TREAT_REGISTRY['toy_mouse'] = {
   buildFn(ef, phase) {
-    return (b, cats, ts, p, cs) => {
-      G.cash += 2;
-      return { type: 'x', cashGained: 2 };
-    };
+    const amt = extractNum(ef);
+    return (b, cats, ts, p, cs) => ({ scoreBonus: amt * cats.length });
   },
 };

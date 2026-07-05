@@ -133,8 +133,19 @@ function doFit(){
 
   const catsSnapshot=[...G.cats];
 
+  // Lifecycle: each placed treat normally moves to G.usedTreats (removed from
+  // the inventory for the rest of the round, restored at round end via
+  // bpRestoreUsedTreats in goShop()). Treats whose Additional Effects text
+  // contains "REAPPEAR" get a 1-in-2 chance, flipped per placed instance, to
+  // skip that and go straight back into the inventory instead — available
+  // again for the NEXT HAND of the same round. On the failed flip (or if the
+  // backpack genuinely has no room for it even with rotation) it falls back
+  // to the normal usedTreats path. It never permanently disappears.
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
+    if(bt.tdef.addEf&&/REAPPEAR/i.test(bt.tdef.addEf)&&Math.random()<0.5){
+      if(bpAutoPlaceRot(bt.tdef))return; // back in the backpack immediately — no usedTreats entry
+    }
     G.usedTreats.push(bt.tdef);
   });
   G.treats=[];
