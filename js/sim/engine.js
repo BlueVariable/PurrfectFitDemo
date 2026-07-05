@@ -16,22 +16,51 @@
 //           player's REAL localStorage World Map progress ('pf-progress').
 //           This is an extra safety measure beyond what the task spec asked
 //           for; flagged here and in the report.
-//    2. simRunOneGame(...) — for ONE game: seed Math.random, call
-//       selectBranch(branchId) (fully resets G), then loop:
+//    2. simRunOneGame(...) — for ONE game (async): seed Math.random, call
+//       selectBranch(branchId) (fully resets G), reset the win/fail/
+//       branch-win overlays (they're only cleared by real-UI buttons the
+//       sim never clicks), then loop:
 //         shop phase (bot.shopPhase) -> startRound() -> hand loop:
+//           YIELD to the event loop (simYield) + check stop flag + check
+//           the per-game wall-clock budget ->
 //           ensure some hand cat can be placed (else discard, else 'stuck')
 //           -> bot.playHand() -> (safety net: force a placement if the bot
 //           placed zero cats despite one being possible) -> doFit() ->
 //           inspect #win-inline/.visible and #ov-fail/.off to learn the
-//           outcome synchronously (endScoreSequence already ran) ->
+//           outcome synchronously (endScoreSequence already ran); if the
+//           game did not advance at all (no win, no fail, hand not
+//           consumed), abort as 'crashed' instead of spinning ->
 //           on win: record round metrics, diff the backpack across
 //           goShop() to detect lost/expired treats, goShop() to advance;
 //           check #ov-branch-win/.off for whole-branch completion.
-//    3. simRunBatch(...) — loops profiles x games-per-profile, yielding to
-//       the event loop between games (setTimeout 0) so the page/progress
-//       UI stays responsive, per the task's "no build tools" browser-only
-//       constraint.
+//    3. simRunBatch(...) — loops profiles x games-per-profile. Yields
+//       happen every HAND (inside simRunOneGame) plus between games, so
+//       the page paints, progress updates, and the Stop button stays
+//       responsive even mid-game; a runaway game is cut off by the
+//       wall-clock budget and recorded as 'crashed' rather than freezing
+//       the tab.
 // ══════════════════════════════════════════════════════
+
+// Hard per-game wall-clock budget. Node-VM benchmarking of the full 59-treat
+// config put the worst observed game at <1s across 500+ games and all three
+// profiles, so 15s is generous headroom, not a tuning knob.
+const SIM_GAME_TIME_BUDGET_MS = 15000;
+
+// Yield control to the event loop so the browser can paint, dispatch input
+// (Stop button!), and run timers. Uses MessageChannel because background
+// tabs throttle setTimeout(0) to >=1s, which would crawl a batch running in
+// an unfocused tab; MessageChannel macrotasks are not throttled.
+function simYield(){
+  return new Promise(resolve => {
+    if (typeof MessageChannel !== 'undefined'){
+      const ch = new MessageChannel();
+      ch.port1.onmessage = () => resolve();
+      ch.port2.postMessage(0);
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
 
 function simWaitForIframeLoad(iframeEl){
   return new Promise(resolve => {
@@ -118,9 +147,20 @@ function simForcePlaceOneCat(win, bridge){
 }
 
 // ── per-game runner ──────────────────────────────────────────────────────
-function simRunOneGame(win, bridge, branchId, profile, seed){
+// Async: yields to the event loop before every hand so the tab paints,
+// progress updates, and Stop works mid-game. runOpts (all optional):
+//   shouldStop()  — checked before every hand; returns null (no result
+//                   recorded) when a stop is requested mid-game.
+//   onProgress({round, hand}) — fired once per hand, after the yield.
+//   timeBudgetMs  — wall-clock cap per game (default
+//                   SIM_GAME_TIME_BUDGET_MS); exceeded -> 'crashed'.
+async function simRunOneGame(win, bridge, branchId, profile, seed, runOpts){
   const bot = SIM_BOTS[profile];
   if (!bot) throw new Error('Unknown bot profile: ' + profile);
+  const shouldStop = (runOpts && runOpts.shouldStop) || (() => false);
+  const onProgress = (runOpts && runOpts.onProgress) || null;
+  const timeBudgetMs = (runOpts && runOpts.timeBudgetMs) || SIM_GAME_TIME_BUDGET_MS;
+  const tGame0 = Date.now();
   const result = { profile, seed, branchId, result: null, failRound: null, error: null, rounds: [] };
   try{
     win.Math.random = simMulberry32(seed);
@@ -168,7 +208,18 @@ function simRunOneGame(win, bridge, branchId, profile, seed){
         handGuard++;
         if (handGuard > 100) throw new Error('Hand loop exceeded 100 iterations within round ' + roundNum);
 
+        // Yield first: lets the browser paint the previous hand's progress,
+        // keeps the Stop button clickable, and gives the wall-clock check a
+        // chance to fire between every hand of a slow game.
+        await simYield();
+        if (shouldStop()) return null;
+        if (Date.now() - tGame0 > timeBudgetMs){
+          throw new Error('Game exceeded its ' + timeBudgetMs + 'ms wall-clock budget at round ' + roundNum + ', hand iteration ' + handGuard + ' — aborted');
+        }
+        if (onProgress) onProgress({ round: roundNum, hand: handGuard });
+
         const maxHands = bridge.getG().maxHands;
+        const handsBefore = bridge.getG().hands;
         if (!simEnsurePlaceable(win, bridge, bot, rng)){ outcome = 'stuck'; break; }
 
         bot.playHand(ctx);
@@ -183,6 +234,14 @@ function simRunOneGame(win, bridge, branchId, profile, seed){
         const doc = win.document;
         const wonVisible = doc.getElementById('win-inline').classList.contains('visible');
         const failVisible = !doc.getElementById('ov-fail').classList.contains('off');
+
+        // No-progress detection: a successful doFit always consumes a hand
+        // (endScoreSequence does G.hands--) or ends the round. If none of
+        // that happened (e.g. doFit early-returned on a zero-cat board),
+        // abort the game cleanly instead of spinning to the loop guard.
+        if (!wonVisible && !failVisible && bridge.getG().hands >= handsBefore){
+          throw new Error('doFit() did not advance the game (no win/fail, hand not consumed) at round ' + roundNum + ' — aborted');
+        }
 
         if (wonVisible){
           const G = bridge.getG();
@@ -242,11 +301,15 @@ function simRunOneGame(win, bridge, branchId, profile, seed){
 
 // ── batch runner ─────────────────────────────────────────────────────────
 // opts: { branchId, profiles:[...], gamesPerProfile, baseSeed }
-// callbacks: { onGameDone(result, doneCount, totalCount), shouldStop() }
+// callbacks: {
+//   onGameDone(result, doneCount, totalCount),
+//   shouldStop(),                                  — also checked per HAND
+//   onProgress({profile, seed, done, total, round, hand}) — per hand
+// }
 async function simRunBatch(handle, opts, callbacks){
   const { win, bridge } = handle;
   const { branchId, profiles, gamesPerProfile, baseSeed } = opts;
-  const { onGameDone, shouldStop } = callbacks || {};
+  const { onGameDone, shouldStop, onProgress } = callbacks || {};
   const results = [];
   const total = profiles.length * gamesPerProfile;
   let done = 0;
@@ -254,11 +317,17 @@ async function simRunBatch(handle, opts, callbacks){
     for (let i = 0; i < gamesPerProfile; i++){
       if (shouldStop && shouldStop()) return results;
       const seed = simDeriveSeed(baseSeed, profile, i);
-      const res = simRunOneGame(win, bridge, branchId, profile, seed);
+      const res = await simRunOneGame(win, bridge, branchId, profile, seed, {
+        shouldStop,
+        onProgress: onProgress
+          ? p => onProgress({ profile, seed, done, total, round: p.round, hand: p.hand })
+          : null
+      });
+      if (res === null) return results; // stopped mid-game — drop the partial game
       results.push(res);
       done++;
       if (onGameDone) onGameDone(res, done, total);
-      await new Promise(r => setTimeout(r, 0)); // yield so the page stays responsive
+      await simYield();
     }
   }
   return results;

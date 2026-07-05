@@ -62,12 +62,20 @@
       setProgress('0 / ' + total);
       setStatus('Running batch: ' + branchId + ', ' + gamesPerProfile + ' games x ' + profiles.length + ' profile(s), base seed ' + baseSeed + '...');
 
+      let lastDoneLine = '0 / ' + total;
       await simRunBatch(handle, { branchId, profiles, gamesPerProfile, baseSeed }, {
         onGameDone(res, done, totalCount){
           allResults.push(res);
           const tail = res.result + (res.failRound != null ? (' @R' + res.failRound) : '');
-          setProgress(done + ' / ' + totalCount + '  —  last: ' + res.profile + ' seed=' + res.seed + ' -> ' + tail);
+          lastDoneLine = done + ' / ' + totalCount + '  —  last: ' + res.profile + ' seed=' + res.seed + ' -> ' + tail;
+          setProgress(lastDoneLine);
           if (done % 5 === 0 || done === totalCount) simRenderDashboard(q('sim-dashboard'), allResults, maxRound);
+        },
+        // Per-hand heartbeat — paints thanks to the engine's per-hand yield.
+        // If the tab ever stalls again, the last painted text pinpoints the
+        // exact game/round/hand where it happened.
+        onProgress(p){
+          setProgress(lastDoneLine + '  |  running ' + p.profile + ' seed=' + p.seed + '  R' + p.round + ' hand ' + p.hand);
         },
         shouldStop(){ return stopRequested; }
       });
@@ -88,7 +96,7 @@
   function onStop(){
     if (!running) return;
     stopRequested = true;
-    setStatus('Stopping after the current game finishes...');
+    setStatus('Stopping (takes effect at the next hand)...');
   }
 
   function onExport(){

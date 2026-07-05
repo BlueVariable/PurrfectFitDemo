@@ -25,30 +25,40 @@ becomes ready to run batches.
    reproducible batches — the same base seed + branch + profile always
    produces the same sequence of games).
 3. Check which **profiles** to include: `solver`, `greedy`, `casual`.
-4. **Run batch**. Progress and a running dashboard update as games finish;
-   **Stop** cancels after the in-flight game completes.
+4. **Run batch**. The progress line updates every hand (a
+   `game / round / hand` heartbeat) and the dashboard refreshes as games
+   finish; **Stop** takes effect at the next hand, even mid-game (the
+   interrupted game is discarded from the results).
 5. **Export JSON** downloads the full raw per-game, per-round results plus a
    stamp (export time + the game's config-cache hash, so you can tell which
    Google Sheet config a run was against) — useful for diffing before/after
    a balance change.
 
-Large batches (especially `solver`, which tends to clear most/all 15 rounds)
-can take a couple of minutes at 500 games — the game's own DOM rendering
-still runs every hand (only the score-sequence *animation* is bypassed, see
-below), and the batch yields to the browser between games so the page stays
-responsive throughout.
+Large batches can take a couple of minutes at 500 games — the game's own
+DOM rendering still runs every hand (only the score-sequence *animation* is
+bypassed, see below). The engine yields to the browser before every hand
+(via `MessageChannel`, which unlike `setTimeout(0)` is not throttled in
+background tabs), so the page keeps painting and the Stop button keeps
+working throughout. Each game also has a hard wall-clock budget
+(15s — Node-VM benchmarks put the worst real game under 1.2s); a game that
+somehow exceeds it is recorded as `crashed` with an explanatory message and
+the batch continues.
 
 ## Bot profiles
 
 - **solver** ("perfect"): the branch-and-bound max-coverage board packer
-  (grouped identical cat shapes, largest pieces first, node-capped at
-  100k, stops the instant a perfect fill is found). Backpack treats are
-  optional pieces in the same search (never mandatory), with early
-  (non-multiplier) treats tried before cats and multiplier-phase treats
-  tried last, biasing them toward top-left/early and bottom-right/late scan
-  positions respectively. Shop: priority-buys from a fixed list (big_bite,
-  quick_paws, deep_deck, catnip, bench_warmer, poker_face, all_or_nothing,
-  morning_stretch) when affordable and backpack space allows.
+  (grouped identical cat shapes, largest pieces first, node-capped at 100k
+  plus a 1.5s wall-clock cap per solve, stops the instant a perfect fill is
+  found). Backpack treats are optional pieces in the same search (never
+  mandatory), **capped at the 4 largest per solve** — treats carry over
+  between rounds, and an uncapped late-game backpack multiplies the
+  branching factor at every open cell (this is what slowed full-pool
+  batches to a crawl before the cap). Early (non-multiplier) treats are
+  tried before cats and multiplier-phase treats last, biasing them toward
+  top-left/early and bottom-right/late scan positions respectively. Shop:
+  priority-buys from a fixed list (big_bite, quick_paws, deep_deck, catnip,
+  bench_warmer, poker_face, all_or_nothing, morning_stretch) when
+  affordable and backpack space allows.
 - **greedy** ("decent player, ~80% fills"): largest-cat-first, first legal
   position (all 4 rotations, scanned anchor-by-anchor); buys the single
   cheapest affordable treat each shop and places it the same way after
@@ -107,9 +117,15 @@ Two things worth knowing if you're extending this:
 - In the rare case the solver's unified cat+treat search accepts a solution
   with treats but zero cats (should be very unlikely given cats generally
   dominate board coverage), a fallback forces one legal cat placement; if
-  the board has since become too constrained even for that, the hand loop
-  is bounded (100 iterations) and the game is recorded as `crashed` rather
-  than hanging.
+  the board has since become too constrained even for that, the engine's
+  no-progress detector (a fit that neither consumes a hand nor ends the
+  round) aborts the game as `crashed` immediately rather than spinning to
+  the loop guard.
+- Every retry/sampling loop is attempt-bounded (hand loop 100, round loop
+  200, discard fallback 30, greedy placement 60, casual placement 80,
+  solver node/time caps) and each game has a 15s wall-clock budget, so a
+  pathological game degrades to a recorded `crashed` result — never a
+  frozen tab.
 - Full DOM rendering (`renderAll`, backpack/board/hand grids) still runs
   every hand — only the score-sequence animation is bypassed. This keeps
   the sim's behavior close to the real game with minimal monkeypatching,

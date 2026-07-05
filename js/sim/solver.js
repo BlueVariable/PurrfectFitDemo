@@ -29,6 +29,19 @@
 // ══════════════════════════════════════════════════════
 
 const SIM_SOLVER_NODE_CAP = 100000;
+// Wall-clock cap per solve. The node cap alone can still take a while when
+// each node is expensive (many pieces x many rotations on big late-game
+// boards), so both caps apply; whichever trips first stops the search and
+// the best solution found so far is used.
+const SIM_SOLVER_TIME_BUDGET_MS = 1500;
+// At most this many backpack treats are offered to a single solve as
+// optional pieces. Treats carry over between rounds, so the backpack grows
+// all run long, and every extra optional piece multiplies the branching
+// factor at every open cell — an uncapped late-game backpack (8+ treats)
+// blows the search space up even under the node cap. The largest treats
+// are kept: they contribute the most board coverage per piece toward the
+// purrfect bonus.
+const SIM_SOLVER_MAX_TREAT_PIECES = 4;
 
 // Group identical-rotation-set hand cats into one piece + a pool of ids
 // (kills duplicate-permutation branching — playbook §12 change #1).
@@ -90,7 +103,11 @@ function simSolveHand(win, bridge){
   playable.forEach(([r, c]) => { occ[r + ',' + c] = false; });
 
   const catPieces = simGroupHandPieces(win, G.hand);
-  const eligible = simEligibleTreats(bridge);
+  // Cap the optional-treat set per solve (largest first) so the search
+  // space stays bounded no matter how big the carried-over backpack gets.
+  const eligible = simEligibleTreats(bridge)
+    .sort((a, b) => simCellCount(b.tdef.bpS) - simCellCount(a.tdef.bpS))
+    .slice(0, SIM_SOLVER_MAX_TREAT_PIECES);
   const earlyTreats = eligible.filter(g => g.tdef.phase !== 'mul').map(g => simBuildTreatPiece(win, g, 'early'));
   const lateTreats = eligible.filter(g => g.tdef.phase === 'mul').map(g => simBuildTreatPiece(win, g, 'late'));
 
@@ -103,6 +120,7 @@ function simSolveHand(win, bridge){
   let best = { filled: -1, placements: [] };
   let nodeCount = 0;
   let stop = false;
+  const tSolve0 = Date.now();
 
   function firstOpen(){
     for (const [r, c] of playable){ const k = r + ',' + c; if (!occ[k]) return [r, c]; }
@@ -119,6 +137,7 @@ function simSolveHand(win, bridge){
   function dfs(){
     nodeCount++;
     if (nodeCount > SIM_SOLVER_NODE_CAP){ stop = true; return; }
+    if ((nodeCount & 2047) === 0 && Date.now() - tSolve0 > SIM_SOLVER_TIME_BUDGET_MS){ stop = true; return; }
     if (filled > best.filled) best = { filled, placements: snapshot() };
     if (filled === total){ stop = true; return; } // perfect fill — stop the whole search
     // Bound: even filling every still-open cell can't beat the current best.
