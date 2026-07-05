@@ -144,7 +144,14 @@ function doFit(){
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
     if(bt.tdef.addEf&&/REAPPEAR/i.test(bt.tdef.addEf)&&Math.random()<0.5){
-      if(bpAutoPlaceRot(bt.tdef))return; // back in the backpack immediately — no usedTreats entry
+      if(bpAutoPlaceRot(bt.tdef)){
+        // Tag the matching scanResults entry (matched by instance, not id, so
+        // duplicate copies of the same treat flip independently) so the
+        // animation log can announce the bounce-back.
+        const entry=scanResults.find(sr=>sr.kind==='treat'&&sr.piece===bt);
+        if(entry)entry.reappeared=true;
+        return; // back in the backpack immediately — no usedTreats entry
+      }
     }
     G.usedTreats.push(bt.tdef);
   });
@@ -329,12 +336,16 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
         }
       });
     }else{
-      const{piece:treat,result,phase,skipped}=item;
+      const{piece:treat,result,phase,skipped,reappeared}=item;
       if(skipped){
         steps.push({
           kind:'treat',
           explain:`${treat.tdef.em} ${treat.tdef.nm}: req not met`,
-          run(){addLogLine(logDiv,`${treat.tdef.em} ${treat.tdef.nm}: req not met`);}
+          run(){
+            let line=`${treat.tdef.em} ${treat.tdef.nm}: req not met`;
+            if(reappeared)line+=' ... and it bounces back to your bag! 🎉';
+            addLogLine(logDiv,line);
+          }
         });
         return;
       }
@@ -345,27 +356,73 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
         runningTotal=result.newTotal;
       }
 
-      // Build log line describing what this treat does
+      // Build log line describing what this treat does.
+      // NOTE: treat.tdef.phase reflects the sheet's "Phase" column, which for
+      // every laser/encore/piggy_bank/zoomies/dice-style "special effect"
+      // treat is literally the string 'misc' — NOT 'x'. The final `else`
+      // branch below is therefore the one that actually runs for all of
+      // those treats; keep it as the catch-all rather than re-keying on 'x'.
       let logLine=`${treat.tdef.em} ${treat.tdef.nm}`;
       if(phase==='add'){
         if(result.bonusMap){
           const futureBonus=Object.values(result.bonusMap).reduce((a,b)=>a+b,0);
           if(futureBonus>0)logLine+=`: +${futureBonus} buffered`;
+          else logLine+=`: no cats in range`;
         }else if(result.bonus>0){
           logLine+=`: +${extractNum(treat.tdef.ef)} buffered`;
         }else if(result.scoreBonus!==undefined){
           logLine+=`: +${result.scoreBonus}`;
+        }else{
+          logLine+=`: no bonus this trigger`;
         }
       }else if(phase==='mul'){
         if(result.gids&&result.gids.length&&result.m>1)
           logLine+=`: ×${result.m} (${result.gids.length} cat${result.gids.length!==1?'s':''} ahead)`;
         else if(result.scoreBonus!==undefined)
           logLine+=`: +${result.scoreBonus}`;
-      }else if(phase==='x'){
-        if(result.scoreMultiplier&&result.m>1)logLine+=`: copied ${result.copiedFrom?.em||''} ×${result.m}`;
-        else if(result.scoreBonus!==undefined&&result.copiedFrom)logLine+=`: copied ${result.copiedFrom.em} +${result.scoreBonus}`;
-        else if(result.subPhase==='add')logLine+=`: copied ${result.copiedFrom.em} buffered`;
-        else if(result.subPhase==='mul'&&result.result?.m>1)logLine+=`: copied ${result.copiedFrom.em} ×${result.result.m}`;
+        else if(treat.tdef.id==='second_wind')
+          logLine+=`: +1 hand this round!`;
+        else if(treat.tdef.id==='wild_dice')
+          logLine+= result.m>1?`: rolled a hit — ×${result.m}!`:`: rolled a miss (1-in-6)`;
+        else if(result.scoreMultiplier&&result.m!==1)
+          logLine+=`: ×${result.m}`;
+        else if(result.scoreMultiplier)
+          logLine+=`: no effect this trigger`;
+        else if(result.gids)
+          logLine+=`: no cats in range`;
+        else
+          logLine+=`: no effect this trigger`;
+      }else{
+        // Catch-all for phase 'misc' (and any literal 'x') — laser, encore,
+        // jumping_ball, standing_ovation, zoomies, brownies, sardine_tin,
+        // piggy_bank/lucky_penny/coin_purse/gift_wrap, loaded_dice, etc.
+        const em=treat.tdef.em;
+        if(result.skip){
+          const skipMsgs={
+            laser:'nothing to copy',
+            encore:'nothing to retrigger',
+            treat_encore:'nothing to retrigger',
+            jumping_ball:'no requirement to disable',
+            standing_ovation:'nothing to duplicate',
+          };
+          logLine+=` — ${skipMsgs[treat.tdef.id]||'no valid target'}`;
+        }
+        else if(result.scoreMultiplier&&result.m>1)
+          logLine+=`: copied ${result.copiedFrom?.em||em} ${result.copiedFrom?.nm||''} ×${result.m}`;
+        else if(result.scoreMultiplier&&result.copiedFrom?.id==='wild_dice')
+          logLine+=`: rolled a miss (1-in-6)`;
+        else if(result.scoreMultiplier&&result.copiedFrom?.id==='second_wind')
+          logLine+=`: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} +1 hand this round!`;
+        else if(result.scoreMultiplier&&result.copiedFrom)
+          logLine+=`: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} (no effect this trigger)`;
+        else if(result.scoreBonus!==undefined&&result.copiedFrom)
+          logLine+=`: copied ${result.copiedFrom.em} ${result.copiedFrom.nm} +${result.scoreBonus}`;
+        else if(result.subPhase==='add'||result.subPhase==='mul'){
+          let n;
+          if(result.subPhase==='mul'&&result.result&&result.result.gids)n=result.result.gids.length;
+          else if(result._affectedGids)n=result._affectedGids.length;
+          logLine+=`: re-fired ${result.copiedFrom?.em||''} ${result.copiedFrom?.nm||''} — buffered${n!==undefined?` for ${n} cat${n!==1?'s':''}`:''}`;
+        }
         else if(result.subPhase==='mirror'){
           logLine+=`: mirror +${result.totalBonus||0}`;
           if(result.scoreBonus)logLine+=` +${result.scoreBonus}`;
@@ -379,9 +436,11 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
         else if(result.destroyedCat)logLine+=`: removed ${result.destroyedCat.em} ${result.destroyedCat.name}`;
         else if(result.duplicatedTreat)logLine+=`: duplicated ${result.duplicatedTreat.em} ${result.duplicatedTreat.nm}`;
         else if(result.charging)logLine+=`: charging ${result.charging}`;
-        else if(result.cashGained)logLine+=`: +$${result.cashGained}`;
+        else if(result.cashGained)logLine+=`: +$${result.cashGained} to your wallet`;
         else if(result.zoomiesCleared!==undefined)logLine+=`: cleared ${result.zoomiesCleared} blocked cell${result.zoomiesCleared!==1?'s':''}`;
+        else logLine+=`: triggered`;
       }
+      if(reappeared)logLine+=' ... and it bounces back to your bag! 🎉';
 
       steps.push({
         kind:'treat',

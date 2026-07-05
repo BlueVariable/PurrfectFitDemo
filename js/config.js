@@ -146,7 +146,12 @@ function applyConfigFromRaw(raw){
   TDEFS=treatRows.filter(r=>r['ID']&&String(r['ID']).trim()).map(r=>{
     const id=String(r['ID']||'').trim();
     const ef=String(r['Effect']||r['Effect '||'']||'').trim();
-    const phase=String(r['Phase']||'add').trim().toLowerCase();
+    // The sheet authors special-effect treats as 'misc'; the engine dispatches
+    // on 'x' (buffer application, retrigger pools). Normalize here — without
+    // this, every x-phase buffered result (second_breakfast's mirror, encore's
+    // copied Type A effects) silently applied zero.
+    const rawPhase=String(r['Phase']||'add').trim().toLowerCase();
+    const phase=rawPhase==='misc'?'x':rawPhase;
     const bpRaw=String(r['Shape ID']||r['Shape ID ']||'1×1').trim();
     const bpS=CSHAPES[bpRaw]||parseBpShape(bpRaw);
     const rar=String(r['Rarity']||'common').trim().toLowerCase();
