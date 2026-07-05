@@ -165,7 +165,8 @@
         // If the tab ever stalls again, the last painted text pinpoints the
         // exact game/round/hand where it happened.
         onProgress(p){
-          setProgress(lastDoneLine + '  |  running ' + p.profile + ' seed=' + p.seed + '  R' + p.round + ' hand ' + p.hand);
+          setProgress(lastDoneLine + '  |  running ' + p.profile + ' seed=' + p.seed + '  R' + p.round +
+            (p.mod ? ' ' + p.mod : '') + ' hand ' + p.hand);
         },
         shouldStop(){ return stopRequested; }
       });

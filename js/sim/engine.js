@@ -190,8 +190,18 @@ async function simRunOneGame(win, bridge, branchId, profile, seed, runOpts){
 
       const Gstart = bridge.getG();
       const roundNum = Gstart.round;
+      // Active boss modifier for this round. goShop() runs
+      // pickRoundModifier(G.round) before the shop opens (js/scoring.js),
+      // so it's already current at the top of this iteration; round 1
+      // comes from newGame() and is always null. Stored compact — {id}
+      // plus the rolled cat `type` for night_shift only — and flows into
+      // the JSON export via result.rounds.
+      const rMod = Gstart.roundModifier || null;
+      const rModCompact = rMod ? { id: rMod.id } : null;
+      if (rMod && rMod.type) rModCompact.type = rMod.type;
+      const rModLabel = rMod ? (rMod.em || '') + rMod.id : null;
       const roundLog = {
-        round: roundNum, target: Gstart.tgt, finalScore: null, handsUsed: 0, discardsUsed: 0,
+        round: roundNum, target: Gstart.tgt, modifier: rModCompact, finalScore: null, handsUsed: 0, discardsUsed: 0,
         purrfectCount: 0, cashAfterShop: null, treatsBought: [], treatsFailedBuy: [], treatsLostExpired: []
       };
       const ctx = { win, bridge, rng, roundLog };
@@ -216,7 +226,7 @@ async function simRunOneGame(win, bridge, branchId, profile, seed, runOpts){
         if (Date.now() - tGame0 > timeBudgetMs){
           throw new Error('Game exceeded its ' + timeBudgetMs + 'ms wall-clock budget at round ' + roundNum + ', hand iteration ' + handGuard + ' — aborted');
         }
-        if (onProgress) onProgress({ round: roundNum, hand: handGuard });
+        if (onProgress) onProgress({ round: roundNum, hand: handGuard, mod: rModLabel });
 
         const maxHands = bridge.getG().maxHands;
         const handsBefore = bridge.getG().hands;
@@ -320,7 +330,7 @@ async function simRunBatch(handle, opts, callbacks){
       const res = await simRunOneGame(win, bridge, branchId, profile, seed, {
         shouldStop,
         onProgress: onProgress
-          ? p => onProgress({ profile, seed, done, total, round: p.round, hand: p.hand })
+          ? p => onProgress({ profile, seed, done, total, round: p.round, hand: p.hand, mod: p.mod })
           : null
       });
       if (res === null) return results; // stopped mid-game — drop the partial game

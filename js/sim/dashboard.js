@@ -147,6 +147,80 @@ function simRenderTreatTables(agg){
   return html;
 }
 
+// ── Boss rounds (per-round modifiers) ────────────────────────────────────
+// Definitions (pooled across ALL profiles — boss samples are small, so
+// splitting by profile would leave nothing readable):
+//   appearance      = one roundLog with a non-null modifier, i.e. one game
+//                     that ENTERED a round while that modifier was active.
+//   fail rate       = games whose run ended on that exact round
+//                     (failRound === the round; covers failRound/stuck/
+//                     crashed — 'won' games have failRound null) divided
+//                     by appearances.
+//   median hands    = median handsUsed over those appearances.
+// The comparison row aggregates the immediately preceding non-boss rounds
+// (boss round − 1, skipping any that are themselves boss rounds), derived
+// from the batch data itself rather than config so it also works when
+// re-rendering exported JSON.
+function simAggregateBossRounds(results){
+  const byId = {};
+  const bossRounds = new Set();
+  const collect = (bucket, g, rl) => {
+    bucket.appearances++;
+    if (g.failRound === rl.round) bucket.fails++;
+    if (rl.handsUsed != null) bucket.hands.push(rl.handsUsed);
+  };
+  const newBucket = () => ({ appearances: 0, fails: 0, hands: [] });
+
+  results.forEach(g => g.rounds.forEach(rl => {
+    if (!rl.modifier) return;
+    bossRounds.add(rl.round);
+    if (!byId[rl.modifier.id]) byId[rl.modifier.id] = newBucket();
+    collect(byId[rl.modifier.id], g, rl);
+  }));
+
+  const allBoss = newBucket();
+  const prevRoundsSet = new Set([...bossRounds].map(r => r - 1).filter(r => r >= 1 && !bossRounds.has(r)));
+  const prevNonBoss = newBucket();
+  results.forEach(g => g.rounds.forEach(rl => {
+    if (rl.modifier) collect(allBoss, g, rl);
+    else if (prevRoundsSet.has(rl.round)) collect(prevNonBoss, g, rl);
+  }));
+
+  return {
+    byId, allBoss, prevNonBoss,
+    bossRounds: [...bossRounds].sort((a, b) => a - b),
+    prevRounds: [...prevRoundsSet].sort((a, b) => a - b)
+  };
+}
+
+function simBossRowHtml(label, b){
+  const failPct = b.appearances ? (b.fails / b.appearances) * 100 : null;
+  const failLabel = b.appearances ? (simRound1(failPct) + '% (' + b.fails + '/' + b.appearances + ')') : '—';
+  return '<tr><td>' + label + '</td><td>' + b.appearances + '</td>' +
+    '<td>' + (b.appearances ? simBarHtml(failPct, failLabel) : '—') + '</td>' +
+    '<td>' + (b.hands.length ? simRound1(simMedian(b.hands)) : '—') + '</td></tr>';
+}
+
+function simRenderBossRounds(results){
+  const boss = simAggregateBossRounds(results);
+  const ids = Object.keys(boss.byId);
+  let html = '<div class="sim-card"><h3>Boss rounds (per-round modifiers)</h3>';
+  if (!ids.length){
+    html += '<div class="sim-muted">No boss rounds were reached in this batch (or no modifiers are configured).</div></div>';
+    return html;
+  }
+  html += '<div class="sim-muted" style="margin-bottom:8px;">Pooled across all profiles. Fail rate = games that died on the ' +
+    'round where the modifier was active. Raw counts shown — mind the small samples.</div>';
+  html += '<table class="sim-table"><thead><tr><th>Modifier</th><th>Appearances</th>' +
+    '<th>Fail rate on that round</th><th>Median hands used</th></tr></thead><tbody>';
+  ids.sort((a, b) => boss.byId[b].appearances - boss.byId[a].appearances);
+  ids.forEach(id => { html += simBossRowHtml(simEsc(id), boss.byId[id]); });
+  html += simBossRowHtml('<strong>ALL boss rounds</strong> (R' + boss.bossRounds.join(', R') + ')', boss.allBoss);
+  html += simBossRowHtml('<strong>Preceding non-boss rounds</strong> (R' + boss.prevRounds.join(', R') + ')', boss.prevNonBoss);
+  html += '</tbody></table></div>';
+  return html;
+}
+
 function simRenderDashboard(containerEl, results, maxRound){
   if (!results.length){ containerEl.innerHTML = '<div class="sim-muted">No games run yet.</div>'; return; }
   const agg = simAggregate(results, maxRound);
@@ -160,6 +234,7 @@ function simRenderDashboard(containerEl, results, maxRound){
     (p, r) => p.cashByRound[r], v => (v && v.n) ? ('$' + simRound1(v.median)) : '—');
   html += simRenderByRoundTable(agg, 'Purrfect rate per round (% of hands that fully filled the board)',
     (p, r) => p.purrfectRateByRound[r], v => (v && v.n) ? simBarHtml(v.pct) : '—');
+  html += simRenderBossRounds(results);
   html += simRenderTreatTables(agg);
   containerEl.innerHTML = html;
 }

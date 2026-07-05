@@ -52,6 +52,20 @@ becomes ready to run batches.
    **Choose results folder** once to re-grant in place (the picker only
    reopens if you decline the re-grant).
 
+### Boss-round metrics
+
+Each round log records the active per-round boss modifier as a compact
+`{id, type?}` (`type` = the rolled cat type, night_shift only; `null` on
+non-boss rounds), so modifiers flow into the JSON export automatically.
+The dashboard's **Boss rounds** table pools all profiles and shows, per
+modifier id: appearances (games that entered a round with that modifier
+active), the fail rate on that round (games whose run ended exactly there
+/ appearances — raw counts shown alongside the percentage), and median
+hands used. Two summary rows compare ALL boss rounds against the
+immediately preceding non-boss rounds (boss − 1), making the boss rounds'
+added difficulty visible at a glance. The per-hand progress heartbeat also
+appends the modifier (emoji + id) while a boss round is being played.
+
 Large batches can take a couple of minutes at 500 games — the game's own
 DOM rendering still runs every hand (only the score-sequence *animation* is
 bypassed, see below). The engine yields to the browser before every hand
