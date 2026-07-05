@@ -478,5 +478,40 @@ batch before and after any sheet tuning change and diff the exported JSON.
 
 ---
 
+# PART V — The spatial-treat era (2026-07-05, latest)
+
+Thirteen new treats are LIVE (59 enabled total): ten placement-driven ones
+(opening_act ×3-next-cat, fashionably_late +25/prior-cat, snack_stack
++40/adjacent-treat, cat_pile +10/largest-blob-cell, potluck
++40/adjacent-type, string_theory +50/completed-line, cuddle_puddle ×1.4 if
+enclosed, twin_paws ×2 same-shape-adjacent, high_rise +30/row-with-cat,
+roadblock_party +20/blocked-cell) plus empty_bowl (+20 per $1 below $10),
+nine_lives (+100 LAST HAND, $3) and clean_plate (+120 on purrfect, $5).
+
+## 21. Run 5 — first LOSS of the session (by design)
+
+Playing a spatial-first build (no flat-dup stack): rounds 1–14 won with
+last-hand finishes at R11/R13, then **R15 FAILED 2491/3000** — the spatial
+toolkit alone is a real build but a notch under the maxed flat-dup stack,
+which cleared 3488 in run 4. Scan-order chains work as designed: opening_act
+tripled a chonker (50→150), clean_plate paid every purrfect, cuddle_puddle's
+enclosure is near-automatic on purrfect boards (hence its ×1.5→×1.4 tune).
+empty_bowl pays +0 unless you're actually broke — buy it only as your LAST
+purchase of a shop visit.
+
+## 22. Harness traps discovered (for anyone driving the game by script)
+
+- After ANY win screen, `#win-inline` stays visible until goShop() runs —
+  if you call selectBranch() from a win screen, RESET overlays before
+  trusting win-detection (score >= tgt is the only ground truth).
+- Pinning too many treat cells can leave a hand with NO legal cat placement;
+  doFit() then refuses silently (no cats). De-pin and retry, then discard.
+- The sim's casual/greedy profiles froze the tab on the 59-treat pool
+  (unbounded sampling somewhere in bot logic — fix in progress); solver
+  slows drastically with many optional treat pieces per solve. Cap the
+  optional-treat set per solve.
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
