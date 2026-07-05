@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Purrfect Fit — Balance Simulator</title>
+<style>
+  :root{
+    --bg:#141522; --card:#1f2136; --tx:#eef0fb; --mu:#9aa0c0; --bd:#33355a;
+    --or:#f5a623; --gr:#4caf6f; --re:#e05a5a; --bl:#5a8ef0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);padding:18px 22px 60px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  h3{font-size:14px;margin:0 0 10px;color:var(--or);}
+  .sub{color:var(--mu);font-size:12px;margin-bottom:16px;}
+  .sim-panel{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+  .sim-controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;}
+  .sim-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mu);}
+  .sim-field input,.sim-field select{background:#0f1020;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:6px 8px;font-size:13px;min-width:120px;}
+  .sim-checks{display:flex;gap:12px;font-size:13px;}
+  .sim-checks label{display:flex;align-items:center;gap:5px;color:var(--tx);}
+  .sim-btns{display:flex;gap:8px;}
+  button.sim-btn{background:var(--or);color:#1a1a2a;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;}
+  button.sim-btn:disabled{opacity:.4;cursor:not-allowed;}
+  button.sim-btn.secondary{background:#31335a;color:var(--tx);}
+  #sim-status{font-size:12px;color:var(--mu);margin-top:8px;}
+  #sim-progress{font-size:12px;color:var(--bl);margin-top:2px;font-family:monospace;}
+  #sim-dashboard{display:flex;flex-direction:column;gap:14px;}
+  .sim-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;overflow-x:auto;}
+  .sim-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap;}
+  .sim-table th,.sim-table td{border-bottom:1px solid var(--bd);padding:5px 10px;text-align:left;}
+  .sim-table th{color:var(--mu);font-weight:600;}
+  .sim-muted{color:var(--mu);font-size:12px;font-style:italic;}
+  .sim-bar-cell{display:flex;align-items:center;gap:8px;min-width:140px;}
+  .sim-bar-track{width:80px;height:8px;background:#0f1020;border-radius:4px;overflow:hidden;flex:0 0 auto;}
+  .sim-bar-fill{height:100%;background:linear-gradient(90deg,var(--bl),var(--gr));}
+  .sim-bar-label{font-size:11px;color:var(--tx);}
+  #game-frame{position:fixed;left:-99999px;top:0;width:1300px;height:900px;border:0;visibility:hidden;}
+</style>
+</head>
+<body>
+
+<h1>Purrfect Fit — Balance Simulator</h1>
+<div class="sub">Drives the real game headlessly in a hidden iframe. Open this file over HTTP (e.g. <code>python -m http.server</code>), never via <code>file://</code>.</div>
+
+<div class="sim-panel">
+  <div class="sim-controls">
+    <div class="sim-field">
+      <label for="sel-branch">Branch</label>
+      <select id="sel-branch"><option value="">(loading config...)</option></select>
+    </div>
+    <div class="sim-field">
+      <label for="inp-games">Games per profile</label>
+      <input id="inp-games" type="number" min="1" max="500" value="50">
+    </div>
+    <div class="sim-field">
+      <label for="inp-seed">Base seed</label>
+      <input id="inp-seed" type="number" min="0" value="1">
+    </div>
+    <div class="sim-field">
+      <label>Profiles</label>
+      <div class="sim-checks">
+        <label><input type="checkbox" id="chk-solver" checked> solver</label>
+        <label><input type="checkbox" id="chk-greedy" checked> greedy</label>
+        <label><input type="checkbox" id="chk-casual" checked> casual</label>
+      </div>
+    </div>
+    <div class="sim-btns">
+      <button class="sim-btn" id="btn-run">Run batch</button>
+      <button class="sim-btn secondary" id="btn-stop">Stop</button>
+      <button class="sim-btn secondary" id="btn-export">Export JSON</button>
+    </div>
+  </div>
+  <div id="sim-status">Loading...</div>
+  <div id="sim-progress"></div>
+</div>
+
+<div id="sim-dashboard">
+  <div class="sim-muted">Run a batch to see results.</div>
+</div>
+
+<iframe id="game-frame" src="index.html" title="hidden game instance"></iframe>
+
+<script src="js/sim/rng.js"></script>
+<script src="js/sim/placement.js"></script>
+<script src="js/sim/solver.js"></script>
+<script src="js/sim/bots.js"></script>
+<script src="js/sim/engine.js"></script>
+<script src="js/sim/dashboard.js"></script>
+<script src="js/sim/main.js"></script>
+</body>
+</html>

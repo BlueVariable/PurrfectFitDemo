@@ -13,6 +13,8 @@ No build step required. Open `index.html` directly in a modern browser. There ar
 
 Configuration is loaded at runtime from published Google Sheets CSV URLs (see `js/config.js` → `SHEET_URLS`). A "↺ Reload Config" button on the title screen re-fetches it.
 
+For balance testing, `sim.html` (+ `js/sim/`) runs the real game headlessly in a hidden iframe across many seeded games with three scripted bot profiles (solver/greedy/casual) and reports clear rates, scoring, economy, and treat pick-rate stats. It must be served over HTTP like the game itself (not `file://`); see `docs/sim.md` for usage and how it drives the game.
+
 ## Architecture
 
 The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`. Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → render → scoring → shop.
