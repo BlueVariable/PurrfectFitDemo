@@ -270,9 +270,10 @@ function dealHand(){
   G.treats.forEach(bt=>bpAutoPlace(bt.tdef));
   G.cats=[];G.treats=[];
   H=resetH();
-  // Re-roll the polyomino board shape and stochastic block mask each hand.
-  const layout=setupBoardLayout(G.round,G.roundModifier);
-  G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;
+  // Board shape + block mask are rolled once per round at round start
+  // (newGame for round 1, roundWin for later rounds), not per hand — every
+  // hand in a round shares that fixed layout. mkBoard just rebuilds the board
+  // on it, clearing placed cats between hands.
   mkBoard();
 }
 

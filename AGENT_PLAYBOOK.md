@@ -15,7 +15,8 @@
    `python -m http.server 8765` in the project dir, then navigate the tab to
    `http://localhost:8765/index.html`.
 2. **You do NOT need pixel-perfect mouse tiling.** Placing irregular pieces on
-   an irregular, *constantly-reshaping* board by mouse is brutal. Instead, drive
+   an irregular board (its shape is fixed per round but re-rolls each new round)
+   by mouse is brutal. Instead, drive
    placement through the game's own functions in JS (`placeCatOnBoard` /
    `placeTreatOnBoard`) — these are exactly what a real click calls, so scoring,
    win/loss, and treat lifecycle all run authentically. Use the mouse for the
@@ -100,9 +101,11 @@ Worked example (Round 1, hand 1): cross(5)+trio(3)+duo(2)+duo(2)=12 cat cells �
 
 - The board is a 5×5 grid with most cells `offShape` (not part of the playable
   silhouette). Playable region is an irregular **diamond/plus** of ~16–18 cells.
-- **The shape RE-RANDOMIZES every hand**, not every round. Some cells may also be
-  `blocked` (shown with diagonal stripes). So re-read `G.board` each hand; never
-  reuse last hand's coordinates.
+- **The shape is RANDOMIZED once per round** (at round start) and stays fixed for
+  every hand in that round; it re-randomizes when the next round begins. Some cells
+  may also be `blocked` (shown with diagonal stripes). Placed cats still clear
+  between hands, so re-read `G.board` each hand; never reuse last hand's *cat*
+  coordinates even though the silhouette itself is stable within a round.
 - Get the current shape cheaply:
   ```js
   (()=>{let g='';for(let r=0;r<G.bsr;r++){let s='';for(let c=0;c<G.bsc;c++){const b=G.board[r][c];s+=(!b.blocked&&!b.offShape)?(b.filled?'#':'.'):' ';}g+=s+'\n';}return g;})()

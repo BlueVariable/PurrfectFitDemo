@@ -112,7 +112,7 @@ async function simSetupIframe(iframeEl){
 
 // ── universal "place at least one cat" guarantee ────────────────────────
 // doFit() refuses a zero-cat fit, and a hand can occasionally have no cat
-// that fits anywhere on the current (re-randomized every hand) board shape.
+// that fits anywhere on the current (per-round, fixed) board shape.
 // Per the task spec: try a discard (bot-flavored pick) when that happens;
 // if no discards remain, the game is 'stuck' and the harness aborts it
 // rather than looping forever.
