@@ -17,7 +17,7 @@ For balance testing, `sim.html` (+ `js/sim/`) runs the real game headlessly in a
 
 ## Architecture
 
-The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`. Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → render → scoring → shop.
+The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`. Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → devfit → render → scoring → projection → shop.
 
 Global game state lives in `G` (see `js/state.js`). Held/dragged piece state lives in `H`.
 
@@ -62,7 +62,7 @@ TREAT_REGISTRY['id'] = {
 ### All treats
 
 The Treats tab in the Google Sheet is the source of truth — do not maintain a list here.
-To inspect the current set, fetch `SHEET_URLS.Treats` (or use the `mcp__google-sheets__sheets_get_values` tool against `Treats!A1:P60`). Each enabled row needs a corresponding `js/treats/<id>.js` registry entry; treats without a file silently no-op via the warning in `buildTreatFn`.
+To inspect the current set, fetch `SHEET_URLS.Treats` (or use the `mcp__google-sheets__sheets_get_values` tool against `Treats!A:P` — the treat list has outgrown any fixed row bound). Each enabled row needs a corresponding `js/treats/<id>.js` registry entry; treats without a file silently no-op via the warning in `buildTreatFn`.
 
 ## Sheet Workflow
 
