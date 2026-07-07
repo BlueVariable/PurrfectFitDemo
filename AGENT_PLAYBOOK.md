@@ -540,5 +540,36 @@ projectScore is the cheap way to compare candidate plans without committing.
 
 ---
 
+# PART VII — Ready-made harness in the repo (2026-07-07)
+
+**Stop re-deriving the solver from §7/§12 — a maintained, injectable harness now
+lives at [`agent/pf-harness.js`](agent/pf-harness.js).** Load it into the running
+game page with one `javascript_tool` call:
+
+```js
+fetch('/agent/pf-harness.js').then(r=>r.text()).then(eval)
+```
+
+It installs `window.PF` with: `state()`, `buy(id)`, `sell(id)`, `reroll()`,
+`playRound()`, `plan({K, treats:[{id, bias:'early'|'late'}]})` (best-of-K
+layouts scored by `projectScore`, leaves the winner placed), `fit()`,
+`discard(catId)`, `nextRound()`. Usage rules are documented in the file header.
+
+Two traps it bakes in — do not "improve" them away:
+
+- **Never use `bpRepackAll([td])` as a buy fallback.** It rebuilds the backpack
+  and silently DESTROYS every treat that doesn't re-fit, while leaving the new
+  treat in without charging for it. (Cost one live run 3 treats.) The harness's
+  `buy` uses `bpAutoPlaceRot` only and returns `'no-bp-room'` — sell something
+  and retry, like a human would.
+- **Keep every injected evaluation synchronous** (no awaited timers — CDP
+  wedges). `fit()` returns immediately; wait ~8 s with the computer tool's
+  `wait`, then read `PF.state()`.
+
+Sell price note: sell-back is via `sellTreatFromShop(gid)` (shop screen);
+observed ~80% of purchase price (twin_paws: bought $10, sold $8).
+
+---
+
 *Maintained by Claude. If you discover new treats, board behaviours, or better
 strategies while playing, append them here for the next agent.*
