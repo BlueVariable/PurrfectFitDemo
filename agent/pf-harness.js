@@ -177,13 +177,25 @@ window.PF = (() => {
       round: G.round, tgt: G.tgt, score: G.score, hands: G.hands, disc: G.disc, cash: G.cash,
       mod: G.roundModifier ? String(G.roundModifier.name || G.roundModifier.id || 'mod').slice(0, 80) : null,
       hand: (G.hand || []).map(h => ({ id: h.id, type: h.type, shape: h.shape, n: cellCnt(h.cells) })),
-      bp: (G.bpGroups || []).map(g => ({ id: g.tdef.id, ef: eff(g.tdef).slice(0, 70) })),
+      // req matters: 'NO OTHER TREAT' (bell), 'PURRFECT FIT!' (all_or_nothing),
+      // 'FIRST HAND only' (morning_stretch)… plan around it or the treat pays 0.
+      bp: (G.bpGroups || []).map(g => ({ id: g.tdef.id, ef: eff(g.tdef).slice(0, 70), req: g.tdef.req || undefined })),
       shop: (typeof shopPool !== 'undefined' ? shopPool : []).map(t => ({
-        id: t.id, nm: t.nm || t.name, pr: t.pr, ef: eff(t).slice(0, 80),
+        id: t.id, nm: t.nm || t.name, pr: t.pr, ef: eff(t).slice(0, 80), req: t.req || undefined,
         sold: typeof shopBoughtIds !== 'undefined' && shopBoughtIds.has(t.id)
       })),
       board: ascii()
     };
+  };
+
+  // Whole-hand resolution without the score animation. The total is computed
+  // in doFit before the animation runs, so scores/lifecycle are authentic;
+  // only the step-by-step presentation is skipped.
+  api.fitFast = () => {
+    const orig = runScoreSequence;
+    runScoreSequence = (sr, bb, bf, total) => { endScoreSequence(total); };
+    try { doFit(); } finally { runScoreSequence = orig; }
+    return { score: G.score, tgt: G.tgt, hands: G.hands, won: G.score >= G.tgt };
   };
 
   // SAFE buy: rotation-aware auto-place only. Never bpRepackAll (destructive —

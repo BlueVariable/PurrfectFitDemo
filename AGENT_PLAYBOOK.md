@@ -569,6 +569,34 @@ Two traps it bakes in — do not "improve" them away:
 Sell price note: sell-back is via `sellTreatFromShop(gid)` (shop screen);
 observed ~80% of purchase price (twin_paws: bought $10, sold $8).
 
+## Part VII addenda (2026-07-08 session — 3 runs: R5†, R10†, LOSS at boss R12)
+
+- **`PF.fitFast()` is now in the harness** — resolves a whole hand synchronously
+  (animation bypassed; the score is computed in doFit before the animation, so
+  results are authentic). A full round becomes 1-2 javascript_tool calls.
+- **javascript_tool has a hard execution budget (~15-20 s).** Multi-combo
+  best-of-K planning across 8+ treats on 24-cell boards blows it ("Internal
+  error") and leaves treats stranded on the board mid-plan. Keep K ≤ 25 and do
+  ONE plan+fit per call. Stranded treats are recoverable — they're in
+  `G.treats`; the next `clearBoard()` returns them.
+- **Read `req` before planning** (state() now surfaces it): `all_or_nothing`
+  requires a PURRFECT FIT — placing it on a hand that can't full-fill wastes
+  its once-per-round trigger AND its once-per-round growth; test the fill
+  without it first (its own 1 cell is sometimes exactly what makes the fill
+  impossible). `morning_stretch` is FIRST-HAND-only. `bell` is solo-only.
+- **clearBoard() can silently destroy treats** (board.js:127-131: rotation-less
+  `bpAutoPlace`, return value ignored). Any planning loop that cycles
+  clearBoard with a fragmented backpack WILL eventually lose treats (this
+  session: milk, morning_stretch, big_bite, poker_face across runs). The
+  harness shields it in `plan()`, but the shield is best-effort — keep the
+  backpack tidy and treat counts ≤ ~8.
+- **Browser-extension tab groups do not survive MCP reconnects.** Twice this
+  session the session's tab group vanished mid-run — the page (and the run) is
+  unrecoverable. There is no save system; budget for restarts, log results as
+  you go, and prefer fewer/faster calls late in a run.
+- Loss screen "Try Again 🔄" **abandons the entire run** (back to world map,
+  everything gone) despite the label suggesting a round retry.
+
 ---
 
 *Maintained by Claude. If you discover new treats, board behaviours, or better
