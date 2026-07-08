@@ -51,6 +51,29 @@ becomes ready to run batches.
    falls back to a download and the folder label turns orange; click
    **Choose results folder** once to re-grant in place (the picker only
    reopens if you decline the re-grant).
+7. **Import JSON** loads a previously-exported results file (the same shape
+   Export produces — a bare `[...]` results array is also accepted) and
+   renders its dashboard, without re-running anything. The imported run is
+   also added to the **Previous runs** history.
+
+### Previous runs (in-app history)
+
+Every completed batch — and every imported file — is recorded to an in-app
+history (an IndexedDB `runs` store in the same `pf-sim-store` DB that holds
+the results-folder handle). The **Previous runs** panel lists them newest
+first with when/branch/profiles/games/seed/win-rate; **click a row to
+re-render that run's dashboard** (a "Viewing saved run…" note appears so you
+know you're looking at a loaded record, not the latest live batch). Each row
+has a ✕ to delete it, and **Clear all** (two-click confirm) empties the
+history. The history is independent of the results-folder auto-save toggle —
+it always records, works in any browser, and survives page reloads.
+
+**Export** always writes whatever the dashboard is currently showing — the
+latest live batch, a loaded history record, or an imported file. Recording is
+best-effort: if IndexedDB is unavailable, live runs and import still work, only
+the history persistence is skipped. For runs stored before a `maxRound` was
+kept in the record, the dashboard's round span is derived from the data itself
+(the largest round number present).
 
 ### Boss-round metrics
 
