@@ -7,6 +7,11 @@
   let running = false;
   let stopRequested = false;
   let allResults = [];
+  // What the dashboard currently shows and what Export writes — the live batch,
+  // a clicked history record, or an imported file. Kept distinct from
+  // allResults so exporting/viewing a loaded run doesn't depend on the last run.
+  let displayedPayload = null;
+  let activeHistoryId = null; // id of the history row being viewed; null = live batch
 
   function q(id){ return document.getElementById(id); }
 
@@ -49,6 +54,186 @@
       },
       results: allResults
     };
+  }
+
+  // ── rendering a payload (live batch, loaded history, or import) ──
+  // Sets displayedPayload + the "viewing" note, then renders the dashboard.
+  // maxRoundHint is the live round count when known (a live batch); otherwise
+  // it's resolved from the payload's summary/data by simResolveMaxRound.
+  function renderPayload(payload, opts){
+    opts = opts || {};
+    displayedPayload = payload;
+    activeHistoryId = opts.historyId != null ? opts.historyId : null;
+    const maxRound = simResolveMaxRound(payload, opts.maxRound);
+    simRenderDashboard(q('sim-dashboard'), payload.results || [], maxRound);
+    q('sim-viewing').textContent = opts.viewingNote || '';
+    q('btn-export').disabled = !(payload.results && payload.results.length);
+    highlightActiveHistoryRow();
+  }
+
+  // ── history record labels ──
+  function fmtWhen(iso){
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso || '—');
+    const p2 = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+      ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+  }
+  function overallWinRate(summary){
+    const rates = Object.values(summary.winRateByProfile || {}).filter(v => v != null);
+    return rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : null;
+  }
+  function histLabel(summary){
+    const parts = [summary.branchId || '?', summary.profileInitials || '—',
+      (summary.gamesPerProfile != null ? summary.gamesPerProfile + '×' : '?'),
+      'seed ' + (summary.baseSeed != null ? summary.baseSeed : '?')];
+    return parts.join(' · ') + (summary.source === 'import' ? ' · imported' : '') +
+      (summary.partial ? ' · partial' : '');
+  }
+
+  // ── history list rendering + wiring ──
+  function highlightActiveHistoryRow(){
+    document.querySelectorAll('#sim-history-list tr.sim-hist-row').forEach(tr => {
+      tr.classList.toggle('active', activeHistoryId != null && Number(tr.dataset.id) === activeHistoryId);
+    });
+  }
+
+  function renderHistoryList(rows){
+    const el = q('sim-history-list');
+    q('btn-clear-history').disabled = !rows.length;
+    if (!rows.length){
+      el.innerHTML = '<div class="sim-muted">No previous runs yet — run a batch or import a file.</div>';
+      return;
+    }
+    let html = '<table class="sim-table"><thead><tr><th>When</th><th>Branch</th><th>Profiles</th>' +
+      '<th>Games</th><th>Seed</th><th>Win rate</th><th></th><th></th></tr></thead><tbody>';
+    rows.forEach(r => {
+      const s = r.summary || {};
+      const wr = overallWinRate(s);
+      html += '<tr class="sim-hist-row" data-id="' + r.id + '" title="' + simEsc(histLabel(s)) + '">' +
+        '<td>' + simEsc(fmtWhen(r.savedAt)) + '</td>' +
+        '<td>' + simEsc(s.branchId || '—') + (s.source === 'import' ? ' <span class="sim-muted">(import)</span>' : '') +
+          (s.partial ? ' <span class="sim-muted">(partial)</span>' : '') + '</td>' +
+        '<td>' + simEsc((s.profiles || []).join(', ') || '—') + '</td>' +
+        '<td>' + (s.gamesPerProfile != null ? s.gamesPerProfile : '—') +
+          ' <span class="sim-muted">(' + (s.totalGames != null ? s.totalGames : '?') + ')</span></td>' +
+        '<td>' + (s.baseSeed != null ? s.baseSeed : '—') + '</td>' +
+        '<td>' + (wr == null ? '—' : (Math.round(wr * 10) / 10) + '%') + '</td>' +
+        '<td class="sim-hist-load">Load</td>' +
+        '<td><button class="sim-del" data-del="' + r.id + '" title="Delete this run">✕</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    el.innerHTML = html;
+
+    el.querySelectorAll('tr.sim-hist-row').forEach(tr => {
+      tr.addEventListener('click', ev => {
+        if (ev.target.closest('button.sim-del')) return; // delete handled separately
+        onLoadHistory(Number(tr.dataset.id));
+      });
+    });
+    el.querySelectorAll('button.sim-del').forEach(btn => {
+      btn.addEventListener('click', ev => {
+        ev.stopPropagation();
+        onDeleteHistory(Number(btn.dataset.del));
+      });
+    });
+    highlightActiveHistoryRow();
+  }
+
+  function refreshHistoryList(){
+    return simHistoryList().then(renderHistoryList).catch(err => {
+      console.warn('[sim] history list failed', err);
+      renderHistoryList([]);
+    });
+  }
+
+  async function onLoadHistory(id){
+    try{
+      const rec = await simHistoryGet(id);
+      if (!rec || !rec.payload){ setStatus('That run could not be loaded (it may have been deleted).'); return; }
+      const s = rec.summary || {};
+      renderPayload(rec.payload, {
+        historyId: id,
+        maxRound: s.maxRound,
+        viewingNote: 'Viewing saved run: ' + histLabel(s) + ' — saved ' + fmtWhen(rec.savedAt) +
+          ' (not the latest live batch)'
+      });
+      setStatus('Loaded saved run from ' + fmtWhen(rec.savedAt) + '.');
+    }catch(err){
+      setStatus('Failed to load run: ' + ((err && err.message) || err));
+    }
+  }
+
+  async function onDeleteHistory(id){
+    try{
+      await simHistoryDelete(id);
+      if (activeHistoryId === id){ activeHistoryId = null; q('sim-viewing').textContent = ''; }
+      await refreshHistoryList();
+    }catch(err){
+      setStatus('Failed to delete run: ' + ((err && err.message) || err));
+    }
+  }
+
+  // Two-click confirm (avoids a blocking native confirm dialog).
+  let clearArmed = false;
+  let clearArmTimer = null;
+  async function onClearHistory(){
+    const btn = q('btn-clear-history');
+    if (!clearArmed){
+      clearArmed = true;
+      btn.textContent = 'Click again to confirm';
+      clearArmTimer = setTimeout(() => { clearArmed = false; btn.textContent = 'Clear all'; }, 4000);
+      return;
+    }
+    clearTimeout(clearArmTimer);
+    clearArmed = false;
+    btn.textContent = 'Clear all';
+    try{
+      await simHistoryClear();
+      activeHistoryId = null;
+      q('sim-viewing').textContent = '';
+      await refreshHistoryList();
+      setStatus('Previous-runs history cleared.');
+    }catch(err){
+      setStatus('Failed to clear history: ' + ((err && err.message) || err));
+    }
+  }
+
+  // Persist a payload into the in-app history, then refresh the list.
+  async function recordToHistory(payload, meta){
+    try{
+      const summary = simBuildRunSummary(meta, payload.results || []);
+      await simHistoryAdd({ savedAt: new Date().toISOString(), summary, payload });
+      await refreshHistoryList();
+    }catch(err){
+      console.warn('[sim] could not record run to history', err);
+    }
+  }
+
+  // ── import a results JSON file ──
+  function onImportFile(file){
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let obj;
+      try{ obj = JSON.parse(reader.result); }
+      catch(e){ setStatus('Import failed: "' + file.name + '" is not valid JSON.'); return; }
+      const payload = simValidatePayload(obj);
+      if (!payload){ setStatus('Import failed: "' + file.name + '" does not look like simulator results.'); return; }
+      const maxRound = simResolveMaxRound(payload, 0);
+      renderPayload(payload, { viewingNote: 'Viewing imported file: ' + file.name });
+      const cfgHash = (payload.stamp && payload.stamp.configHash) || null;
+      await recordToHistory(payload, {
+        branchId: (payload.stamp && payload.stamp.branchId) || 'imported',
+        profiles: [...new Set(payload.results.map(r => r.profile))],
+        gamesPerProfile: null, baseSeed: null, configHash: cfgHash,
+        maxRound, partial: false, source: 'import'
+      });
+      setStatus('Imported ' + payload.results.length + ' game(s) from "' + file.name + '" and added to history.');
+    };
+    reader.onerror = () => setStatus('Import failed: could not read "' + file.name + '".');
+    reader.readAsText(file);
   }
 
   // ── results-folder UI (File System Access API — see js/sim/store.js) ──
@@ -134,6 +319,8 @@
     if (running) return;
     running = true;
     stopRequested = false;
+    activeHistoryId = null;
+    q('sim-viewing').textContent = '';
     q('btn-run').disabled = true;
     q('btn-stop').disabled = false;
     q('btn-export').disabled = true;
@@ -173,11 +360,21 @@
 
       simRenderDashboard(q('sim-dashboard'), allResults, maxRound);
       const partial = stopRequested || allResults.length < total;
+      const configHash = handle.bridge.getConfigHash();
+      // This live batch is now what the dashboard shows and Export writes.
+      displayedPayload = buildPayload();
       const saveNote = await autoSaveBatch({
         branchId, profiles, gamesPerProfile, baseSeed,
-        configHash: handle.bridge.getConfigHash(),
-        partial, date: new Date()
+        configHash, partial, date: new Date()
       });
+      // Record to in-app history (always, when there's at least one game) —
+      // independent of the folder auto-save toggle above.
+      if (allResults.length){
+        await recordToHistory(displayedPayload, {
+          branchId, profiles, gamesPerProfile, baseSeed,
+          configHash, maxRound, partial, source: 'batch'
+        });
+      }
       setStatus((stopRequested ? 'Stopped early.' : 'Batch complete.') + saveNote);
     }catch(err){
       setStatus('Error: ' + ((err && err.message) || err));
@@ -196,10 +393,15 @@
     setStatus('Stopping (takes effect at the next hand)...');
   }
 
-  // Manual export — unchanged behavior (plain download, original filename).
+  // Manual export — writes whatever the dashboard currently shows (live batch,
+  // a loaded history record, or an imported file).
   function onExport(){
-    if (!allResults.length){ setStatus('Nothing to export yet — run a batch first.'); return; }
-    simDownloadTextAsFile('purrfectfit-sim-' + Date.now() + '.json', JSON.stringify(buildPayload(), null, 2));
+    const payload = displayedPayload || (allResults.length ? buildPayload() : null);
+    if (!payload || !payload.results || !payload.results.length){
+      setStatus('Nothing to export yet — run a batch, import a file, or load a previous run.');
+      return;
+    }
+    simDownloadTextAsFile('purrfectfit-sim-' + Date.now() + '.json', JSON.stringify(payload, null, 2));
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -207,9 +409,17 @@
     q('btn-stop').addEventListener('click', onStop);
     q('btn-export').addEventListener('click', onExport);
     q('btn-folder').addEventListener('click', onChooseFolder);
+    q('btn-import').addEventListener('click', () => q('inp-import').click());
+    q('inp-import').addEventListener('change', ev => {
+      const file = ev.target.files && ev.target.files[0];
+      onImportFile(file);
+      ev.target.value = ''; // allow re-importing the same file
+    });
+    q('btn-clear-history').addEventListener('click', onClearHistory);
     q('btn-stop').disabled = true;
     q('btn-export').disabled = true;
     initStoreUI().catch(err => console.warn('[sim] results-folder init failed', err));
+    refreshHistoryList().catch(err => console.warn('[sim] history init failed', err));
     ensureIframeReady().catch(err => setStatus('Error loading game: ' + ((err && err.message) || err)));
   });
 })();

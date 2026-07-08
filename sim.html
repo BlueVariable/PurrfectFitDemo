@@ -40,6 +40,16 @@
   .sim-bar-track{width:80px;height:8px;background:#0f1020;border-radius:4px;overflow:hidden;flex:0 0 auto;}
   .sim-bar-fill{height:100%;background:linear-gradient(90deg,var(--bl),var(--gr));}
   .sim-bar-label{font-size:11px;color:var(--tx);}
+  .sim-history-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;}
+  .sim-history-head h3{margin:0;}
+  .sim-table tr.sim-hist-row{cursor:pointer;}
+  .sim-table tr.sim-hist-row:hover td{background:#2a2c4a;}
+  .sim-table tr.sim-hist-row.active td{background:#2f3560;}
+  .sim-hist-load{color:var(--bl);font-weight:600;}
+  button.sim-del{background:transparent;color:var(--re);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:12px;cursor:pointer;line-height:1;}
+  button.sim-del:hover{background:#3a2030;}
+  button.sim-btn.tiny{padding:5px 10px;font-size:12px;}
+  #sim-viewing{font-size:12px;color:var(--or);margin-top:6px;min-height:14px;}
   #game-frame{position:fixed;left:-99999px;top:0;width:1300px;height:900px;border:0;visibility:hidden;}
 </style>
 </head>
@@ -74,6 +84,8 @@
       <button class="sim-btn" id="btn-run">Run batch</button>
       <button class="sim-btn secondary" id="btn-stop">Stop</button>
       <button class="sim-btn secondary" id="btn-export">Export JSON</button>
+      <button class="sim-btn secondary" id="btn-import">Import JSON</button>
+      <input type="file" id="inp-import" accept="application/json,.json" style="display:none">
     </div>
   </div>
   <div class="sim-controls sim-save-row">
@@ -87,6 +99,15 @@
   <div id="sim-progress"></div>
 </div>
 
+<div class="sim-panel" id="sim-history-panel">
+  <div class="sim-history-head">
+    <h3>Previous runs</h3>
+    <button class="sim-btn secondary tiny" id="btn-clear-history">Clear all</button>
+  </div>
+  <div id="sim-history-list"><div class="sim-muted">No previous runs yet — run a batch or import a file.</div></div>
+</div>
+
+<div id="sim-viewing"></div>
 <div id="sim-dashboard">
   <div class="sim-muted">Run a batch to see results.</div>
 </div>

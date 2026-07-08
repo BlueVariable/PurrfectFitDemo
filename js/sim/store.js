@@ -19,17 +19,31 @@
 
 const SIM_STORE_DB_NAME = 'pf-sim-store';
 const SIM_STORE_KV = 'kv';
+const SIM_STORE_RUNS = 'runs';
 const SIM_STORE_DIR_KEY = 'resultsDir';
+const SIM_STORE_DB_VERSION = 2;
 
 function simStoreSupported(){
   return typeof window.showDirectoryPicker === 'function';
 }
 
-// ── tiny promise-wrapped IndexedDB key/value store ──
+// ── tiny promise-wrapped IndexedDB store ──
+// v1: only the `kv` store (results-folder handle).
+// v2: adds the `runs` store — the in-app history of completed/imported batches
+//     (keyPath 'id', autoIncrement; index on 'savedAt' for newest-first lists).
+// The upgrade handler is version-agnostic (creates whatever is missing) so it
+// migrates a v1 DB in place without dropping the stored folder handle.
 function simIdbOpen(){
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(SIM_STORE_DB_NAME, 1);
-    req.onupgradeneeded = () => { req.result.createObjectStore(SIM_STORE_KV); };
+    const req = indexedDB.open(SIM_STORE_DB_NAME, SIM_STORE_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(SIM_STORE_KV)) db.createObjectStore(SIM_STORE_KV);
+      if (!db.objectStoreNames.contains(SIM_STORE_RUNS)){
+        const runs = db.createObjectStore(SIM_STORE_RUNS, { keyPath: 'id', autoIncrement: true });
+        runs.createIndex('savedAt', 'savedAt', { unique: false });
+      }
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -146,4 +160,129 @@ async function simAutoSaveResults(json, meta){
   simDownloadTextAsFile(filename, json);
   return { ok: true, method: 'download', filename, needsRegrant: false,
     note: 'Auto-saved ' + filename + ' (no folder chosen — downloaded).' };
+}
+
+// ══════════════════════════════════════════════════════
+//  In-app run history (IndexedDB `runs` store)
+//
+//  Every completed batch — and every imported file — is recorded here so the
+//  simulator can list past runs and re-render any of them without re-running.
+//  A record is { id, savedAt, summary, payload }:
+//    payload = the full { stamp, results } object the dashboard renders from.
+//    summary = a small precomputed blob for the list view, so listing never
+//              has to load or re-aggregate the (potentially large) results.
+//  All helpers fail soft: if IndexedDB is unavailable or a transaction errors,
+//  they reject, and callers treat history as best-effort (import + live runs
+//  keep working; only persistence is lost).
+// ══════════════════════════════════════════════════════
+
+// Add one record. `savedAt` is stamped by the caller (browser Date is fine).
+// Returns the new autoincrement id.
+function simHistoryAdd(record){
+  return simIdbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(SIM_STORE_RUNS, 'readwrite');
+    const req = tx.objectStore(SIM_STORE_RUNS).add(record);
+    req.onsuccess = () => { const id = req.result; db.close(); resolve(id); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+
+// List metadata only (id, savedAt, summary) — never the full results — newest
+// first. Keeps the history panel cheap even with big batches stored.
+function simHistoryList(){
+  return simIdbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(SIM_STORE_RUNS, 'readonly');
+    const req = tx.objectStore(SIM_STORE_RUNS).getAll();
+    req.onsuccess = () => {
+      db.close();
+      const rows = (req.result || []).map(r => ({ id: r.id, savedAt: r.savedAt, summary: r.summary }));
+      rows.sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+      resolve(rows);
+    };
+    req.onerror = () => { db.close(); reject(req.error); };
+  })).catch(() => []);
+}
+
+// Full record (with payload) for one id, or null if missing.
+function simHistoryGet(id){
+  return simIdbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(SIM_STORE_RUNS, 'readonly');
+    const req = tx.objectStore(SIM_STORE_RUNS).get(id);
+    req.onsuccess = () => { db.close(); resolve(req.result || null); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+
+function simHistoryDelete(id){
+  return simIdbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(SIM_STORE_RUNS, 'readwrite');
+    const req = tx.objectStore(SIM_STORE_RUNS).delete(id);
+    req.onsuccess = () => { db.close(); resolve(); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+
+function simHistoryClear(){
+  return simIdbOpen().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(SIM_STORE_RUNS, 'readwrite');
+    const req = tx.objectStore(SIM_STORE_RUNS).clear();
+    req.onsuccess = () => { db.close(); resolve(); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  }));
+}
+
+// ── payload validation / normalization (for imported files) ──
+// A per-game result must at least carry a `profile` and a `rounds` array — the
+// two fields every dashboard aggregation reaches for. Accepts either the
+// wrapped { results:[...] } shape or a bare [...] array; returns a normalized
+// { stamp, results } payload, or null if it does not look like sim results.
+function simValidatePayload(obj){
+  let results = null;
+  if (Array.isArray(obj)) results = obj;
+  else if (obj && Array.isArray(obj.results)) results = obj.results;
+  if (!results || !results.length) return null;
+  const looksLikeGame = g => g && typeof g === 'object' &&
+    typeof g.profile === 'string' && Array.isArray(g.rounds);
+  if (!results.every(looksLikeGame)) return null;
+  const stamp = (obj && obj.stamp && typeof obj.stamp === 'object') ? obj.stamp : {};
+  return { stamp, results };
+}
+
+// Resolve the round count a payload's dashboard should span:
+//   1) an explicit maxRound (stored in the summary going forward),
+//   2) else the largest round number present in the data,
+//   3) else 0 (empty → dashboard renders its "no games" state).
+function simResolveMaxRound(payload, explicitMaxRound){
+  if (explicitMaxRound && explicitMaxRound > 0) return explicitMaxRound;
+  let max = 0;
+  const results = (payload && payload.results) || [];
+  results.forEach(g => (g.rounds || []).forEach(r => {
+    if (r && typeof r.round === 'number' && r.round > max) max = r.round;
+  }));
+  return max;
+}
+
+// Build the compact list-view summary for a history record.
+function simBuildRunSummary(meta, results){
+  const profiles = meta.profiles || [];
+  const winRateByProfile = {};
+  profiles.forEach(p => {
+    const games = results.filter(r => r.profile === p);
+    winRateByProfile[p] = games.length
+      ? (games.filter(g => g.result === 'won').length / games.length) * 100
+      : null;
+  });
+  return {
+    branchId: meta.branchId || null,
+    profiles,
+    profileInitials: profiles.map(p => String(p).charAt(0)).join('') || '—',
+    gamesPerProfile: meta.gamesPerProfile != null ? meta.gamesPerProfile : null,
+    baseSeed: meta.baseSeed != null ? meta.baseSeed : null,
+    configHash: meta.configHash || null,
+    maxRound: meta.maxRound || 0,
+    partial: !!meta.partial,
+    totalGames: results.length,
+    winRateByProfile,
+    source: meta.source || 'batch'
+  };
 }
