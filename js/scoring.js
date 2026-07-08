@@ -673,8 +673,9 @@ function endScoreSequence(total){
 }
 
 function roundWin(){
-  // base earn + $1 per unused hand remaining
-  const bonus=G.hands;
+  // base earn + configurable payout per unused hand remaining (General → unused_hand_bonus, default 1)
+  const perHand=CFG.unused_hand_bonus!=null?Number(CFG.unused_hand_bonus):1;
+  const bonus=G.hands*perHand;
   const total=G.earn+bonus;
   G.cash+=total;
   const cc=document.querySelector('.cc');
@@ -683,7 +684,7 @@ function roundWin(){
   if(rc)rc.classList.add('round-won');
   const wi=g('win-inline');
   g('wi-sc').textContent=G.score.toLocaleString();
-  g('wi-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} unused hands)`;
+  g('wi-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} from ${G.hands} unused hand${G.hands===1?'':'s'})`;
   wi.style.display='';
   void wi.offsetWidth;
   wi.classList.add('visible');
