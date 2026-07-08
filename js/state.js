@@ -3,8 +3,33 @@
 //  STATE
 // ══════════════════════════════════════════════════════
 const BPS_DEFAULT=4;
+const BOTTOMLESS_TOTE_ID='bottomless_tote';
 function getBPR(){if(G._bpOverrideR)return G._bpOverrideR;return CFG.inventory_rows||CFG.backpack_grid_size||BPS_DEFAULT;}
-function getBPC(){if(G._bpOverrideC)return G._bpOverrideC;return CFG.inventory_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
+// Base column count from config / branch override only — no treat bonuses.
+function getBPCBase(){if(G._bpOverrideC)return G._bpOverrideC;return CFG.inventory_cols||CFG.backpack_grid_size||BPS_DEFAULT;}
+// ── bottomless_tote ownership: anywhere in the player's possession counts —
+// inventory (G.bpGroups), placed on the board (G.treats), parked in
+// G.usedTreats mid-round, or currently on the cursor (H). A held SHOP copy
+// counts too, deliberately: the bag pre-widens during the buy drag so the
+// tote can be dropped into the very column it creates even when the bag was
+// full (see shopPickupTreat); cancelling the drag reverts the width, and
+// nothing else can have been placed in the phantom column meanwhile because
+// H is the only thing placeable while it is held. Does NOT stack — a second
+// copy adds no second column.
+function bpToteOwned(){
+  if(!G||typeof G!=='object')return false;
+  if((G.bpGroups||[]).some(gr=>gr.tdef&&gr.tdef.id===BOTTOMLESS_TOTE_ID))return true;
+  if((G.treats||[]).some(t=>t.tdef&&t.tdef.id===BOTTOMLESS_TOTE_ID))return true;
+  if((G.usedTreats||[]).some(td=>td&&td.id===BOTTOMLESS_TOTE_ID))return true;
+  if(typeof H==='object'&&H&&(H.kind==='treat'||H.kind==='shop-treat')&&H.data&&H.data.id===BOTTOMLESS_TOTE_ID)return true;
+  return false;
+}
+// Single choke point for the effective backpack column count. Every reader
+// (backpack.js, shop.js, held.js, render.js, sim/placement.js) already goes
+// through here. G._bpGraceC keeps the bag temporarily wide after tote
+// ownership ends when the doomed column's occupants can't be reflowed yet
+// (see bpReconcileWidth in backpack.js).
+function getBPC(){return getBPCBase()+Math.max(bpToteOwned()?1:0,(G&&G._bpGraceC)||0);}
 let G={};
 let gameInProgress=false;
 let curDeck='classic';
@@ -173,9 +198,13 @@ function newGame(deckId){
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
-    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,
+    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,
     roundModifier:null,
   };
+  // The bp grid in the literal above was sized with getBPR()/getBPC() reading
+  // the PREVIOUS game's G (tote ownership, bp-small/bp-large overrides), so it
+  // can be stale-sized for this game — resync to this game's true width.
+  bpReconcileWidth();
   mkDeck();dealHand();
 }
 

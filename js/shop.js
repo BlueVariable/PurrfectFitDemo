@@ -163,7 +163,11 @@ function renderTreatsRow(){
   if(flavorEl) flavorEl.textContent=flavors[0]||'';
   available.forEach(td=>{
     const broke=G.cash<td.pr;
-    const noSpc=!bpCanFit(td.bpS);
+    // bottomless_tote: buying an unowned tote widens the bag by a whole column
+    // of empty cells, which its uno shape always fits — so a full bag must not
+    // disable its card (the buy-check would otherwise run before the ownership
+    // it grants). An already-owned duplicate adds no column: normal check.
+    const noSpc=!bpCanFit(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
     const dis=broke||noSpc;
     const card=document.createElement('div');
     card.className='tc'+(dis?' tc-dis':'');
@@ -212,6 +216,12 @@ function shopPickupTreat(td){
      color:td.col,em:td.em,handIdx:null,boardGid:null,bpGid:null,
      grabDr:Math.floor(td.bpS.length/2),grabDc:Math.floor(td.bpS[0].length/2),dragging:true};
   updateGhost();showHUD();
+  // bottomless_tote: a held shop copy already counts as owned (bpToteOwned in
+  // state.js), so the bag pre-widens NOW — resync the physical grid and
+  // re-render so the new column is a live drop target even when the bag was
+  // full. A cancelled drag reverts the width; the extra rendered column goes
+  // stale but inert (hover/drop on it no-op) until the next renderShopFull().
+  if(bpReconcileWidth())renderShopBPGrid();
 }
 
 function shopDropOnBP(r,c){
