@@ -4,10 +4,19 @@
 // ══════════════════════════════════════════════════════
 let shopPool=[]; // current treat pool shown
 let shopBoughtIds=new Set(); // treats bought this shop visit
-let rerollExtraCost=0; // increments each reroll purchase, resets each round
-// REROLL_COST now comes from CFG.reroll_cost (loaded from sheets)
+let rerollExtraCost=0; // count of rerolls purchased this round; resets each round
+// REROLL_COST now comes from CFG.reroll_cost (loaded from sheets).
+// reroll_cost is an escalating comma-separated list (e.g. "3,5,8,12"): each
+// reroll in a round costs the next value; rerolls past the list clamp to the
+// last value. A single number ("3") is treated as a one-element list.
 const REROLL_COST_DEFAULT=1;
-function getRerollCost(){return (CFG.reroll_cost||REROLL_COST_DEFAULT)+rerollExtraCost;}
+function rerollCostList(){
+  const raw=CFG.reroll_cost;
+  if(raw===undefined||raw===null||raw==='')return[REROLL_COST_DEFAULT];
+  const list=String(raw).split(',').map(s=>parseInt(s.trim(),10)).filter(n=>!isNaN(n));
+  return list.length?list:[REROLL_COST_DEFAULT];
+}
+function getRerollCost(){const list=rerollCostList();return list[Math.min(rerollExtraCost,list.length-1)];}
 
 function generateShopPool(){
   const available=TDEFS.filter(td=>td.enabled);
