@@ -35,6 +35,13 @@ function doFit(){
   // Restore any requirements disabled by jumping_ball in the previous hand
   TDEFS.forEach(td=>{if(td._origReq!==undefined){td.req=td._origReq;delete td._origReq;}});
 
+  // Per-fit cleanup hooks: treats whose effect must revert when the fit ends
+  // (e.g. milk_bar's temporary type override) push a restore closure here from
+  // their fn(); all run LIFO right after the scan loop below. Re-initialized
+  // every fit so closures registered during projectScore() scans (projection
+  // restores all state itself in its finally) are discarded, never executed.
+  G._fitCleanups=[];
+
   // Trigger cell = topmost then leftmost cell of a piece
   function triggerCell(cells){
     return cells.reduce((best,[r,c])=>
@@ -111,6 +118,11 @@ function doFit(){
       scanResults.push({kind:'treat',piece:treat,result,phase:treat.tdef.phase});
     }
   }
+
+  // The scan is over — run per-fit cleanups LIFO so stacked overrides (two
+  // milk_bars in one fit) unwind in reverse registration order.
+  for(let i=G._fitCleanups.length-1;i>=0;i--)G._fitCleanups[i]();
+  G._fitCleanups=[];
 
   // Board fill bonus
   const filledCells=G.board.flat().filter(c=>c.filled).length;
@@ -438,6 +450,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
         else if(result.charging)logLine+=`: charging ${result.charging}`;
         else if(result.cashGained)logLine+=`: +$${result.cashGained} to your wallet`;
         else if(result.zoomiesCleared!==undefined)logLine+=`: cleared ${result.zoomiesCleared} blocked cell${result.zoomiesCleared!==1?'s':''}`;
+        else if(result.announce!==undefined)logLine+=`: ${result.announce}`;
         else logLine+=`: triggered`;
       }
       if(reappeared)logLine+=' ... and it bounces back to your bag! 🎉';
@@ -640,6 +653,11 @@ function endScoreSequence(total){
   if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
   _syncTbScore(G.score.toLocaleString());
   G.hands--;
+  // bottomless_tote: a mid-scan ownership change (catnado destroying the tote
+  // in the inventory) shifts getBPC() — resync the physical bag, reflowing
+  // anything stranded in the doomed column, before the next hand renders or
+  // places into it.
+  bpReconcileWidth();
   if(G.score>=G.tgt){roundWin();return;}
   if(G.hands<=0||(G.deck.length===0&&G.hand.length===0)){
     const slGrp=G.bpGroups.find(gr=>gr.tdef&&gr.tdef.id==='soft_landing');
@@ -680,6 +698,11 @@ function goShop(){
   wi.style.display='none';
   bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
   G.usedTreats=[];
+  // bottomless_tote: the tote may have just left the player's possession (it
+  // was in usedTreats until the line above; bpRestoreUsedTreats can refund it
+  // when even a repack can't seat it) — and round end is also the natural
+  // retry point for a pending grace shrink. Resync width now.
+  bpReconcileWidth();
   G.round++;
   if(G.round>RCFG.length){
     if(G.branchId)markBranchComplete(G.branchId);

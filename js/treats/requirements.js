@@ -60,6 +60,11 @@ const REQUIREMENT_FNS = {
   'All BOARD cells are FULL': () => !_isPurrfect(),
   'LAST HAND only': () => G.hands > 1,
   'FIRST HAND only': () => G.hands !== G.maxHands,
+  '3+ cats must SHARE a SHAPE': () => {
+    const counts = {};
+    for (const cat of G.cats) counts[cat.shape] = (counts[cat.shape] || 0) + 1;
+    return !Object.values(counts).some(n => n >= 3);
+  },
 };
 
 function requirementFails(req) {

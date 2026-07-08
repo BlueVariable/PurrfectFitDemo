@@ -29,6 +29,57 @@ function onBPMouseUp(r,c){
 }
 function getBPCell(r,c){return g('bpg').querySelectorAll('.bpc')[r*getBPC()+c]||null;}
 
+// ── Dynamic backpack width (bottomless_tote) ──
+// getBPC() (state.js) grows by one column while the tote is owned; these two
+// helpers keep the physical G.bp arrays in sync with that effective width.
+
+// Widen-only invariant repair: every insertion into the bag funnels through
+// bpCanAt() (place, drop, autoplace, repack, sim buys, duplication treats),
+// so widening lazily there guarantees the physical arrays can never be
+// narrower than getBPC(), whichever path tote ownership arrived through.
+function bpEnsureWidth(){
+  if(!G.bp||!G.bp.length)return;
+  const want=getBPC();
+  if(G.bp[0].length>=want)return;
+  G.bp.forEach(row=>{while(row.length<want)row.push({filled:false,col:null,em:null,gid:null,tdef:null});});
+}
+
+// Full reconciliation, including shrink when tote ownership ends (sold,
+// destroyed by catnado, refunded at round end). Shrinking must never destroy
+// a treat: if the doomed column is occupied we try a full repack at the
+// narrow width, and if even that fails the bag temporarily STAYS WIDE
+// (G._bpGraceC) and we retry at the next reconcile point (end of each score
+// sequence, shop sell/pickup, round end, new game). Returns true if the
+// physical width changed.
+function bpReconcileWidth(){
+  if(!G.bp||!G.bp.length)return false;
+  // Target width deliberately IGNORES G._bpGraceC: grace is this function's
+  // OUTPUT (how wide we were forced to stay), never an input — feeding it
+  // back (via getBPC()) would make a pending grace column defeat every
+  // later shrink retry.
+  const want=getBPCBase()+(bpToteOwned()?1:0),have=G.bp[0].length;
+  if(have===want){G._bpGraceC=0;return false;}
+  if(have<want){
+    G._bpGraceC=0;
+    G.bp.forEach(row=>{while(row.length<want)row.push({filled:false,col:null,em:null,gid:null,tdef:null});});
+    return true;
+  }
+  // Shrinking. Fast path: doomed column(s) empty — just truncate.
+  const overflow=(G.bpGroups||[]).some(gr=>gr.cells.some(([,c])=>c>=want));
+  if(!overflow){G.bp.forEach(row=>{row.length=want;});G._bpGraceC=0;return true;}
+  // Occupied: reflow everything into the narrow bag via a full repack.
+  const snapBp=G.bp,snapGroups=G.bpGroups;
+  G._bpGraceC=0;
+  const failed=bpRepackAll([]); // rebuilds G.bp at the now-narrow getBPC()
+  if(!failed.length)return true;
+  // Genuinely no room at the narrow width: restore the wide packing untouched
+  // (bpRepackAll built fresh arrays/groups, so the snapshot is intact) and
+  // keep the extra column alive until space frees up.
+  G.bp=snapBp;G.bpGroups=snapGroups;
+  G._bpGraceC=have-getBPCBase();
+  return false;
+}
+
 // ── BP helpers ──
 function bpAutoPlace(tdef){
   const shape=tdef.bpS;
@@ -76,6 +127,7 @@ function bpRestoreUsedTreats(tdefs){
   });
 }
 function bpCanAt(cells,r,c){
+  bpEnsureWidth(); // physical G.bp may lag getBPC() right after tote ownership begins
   for(let dr=0;dr<cells.length;dr++) for(let dc=0;dc<cells[dr].length;dc++){
     if(!cells[dr][dc])continue;
     const rr=r+dr,cc=c+dc;
@@ -106,6 +158,10 @@ function sellTreatFromShop(gid){
   G.cash+=grp.tdef.sp;
   G.purchasedTreatIds.delete(grp.tdef.id);
   removeBpGid(gid);
+  // Selling the tote shrinks the bag (reflowing anything in the doomed
+  // column); selling anything else may free the room a pending shrink
+  // (G._bpGraceC) was waiting for.
+  bpReconcileWidth();
   renderAll(); // update backpack display
   renderShopFull(); // refresh shop listing
   g('shop-cash').textContent=G.cash;
