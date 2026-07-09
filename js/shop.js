@@ -29,6 +29,7 @@ function generateShopPool(){
 }
 
 function rerollTreats(){
+  if(G.shopClosed)return; // Coffee Break: shop is closed this prep — no rerolling
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
   rerollExtraCost++;
@@ -42,9 +43,12 @@ function renderShopFull(){
   renderShopBPGrid();
   renderShopBPList();
   renderTreatsRow();
-  // reroll button disabled if broke
+  // Coffee Break: café-flavored boarded-up styling while the shop is closed
+  const sec=g('treats-section');
+  if(sec)sec.classList.toggle('shop-closed-sec',!!G.shopClosed);
+  // reroll button disabled if broke (or the shop is closed after a skip)
   const rr=g('treats-reroll');
-  if(rr){rr.disabled=G.cash<getRerollCost();const rc=g('reroll-cost');if(rc)rc.textContent='$'+getRerollCost();}
+  if(rr){rr.disabled=!!G.shopClosed||G.cash<getRerollCost();const rc=g('reroll-cost');if(rc)rc.textContent='$'+getRerollCost();}
 }
 
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
@@ -156,6 +160,19 @@ function renderShopBPList(){
 function renderTreatsRow(){
   const row=g('treats-row');if(!row)return;
   row.innerHTML='';
+  // Coffee Break: the prep right after a skipped round has NO shop — cards
+  // are boarded up behind a café "closed" sign. Buying and rerolling are
+  // disabled; SELLING from the backpack (renderShopBPList) stays open.
+  if(G.shopClosed){
+    row.innerHTML=`<div class="shop-closed-sign">
+      <div class="scs-em">☕🪧</div>
+      <div class="scs-title">GONE FOR COFFEE</div>
+      <div class="scs-desc">You took a round off — so did the shopkeeper. No buying or rerolls this visit. Selling from your backpack is still open.</div>
+    </div>`;
+    const flavorEl=g('treats-flavor');
+    if(flavorEl)flavorEl.textContent='"back next round — the espresso machine won\'t clean itself"';
+    return;
+  }
   // only show items not yet purchased, sorted: affordable first
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
   const available=shopPool.filter(td=>!shopBoughtIds.has(td.id)).sort((a,b)=>{
@@ -219,6 +236,7 @@ function renderTreatsRow(){
 
 function shopPickupTreat(td){
   // Pick up a treat from shop to drag into backpack
+  if(G.shopClosed)return; // Coffee Break: unreachable via UI (no cards render) — defensive
   if(G.cash<td.pr)return;
   dropHeld();
   H={kind:'shop-treat',source:'shop',data:td,cells:td.bpS,rot:0,

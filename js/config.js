@@ -162,6 +162,7 @@ function applyConfigFromRaw(raw){
     const addEf=String(r['Additional Effects']||'').trim();
     return{
       id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
+      arch:String(r['Archetype']||'').trim(), // treat family — drives the Coffee Break café blend pools (js/cafe.js)
       bpS, ef, addEf, req:String(r['Requirement']||r['Req']||'').trim(),
       pr:buyPr, sp:sellPr,
       enabled:String(r['Enabled']||'true').trim().toLowerCase()!=='false',

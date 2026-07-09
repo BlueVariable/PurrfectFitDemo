@@ -700,6 +700,60 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .br-btn-replay:hover{transform:translateY(-2px);box-shadow:0 5px 0 #2a4090;}
 .br-btn-locked{background:rgba(0,0,0,.08);color:#b0b4bc;border-color:transparent;box-shadow:none;cursor:default;font-size:20px;}
 
+/* ════════ COFFEE BREAK ☕ (prep button + café screen + closed shop) ════════ */
+.rds-btn-cafe{
+  padding:9px 24px;border:2.5px solid #1a1a2a;cursor:pointer;
+  background:#8a6a4f;color:#fff;font-family:'Fredoka One',cursive;
+  font-size:13px;border-radius:14px;box-shadow:0 4px 0 #5a4030;
+  transition:all .12s;letter-spacing:.5px;
+}
+.rds-btn-cafe:hover{transform:translateY(-2px);box-shadow:0 6px 0 #5a4030;}
+.rds-btn-cafe:active{transform:translateY(2px);box-shadow:0 1px 0 #5a4030;}
+.rds-btn-cafe.armed{background:#d04545;box-shadow:0 4px 0 #902020;animation:cafe-arm-wiggle .3s ease;}
+@keyframes cafe-arm-wiggle{0%,100%{transform:rotate(0)}30%{transform:rotate(-2deg)}70%{transform:rotate(2deg)}}
+
+#s-cafe{flex-direction:column;align-items:stretch;background:#4a3626;overflow:hidden;}
+#s-cafe .sp-topbar{background:#3a2a1d;}
+.cafe-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px 24px 40px;}
+.cafe-hdr{text-align:center;}
+.cafe-title{font-family:'Fredoka One',cursive;font-size:30px;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.3);letter-spacing:1px;}
+.cafe-sub{font-size:13px;color:rgba(255,255,255,.65);font-style:italic;margin-top:6px;}
+.cafe-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:1060px;}
+.cafe-blend{
+  width:230px;background:#fff6ea;border:3px solid #1a1a2a;border-radius:14px;
+  box-shadow:3px 3px 0 #1a1a2a;padding:16px 14px;text-align:center;cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;align-items:center;transition:all .12s;
+}
+.cafe-blend:hover{transform:translateY(-3px);border-color:#f5c200;box-shadow:0 5px 0 rgba(0,0,0,.25);}
+.cafe-blend-em{font-size:34px;line-height:1;}
+.cafe-blend-nm{font-family:'Fredoka One',cursive;font-size:15px;color:#1a1a2a;}
+.cafe-blend-ds{font-size:11px;color:#7a6a58;font-weight:700;line-height:1.35;}
+/* menu cards reuse the shop's .tc styling with café add-ons */
+.cafe-card{min-width:210px;max-width:250px;flex:0 1 auto;}
+.cafe-card.cafe-noroom{opacity:.45;cursor:not-allowed;}
+.cafe-card.cafe-noroom:hover{transform:none;border-color:transparent;box-shadow:2px 2px 0 rgba(0,0,0,.18);}
+.cafe-card.cafe-noroom::after{content:"No room!";position:absolute;top:6px;right:6px;background:#d04545;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:2px 6px;font-family:'Fredoka One',cursive;pointer-events:none;}
+.cafe-rar{font-family:'Fredoka One',cursive;font-size:9px;color:#fff;border-radius:6px;padding:2px 10px;letter-spacing:1.5px;text-transform:uppercase;border:1.5px solid rgba(0,0,0,.35);text-shadow:0 1px 2px rgba(0,0,0,.35);}
+.cafe-price{display:flex;align-items:center;gap:8px;background:#5ab855;color:#fff;border-radius:8px;padding:3px 12px;border:2px solid #1a1a2a;box-shadow:0 2px 0 #3a8030;font-family:'Fredoka One',cursive;font-size:16px;}
+.cafe-strike{text-decoration:line-through;opacity:.65;font-size:12px;display:flex;align-items:center;gap:3px;}
+.cafe-foot{display:flex;gap:12px;align-items:center;margin-top:4px;}
+.cafe-back-blends{padding:10px 20px;border:2.5px solid rgba(255,255,255,.45);cursor:pointer;background:rgba(255,255,255,.12);color:#fff;font-family:'Fredoka One',cursive;font-size:13px;border-radius:12px;transition:all .12s;}
+.cafe-back-blends:hover{background:rgba(255,255,255,.22);}
+.cafe-decline{padding:11px 26px;border:3px solid #1a1a2a;cursor:pointer;background:#7a8090;color:#fff;font-family:'Fredoka One',cursive;font-size:14px;border-radius:14px;box-shadow:0 4px 0 #4a5060;transition:all .12s;}
+.cafe-decline:hover{transform:translateY(-2px);box-shadow:0 6px 0 #4a5060;}
+.cafe-decline:active{transform:translateY(2px);box-shadow:0 1px 0 #4a5060;}
+/* closed shop (the one prep screen right after a skip) */
+.treat-section.shop-closed-sec .treat-sec-hdr{background:#6f5a45;}
+.shop-closed-sign{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  background:repeating-linear-gradient(45deg,#8a6a4f,#8a6a4f 18px,#7a5c42 18px,#7a5c42 36px);
+  border:3px solid #1a1a2a;border-radius:10px;padding:26px 20px;text-align:center;min-height:170px;
+  box-shadow:inset 0 0 24px rgba(0,0,0,.25);width:100%;
+}
+.scs-em{font-size:34px;line-height:1;}
+.scs-title{font-family:'Fredoka One',cursive;font-size:20px;color:#fff;letter-spacing:2px;background:#1a1a2a;border-radius:10px;padding:6px 18px;transform:rotate(-2deg);box-shadow:0 4px 0 rgba(0,0,0,.3);}
+.scs-desc{font-size:11px;color:rgba(255,255,255,.9);font-weight:800;max-width:360px;line-height:1.5;text-shadow:0 1px 2px rgba(0,0,0,.4);}
+
 /* ── Branches: Theme Map toggle ── */
 .btn-theme-toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;}
 .btn-theme-toggle:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.4);}

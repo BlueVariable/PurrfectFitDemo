@@ -137,6 +137,11 @@ function bpCanAt(cells,r,c){
   return true;
 }
 function bpCanFit(shape){for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c))return true;return false;}
+// Rotation-aware "would it fit anywhere" check — mirrors bpAutoPlaceRot's
+// search without placing anything. Used by the Coffee Break café draft
+// cards' "no room" state (js/cafe.js) so a card is only selectable when the
+// grant is guaranteed to succeed.
+function bpCanFitRot(shape){for(let rot=0;rot<4;rot++)if(bpCanFit(rotC(shape,rot)))return true;return false;}
 function bpPlaceAt(tdef,cells,r,c){
   const gid=uid();const placed=[];
   cells.forEach((row,dr)=>row.forEach((v,dc)=>{
