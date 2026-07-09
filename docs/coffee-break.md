@@ -25,10 +25,17 @@ normal win path is `advanceRoundSetup()` in `js/scoring.js`.
 
 ## Skip semantics
 
+**The skip is committed the moment the café opens** (second confirm click):
+`openCafe()` immediately advances the round and runs the next round's setup,
+so nothing that happens on the café screen — including any exit added to it
+later — can cancel the skip or re-roll a fresh menu. Decline only forfeits
+the treat, never the skip.
+
 Skipping round N advances to round N+1's prep **exactly as if N had been won
 minus the payout**: fresh board layout roll, fresh modifier draw for N+1,
-deck rebuilt, target/earn/hands from the Rounds sheet. Treat lifecycle is
-untouched and the purrfect streak is preserved.
+deck rebuilt, target/earn/hands from the Rounds sheet, and the same
+round-end `bpReconcileWidth()` retry the win path performs. Treat lifecycle
+is untouched and the purrfect streak is preserved.
 
 Guards:
 
@@ -69,6 +76,11 @@ Granting uses `bpAutoPlaceRot` (the rotation-aware auto-place used by shop
 buys/round-end restores). If an option can't fit the current backpack it is
 marked **"No room!"** and is unselectable — the reward is never silently
 destroyed, and `bpRepackAll` is never used as a fallback.
+
+Exception: an **unowned Bottomless Tote** is never marked no-room — like its
+shop card, it widens the backpack by the very column its shape lands in. The
+café grant reuses the shop's held-copy pre-widen mechanism (`bpToteOwned`
+counts a held copy) so the tote can be drafted even from a full bag.
 
 ## Config knobs (General tab, all optional)
 

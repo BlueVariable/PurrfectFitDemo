@@ -3,10 +3,12 @@
 //  COFFEE BREAK ☕ — skip a non-boss round, draft a rarity-boosted treat
 //
 //  Flow: prep-screen "COFFEE BREAK ☕" button (two-click confirm) opens the
-//  s-cafe screen. Step 1: pick a "blend" (a treat archetype from the sheet's
-//  Archetype column). Step 2: draft 1 of N options rolled from that
-//  archetype with rarity-boosted weights (rare/epic/legendary only —
-//  commons never appear), free.
+//  s-cafe screen. THE SKIP IS COMMITTED AT CAFÉ ENTRY (openCafe) — the
+//  round counter has already advanced while the café is open, so no exit
+//  from this screen can cancel the skip. Step 1: pick a "blend" (a treat
+//  archetype from the sheet's Archetype column). Step 2: draft 1 of N
+//  options rolled from that archetype with rarity-boosted weights
+//  (rare/epic/legendary only — commons never appear), free.
 //
 //  Cost of the skip: round N's earnings are forfeited (it is never played —
 //  no hands, treat lifecycle untouched, purrfect streak preserved) and the
@@ -86,6 +88,10 @@ function coffeeBreakClick(){
     _cbArmTimer=setTimeout(updateCoffeeBreakButton,4000); // disarm if not confirmed
     return;
   }
+  // Disarm BEFORE committing — openCafe() advances the round now, so a
+  // stray extra click must never reach it still-armed and double-commit.
+  if(_cbArmTimer){clearTimeout(_cbArmTimer);_cbArmTimer=null;}
+  _cbArmed=false;
   openCafe();
 }
 
@@ -93,7 +99,9 @@ function coffeeBreakClick(){
 // _cafeRolls caches the rolled menu per archetype for THIS visit, so backing
 // out to the blend list and returning shows the same 3 options (no re-roll
 // fishing). _cafeDone guards double-clicks after a pick/decline resolves.
-let _cafeRolls={},_cafeDone=false;
+// _cafeSkippedRound remembers the forfeited round for the header copy (the
+// live G.round already points at the NEXT round while the café is open).
+let _cafeRolls={},_cafeDone=false,_cafeSkippedRound=0;
 
 function openCafe(){
   if(!coffeeBreakAvailable())return;
@@ -102,6 +110,18 @@ function openCafe(){
   if(H.kind==='treat')dropHeld();
   else if(H.kind){H=resetH();updateGhost();hideHUD();}
   _cafeRolls={};_cafeDone=false;
+  // COMMIT THE SKIP NOW, at café entry — not at pick/decline. Round N is
+  // forfeited the moment the café opens (no earnings, no hands, treat
+  // lifecycle untouched, purrfect streak preserved), so no future exit
+  // added to this screen can silently cancel the skip or re-roll-fish a
+  // fresh menu (_cafeRolls resets on every openCafe). Same relative order
+  // as goShop(): width reconcile, closure flag, round advance, then the
+  // shared advanceRoundSetup() seam.
+  _cafeSkippedRound=G.round;
+  bpReconcileWidth(); // round end is a pending-grace-shrink retry point on the win path too
+  G.shopClosed=true;  // boards up the NEXT prep's shop; cleared by goShop() on the next real round win
+  G.round++;
+  advanceRoundSetup();
   renderCafeBlends();
   show('s-cafe');
 }
@@ -166,7 +186,7 @@ function cafeRollMenu(arch){
 function renderCafeBlends(){
   const cashEl=g('cafe-cash');if(cashEl)cashEl.textContent=G.cash;
   const title=g('cafe-title');if(title)title.textContent='☕ Choose your blend';
-  const sub=g('cafe-sub');if(sub)sub.textContent=`Round ${G.round} skipped — pick a treat family, then draft 1 of ${cafeOptionCount()}. On the house.`;
+  const sub=g('cafe-sub');if(sub)sub.textContent=`Round ${_cafeSkippedRound} skipped — pick a treat family, then draft 1 of ${cafeOptionCount()}. On the house.`;
   const grid=g('cafe-grid');if(!grid)return;
   grid.innerHTML='';
   cafeArchetypes().forEach(arch=>{
@@ -190,7 +210,11 @@ function renderCafeMenu(arch){
   const grid=g('cafe-grid');if(!grid)return;
   grid.innerHTML='';
   (_cafeRolls[arch]||[]).forEach(td=>{
-    const noRoom=!bpCanFitRot(td.bpS);
+    // bottomless_tote: an unowned tote always fits — it widens the bag by
+    // the very column its shape lands in (same exemption as its shop card,
+    // see renderTreatsRow in shop.js). An owned duplicate adds no second
+    // column: normal check.
+    const noRoom=!bpCanFitRot(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
     const card=document.createElement('div');
     card.className='tc cafe-card'+(noRoom?' cafe-noroom':'');
     // Backpack shape mini grid — adapted from the shop card (renderTreatsRow)
@@ -238,10 +262,23 @@ function renderCafeFoot(step,arch){
 // ── Resolution ──
 function cafeTakeTreat(td,arch){
   if(_cafeDone)return;
+  // bottomless_tote bootstrap: an unowned tote widens the bag by the very
+  // column it needs, and tote ownership deliberately counts a held copy
+  // (bpToteOwned in state.js) — reuse the shop's held-copy pre-widen
+  // mechanism (see shopPickupTreat) so the auto-place below can land in
+  // the column the tote itself creates, then settle the width after.
+  const toteBoot=td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned();
+  if(toteBoot)H={kind:'shop-treat',source:'shop',data:td,cells:td.bpS,rot:0,
+    color:td.col,em:td.em,handIdx:null,boardGid:null,bpGid:null,
+    grabDr:0,grabDc:0,dragging:false};
   // Rotation-aware auto-place, same as the round-end restore path. NEVER
   // falls back to bpRepackAll — if it can't fit, nothing is consumed and
   // the menu re-renders with fresh no-room flags.
-  if(!bpAutoPlaceRot(td)){renderCafeMenu(arch);return;}
+  const ok=bpAutoPlaceRot(td);
+  // A placed tote keeps its column via real ownership (it's in G.bpGroups
+  // now); on the shouldn't-happen failure path the reconcile shrinks back.
+  if(toteBoot){H=resetH();bpReconcileWidth();}
+  if(!ok){renderCafeMenu(arch);return;}
   _cafeDone=true;
   cafeFinish();
 }
@@ -251,12 +288,8 @@ function cafeDecline(){
   cafeFinish();
 }
 function cafeFinish(){
-  // The skip: round N is never played — no earnings, no hands, treat
-  // lifecycle untouched, purrfect streak preserved. Advance to round N+1's
-  // prep exactly as if N had been won minus the payout, with the shop
-  // boarded up for that one prep screen.
-  G.shopClosed=true;
-  G.round++;
-  advanceRoundSetup();
+  // The skip itself was committed at café entry (openCafe) — G.round,
+  // G.shopClosed and the next round's setup are already in place. This
+  // just returns to the (already-advanced) next round's prep screen.
   openRounds();
 }

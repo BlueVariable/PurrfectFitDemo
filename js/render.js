@@ -65,7 +65,7 @@ function exitToMenu(){
 function openRounds(){
   shopBoughtIds=new Set();
   rerollExtraCost=0;
-  g('shop-sub').textContent=G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
+  g('shop-sub').textContent=G.shopClosed?'"the shopkeeper took a coffee break too!"':G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
   G.visitedShop=true;
   shopPool=generateShopPool();
   renderShopFull();
