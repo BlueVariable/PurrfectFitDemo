@@ -148,6 +148,16 @@ function doFit(){
   const total=runningTotal+boardBonus;
   G.lastScore=total;
 
+  // TAX SEASON round modifier: every treat played this fit costs cash.
+  // mod.mag is the per-treat cash delta (e.g. -1). Cash may go negative —
+  // nothing clamps it, matching the modifier's "cash can go negative".
+  // Applied here in the committed fit only; projectScore() has its own scan
+  // and never runs this, so score previews stay tax-free.
+  const _taxMod=G.roundModifier;
+  if(_taxMod&&_taxMod.effect==='treat_tax'&&G.treats.length){
+    G.cash+=(_taxMod.mag||0)*G.treats.length;
+  }
+
   const catsSnapshot=[...G.cats];
 
   // Lifecycle: each placed treat normally moves to G.usedTreats (removed from
@@ -454,7 +464,6 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
         else if(result.duplicatedTreat)logLine+=`: duplicated ${result.duplicatedTreat.em} ${result.duplicatedTreat.nm}`;
         else if(result.charging)logLine+=`: charging ${result.charging}`;
         else if(result.cashGained)logLine+=`: +$${result.cashGained} to your wallet`;
-        else if(result.cashLost)logLine+=`: −$${result.cashLost} taxed from your wallet`;
         else if(result.zoomiesCleared!==undefined)logLine+=`: cleared ${result.zoomiesCleared} blocked cell${result.zoomiesCleared!==1?'s':''}`;
         else if(result.announce!==undefined)logLine+=`: ${result.announce}`;
         else logLine+=`: triggered`;

@@ -93,7 +93,7 @@ function renderRoundsTrack(){
     }
   }
   // Update round card stats. Target/earn read off G (not the raw rcfg row)
-  // because target_mult/earn_mult modifiers (picky_judge/tax_season) already
+  // because target_mult/earn_mult modifiers (e.g. picky_judge) already
   // baked their multiplier into G.tgt/G.earn at round setup (goShop) — the
   // prep screen must show the modified number, not the sheet's raw value.
   const cfg=rcfg(G.round);
