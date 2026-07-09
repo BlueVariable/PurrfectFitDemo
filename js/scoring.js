@@ -130,6 +130,11 @@ function doFit(){
   const boardFull=filledCells===playableCells&&playableCells>0;
   const boardBonus=boardFull?boardFillBonus(playableCells,CFG.board_fill_bonus||5,G.roundModifier):0;
   G.totalFits=(G.totalFits||0)+1;
+  // Run-level cumulative count of cats scored — persists across hands AND rounds
+  // (reset only by newGame). big_bite reads it so its decay carries over the whole
+  // run. Incremented here, in the real fit only; projectScore() has its own scan
+  // and never reaches this line, so projections don't advance the counter.
+  G.catsScoredRun=(G.catsScoredRun||0)+scoredGids.size;
   if(boardFull){G.totalPurrfects=(G.totalPurrfects||0)+1;G.purrfectsThisRound=(G.purrfectsThisRound||0)+1;}
 
   // Feature 3 — purrfect streak + near-miss TRACKING lives here (not in
