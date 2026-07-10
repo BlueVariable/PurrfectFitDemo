@@ -120,7 +120,7 @@ function selectBranch(branchId){
   const branch=branches.find(b=>b.id===branchId);
   if(!branch)return;
   newGameFromBranch(branchId);
-  openRounds();
+  openCalendar();
 }
 
 // ── Navigate to branches screen ──
