@@ -12,7 +12,7 @@ function openDeckPopup(){
   sorted.forEach(cat=>{
     const d=document.createElement('div');
     d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
-    d.innerHTML=shpHTML(cat.cells,cat.col,10)+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
+    d.innerHTML=((typeof catArtHTML==='function'&&catArtHTML(cat.shape,cat.type,46))||shpHTML(cat.cells,cat.col,10))+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
     grid.appendChild(d);
   });
   g('ov-deck').classList.remove('off');
@@ -37,7 +37,7 @@ function openDeckPreview(deckId){
   previewCards.forEach(cat=>{
     const d=document.createElement('div');
     d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
-    d.innerHTML=shpHTML(cat.cells,cat.col,10)+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
+    d.innerHTML=((typeof catArtHTML==='function'&&catArtHTML(cat.shape,cat.type,46))||shpHTML(cat.cells,cat.col,10))+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
     grid.appendChild(d);
   });
   const deckName=(DECK_META[deckId]&&DECK_META[deckId].name)||deckId;
@@ -353,8 +353,11 @@ function renderBoard(){
     }
     if(bd.filled){
       div.classList.add('filled');
-      div.style.background=bd.col;
-      div.style.borderColor='rgba(255,255,255,.18)';
+      // Arted cat cells keep only a faint tint so the illustration overlay
+      // (renderCatArtLayer) reads cleanly; treats and art-less cats fill solid.
+      const catHasArt=bd.kind==='cat'&&typeof hasCatArt==='function'&&hasCatArt(bd.shape,bd.type);
+      div.style.background=catHasArt?bd.col+'26':bd.col;
+      div.style.borderColor=catHasArt?'rgba(255,255,255,.10)':'rgba(255,255,255,.18)';
       div.title=bd.kind==='cat'?'Click to pick up':'Click to return to backpack';
       if(bd.kind==='cat'){
         div.textContent='';
@@ -391,6 +394,7 @@ function renderBoard(){
     },{passive:false});
     el.appendChild(div);
   }
+  if(typeof renderCatArtLayer==='function')renderCatArtLayer();
 }
 
 function renderHand(){
@@ -399,7 +403,8 @@ function renderHand(){
     const isHeld=H.kind==='cat'&&H.handIdx===i;
     const d=document.createElement('div');
     d.className='cslot'+(isHeld?' held':'');
-    d.innerHTML=shpHTML(cat.cells,cat.col,25)+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
+    const handArt=(typeof catArtHTML==='function')&&catArtHTML(cat.shape,cat.type,110);
+    d.innerHTML=(handArt||shpHTML(cat.cells,cat.col,25))+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
       // compute grab offset within the mini shape preview

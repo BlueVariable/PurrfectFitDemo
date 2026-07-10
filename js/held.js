@@ -361,15 +361,34 @@ function updateGhost(){
   const grid=g('gh-grid');
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.style.gap=gap+'px';
+  grid.style.position='relative';
   grid.innerHTML='';
+  // Resolve cat art so the drag ghost shows the illustration (not blocks),
+  // matching the board/hand rendering. Treats (no shape/type) return null.
+  const catInfo=(H.kind==='cat'&&typeof catArtInfo==='function')?catArtInfo(H.data&&H.data.shape,H.data&&H.data.type):null;
   cells.forEach(row=>row.forEach(v=>{
     const d=document.createElement('div');
     d.className='gh-cell';
     d.style.width=cs+'px';d.style.height=cs+'px';
-    if(v){d.style.background=H.color;d.style.borderColor='rgba(255,255,255,.55)';}
+    if(v){d.style.background=catInfo?H.color+'33':H.color;d.style.borderColor=catInfo?'rgba(255,255,255,.35)':'rgba(255,255,255,.55)';}
     else{d.style.background='transparent';d.style.border='none';}
     grid.appendChild(d);
   }));
+  // Illustration overlay across the (already-rotated) ghost bounding box.
+  if(catInfo){
+    const rows=cells.length;
+    const fullW=cols*cs+(cols-1)*gap, fullH=rows*cs+(rows-1)*gap;
+    const total=(catInfo.drawRot+(H.rot||0))%4;
+    const odd=total%2===1;
+    const imgW=odd?fullH:fullW, imgH=odd?fullW:fullH;
+    const wrap=document.createElement('div');
+    wrap.className='cat-art-board';
+    wrap.style.cssText=`left:0;top:0;width:${fullW}px;height:${fullH}px;`;
+    const img=document.createElement('img');
+    img.className='cat-art-img';img.src=catInfo.src;img.alt='';
+    img.style.cssText=`width:${imgW}px;height:${imgH}px;transform:rotate(${total*90}deg)${catInfo.mirror?' scaleX(-1)':''};`;
+    wrap.appendChild(img);grid.appendChild(wrap);
+  }
   // Position ghost so the (grabDr, grabDc) cell sits exactly at the cursor.
   const offX=H.grabDc*(cs+gap)+cs/2;
   const offY=H.grabDr*(cs+gap)+cs/2;
