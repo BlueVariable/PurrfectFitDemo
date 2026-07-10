@@ -14,9 +14,10 @@
 // Shapes/types with no asset (e.g. the 1×1 `uno`) fall back to the classic
 // colored-block rendering via the null return.
 
-// game cat type -> asset colour suffix. `black` has no dedicated art, so it
-// reuses the Siamese illustration (chosen deliberately, see design notes).
-const CAT_ART_COLOR = { orange:'Orange', grey:'Gray', tabby:'Tabby', black:'Siamese' };
+// game cat type -> asset colour suffix. The `black` type was renamed to
+// `siamese` in the sheet; `black` is kept here as a fallback so cats still get
+// art while the published-CSV rename propagates (it lags a few minutes).
+const CAT_ART_COLOR = { orange:'Orange', grey:'Gray', tabby:'Tabby', siamese:'Siamese', black:'Siamese' };
 
 // game shape id -> asset stem (+ mirror flag). Shapes absent here fall back to
 // blocks. J = L mirrored, S = Z mirrored (no dedicated art for the mirrors).
@@ -26,16 +27,30 @@ const CAT_ART_SHAPE = {
   chonk:{a:'Chonk'}, cross:{a:'Cross'}, chonker:{a:'Chonker'}, chonkest:{a:'Chonkest'},
 };
 
-// Some assets were drawn in a different orientation than the game's canonical
-// rot=0 grid. drawRot = number of 90°-clockwise turns to bring the AS-DRAWN
-// art onto the canonical grid. Only Chonker differs (drawn landscape while its
-// grid is portrait). Calibrated visually.
-const CAT_ART_DRAWROT = { chonker:1 };
+// The grid orientation each asset was DRAWN in (the one where its cat face is
+// UPRIGHT). The shipped Shapes tab was re-oriented to match these exactly, so
+// drawRot resolves to 0 and faces are upright. Computing drawRot from the LIVE
+// grid (rather than hard-coding it) keeps the art aligned to the cells even if
+// a grid is oriented differently — e.g. during the brief published-CSV lag
+// after a Shapes edit — instead of spilling the cat into the wrong cells.
+// Shapes not listed here were drawn in the same orientation as their grid.
+const CAT_ART_ASSET_GRID = {
+  T:       [[0,1,0],[1,1,1]],
+  corner:  [[1,0],[1,1]],
+  chonker: [[1,1,0],[1,1,1]],
+};
+// # of 90°-CW turns to bring the AS-DRAWN asset onto the live rot=0 grid.
+function catArtDrawRot(shape){
+  const a=CAT_ART_ASSET_GRID[shape];
+  if(!a||typeof CSHAPES==='undefined'||!CSHAPES[shape])return 0;
+  for(let k=0;k<4;k++){ if(catGridsEqual(rotC(a,k),CSHAPES[shape]))return k; }
+  return 0;
+}
 
 function catArtInfo(shape,type){
   const s=CAT_ART_SHAPE[shape], color=CAT_ART_COLOR[type];
   if(!s||!color)return null;
-  return { src:`assets/cats/${s.a}_${color}.png`, mirror:!!s.mirror, drawRot:(CAT_ART_DRAWROT[shape]||0) };
+  return { src:`assets/cats/${s.a}_${color}.png`, mirror:!!s.mirror, drawRot:catArtDrawRot(shape) };
 }
 function hasCatArt(shape,type){ return !!catArtInfo(shape,type); }
 
