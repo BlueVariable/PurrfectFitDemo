@@ -656,6 +656,16 @@ function addLogLine(parent,text){
   line.textContent=text;
   parent.appendChild(line);
   setTimeout(()=>line.classList.add('show'),20);
+  // Keep the running log compact: it's anchored in the bottom margin and grows
+  // upward, so an uncapped stack climbs into the board and overlaps the per-cat
+  // score labels. Retire the oldest lines so only the most recent few show.
+  const MAX_LINES=3;
+  const lines=parent.querySelectorAll('.seq-log-line:not(.seq-log-retire)');
+  for(let i=0;i<lines.length-MAX_LINES;i++){
+    const old=lines[i];
+    old.classList.add('seq-log-retire');
+    setTimeout(()=>old.remove(),220);
+  }
 }
 
 function endScoreSequence(total){

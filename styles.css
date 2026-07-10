@@ -322,9 +322,9 @@ body::before{display:none;}
 }
 .score-continue-btn.show{opacity:1;}
 .seq-log{
-  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12% + 60px);
+  position:fixed;left:50%;transform:translateX(-50%);bottom:16px;
   display:flex;flex-direction:column;align-items:center;gap:4px;z-index:401;
-  max-width:320px;width:90%;
+  max-width:320px;width:90%;pointer-events:none;
 }
 .seq-log-line{
   background:rgba(26,26,42,.9);color:#fff;border-radius:10px;
@@ -332,6 +332,8 @@ body::before{display:none;}
   opacity:0;transform:translateY(8px);transition:all .25s;text-align:center;
 }
 .seq-log-line.show{opacity:1;transform:translateY(0);}
+/* Oldest lines fade up and out so the log stays a compact bottom-margin strip. */
+.seq-log-line.seq-log-retire{opacity:0;transform:translateY(-6px);}
 /* ── Feature 3: purrfect streak + near-miss callouts ── */
 @keyframes streak-callout-in{
   0%{opacity:0;transform:translateX(-50%) scale(.4) rotate(-6deg);}
