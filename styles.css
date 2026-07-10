@@ -716,6 +716,27 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .rds-btn-cafe.armed{background:#d04545;box-shadow:0 4px 0 #902020;animation:cafe-arm-wiggle .3s ease;}
 @keyframes cafe-arm-wiggle{0%,100%{transform:rotate(0)}30%{transform:rotate(-2deg)}70%{transform:rotate(2deg)}}
 
+/* Coffee Break hover/focus tooltip (wraps the button in #cb-tip-wrap). */
+.cb-tip-wrap{position:relative;display:flex;justify-content:center;}
+.cb-tip{
+  position:absolute;bottom:100%;left:50%;z-index:60;width:244px;
+  margin-bottom:12px;padding:12px 14px;
+  transform:translateX(-50%) translateY(6px);
+  background:#3a2a1d;color:#fff6ea;text-align:left;
+  border:2.5px solid #1a1a2a;border-radius:14px;box-shadow:3px 3px 0 #1a1a2a;
+  opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;
+}
+.cb-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:9px solid transparent;border-top-color:#1a1a2a;}
+.cb-tip::before{content:'';position:absolute;top:100%;left:50%;z-index:1;margin-top:-3px;
+  transform:translateX(-50%);border:7px solid transparent;border-top-color:#3a2a1d;}
+.cb-tip-title{font-family:'Fredoka One',cursive;font-size:13px;letter-spacing:.4px;color:#f5c98a;margin-bottom:5px;}
+.cb-tip-body{font-size:11px;line-height:1.42;}
+.cb-tip-body b{color:#ffd9a0;}
+.cb-tip-cost{font-size:10px;line-height:1.4;margin-top:7px;color:rgba(255,246,234,.72);font-style:italic;}
+.cb-tip-wrap:hover .cb-tip,
+#btn-coffee-break:focus-visible ~ .cb-tip{opacity:1;transform:translateX(-50%) translateY(0);}
+
 #s-cafe{flex-direction:column;align-items:stretch;background:#4a3626;overflow:hidden;}
 #s-cafe .sp-topbar{background:#3a2a1d;}
 .cafe-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:16px;padding:22px 24px 40px;}

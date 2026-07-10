@@ -107,7 +107,14 @@
       </div>
       <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
       <button class="rds-btn-play" onclick="startRound()">▶ PLAY ROUND</button>
-      <button class="rds-btn-cafe" id="btn-coffee-break" onclick="coffeeBreakClick()" style="display:none;" title="Skip this round to draft one free treat (rare or better).&#10;In exchange you forfeit this round's earnings, and your next shop stays closed (selling still allowed).&#10;Boss rounds can't be skipped.">COFFEE BREAK ☕</button>
+      <div class="cb-tip-wrap" id="cb-tip-wrap" style="display:none;">
+        <button class="rds-btn-cafe" id="btn-coffee-break" onclick="coffeeBreakClick()" aria-describedby="cb-tip">COFFEE BREAK ☕</button>
+        <div class="cb-tip" id="cb-tip" role="tooltip">
+          <div class="cb-tip-title">☕ Coffee Break — skip this round</div>
+          <div class="cb-tip-body">Draft <b>one free treat</b> (rare or better) from a blend of your choice.</div>
+          <div class="cb-tip-cost">In return you forfeit this round's earnings and your next shop stays closed — you can still sell. Boss rounds can't be skipped.</div>
+        </div>
+      </div>
       <div class="rds-hint" id="rds-hint"></div>
     </div>
     <div></div>
