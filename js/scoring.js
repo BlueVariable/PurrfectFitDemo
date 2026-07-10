@@ -704,6 +704,21 @@ function roundWin(){
   void wi.offsetWidth;
   wi.classList.add('visible');
 }
+// Round-advance seam shared by the normal round-win path (goShop) and the
+// Coffee Break skip path (cafeFinish in js/cafe.js). Assumes G.round has
+// already been advanced to the incoming round and is <= RCFG.length: rolls
+// that round's modifier, board layout, stats, deck and first hand.
+function advanceRoundSetup(){
+  // Pick this round's modifier (if any) BEFORE board layout / dealHand so
+  // board_size_delta, blocked_mult, hand_size_delta etc. are already in
+  // effect for every board/hand generation that happens this round.
+  G.roundModifier=pickRoundModifier(G.round);
+  const c=rcfg(G.round);
+  const layout=setupBoardLayout(G.round,G.roundModifier);
+  G.tgt=applyTargetMult(c.tgt,G.roundModifier);G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=applyEarnMult(c.earn,G.roundModifier);G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
+  G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
+  applyModifiers();
+}
 function goShop(){
   const cc=document.querySelector('.cc');
   const rc=document.querySelector('.rc');
@@ -719,6 +734,9 @@ function goShop(){
   // when even a repack can't seat it) — and round end is also the natural
   // retry point for a pending grace shrink. Resync width now.
   bpReconcileWidth();
+  // Coffee Break's shop closure lasts exactly one prep screen — a round
+  // actually played and won always reopens the shop.
+  G.shopClosed=false;
   G.round++;
   if(G.round>RCFG.length){
     if(G.branchId)markBranchComplete(G.branchId);
@@ -727,15 +745,7 @@ function goShop(){
     showBranchWin();
     return;
   }
-  // Pick this round's modifier (if any) BEFORE board layout / dealHand so
-  // board_size_delta, blocked_mult, hand_size_delta etc. are already in
-  // effect for every board/hand generation that happens this round.
-  G.roundModifier=pickRoundModifier(G.round);
-  const c=rcfg(G.round);
-  const layout=setupBoardLayout(G.round,G.roundModifier);
-  G.tgt=applyTargetMult(c.tgt,G.roundModifier);G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=applyEarnMult(c.earn,G.roundModifier);G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
-  G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
-  applyModifiers();
+  advanceRoundSetup();
   openRounds();
 }
 

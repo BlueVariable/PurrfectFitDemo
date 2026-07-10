@@ -197,7 +197,7 @@ function newGame(deckId){
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
-    lastScore:0,selBpGid:null,visitedShop:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
+    lastScore:0,selBpGid:null,visitedShop:false,shopClosed:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
     branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,
     roundModifier:null,
   };

@@ -107,6 +107,7 @@
       </div>
       <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
       <button class="rds-btn-play" onclick="startRound()">▶ PLAY ROUND</button>
+      <button class="rds-btn-cafe" id="btn-coffee-break" onclick="coffeeBreakClick()" style="display:none;">COFFEE BREAK ☕</button>
       <div class="rds-hint" id="rds-hint"></div>
     </div>
     <div></div>
@@ -137,6 +138,24 @@
         <div class="treat-sec-flavor" id="treats-flavor"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- CAFÉ (Coffee Break — round skip reward draft, see js/cafe.js) -->
+<div id="s-cafe" class="scr">
+  <div class="sp-topbar">
+    <div class="rds-title" style="margin-left:8px;">COFFEE BREAK ☕</div>
+    <div class="sp-mon">
+      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="cafe-cash">0</span></span>
+    </div>
+  </div>
+  <div class="cafe-body">
+    <div class="cafe-hdr">
+      <div class="cafe-title" id="cafe-title">☕ Choose your blend</div>
+      <div class="cafe-sub" id="cafe-sub"></div>
+    </div>
+    <div class="cafe-grid" id="cafe-grid"></div>
+    <div class="cafe-foot" id="cafe-foot"></div>
   </div>
 </div>
 
@@ -405,5 +424,6 @@
 <script src="js/scoring.js"></script>
 <script src="js/projection.js"></script>
 <script src="js/shop.js"></script>
+<script src="js/cafe.js"></script>
 </body>
 </html>

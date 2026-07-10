@@ -65,7 +65,7 @@ function exitToMenu(){
 function openRounds(){
   shopBoughtIds=new Set();
   rerollExtraCost=0;
-  g('shop-sub').textContent=G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
+  g('shop-sub').textContent=G.shopClosed?'"the shopkeeper took a coffee break too!"':G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
   G.visitedShop=true;
   shopPool=generateShopPool();
   renderShopFull();
@@ -102,6 +102,9 @@ function renderRoundsTrack(){
   const re=g('rds-earn');if(re)re.textContent='+$'+G.earn;
   const rb=g('rds-board');if(rb)rb.textContent=(cfg.boardSize||(G.bsr*G.bsc))+' cells';
   renderRoundModifierCard();
+  // Coffee Break button visibility + confirm-state reset (js/cafe.js).
+  // typeof-guarded: render.js loads before cafe.js in index.html.
+  if(typeof updateCoffeeBreakButton==='function')updateCoffeeBreakButton();
 }
 
 // Prep-screen "boss round" card — shown only when the upcoming round has a modifier.
