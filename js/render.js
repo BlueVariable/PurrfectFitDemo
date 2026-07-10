@@ -285,14 +285,14 @@ function showBoardTip(e,r,c){
     const grp=G.cats.find(g=>g.cells.some(([gr,gc])=>gr===r&&gc===c));
     if(!grp)return;
     const base=grp.cells.length*(CFG.base_score_per_cell||10);
-    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:var(--or)">${cap(grp.type)} Cat</div><div style="font-size:10px;margin-top:2px;">${grp.shape} shape · ${grp.cells.length} cells</div><div style="color:#72cc60;margin-top:2px;">Base: +${base} pts</div>`;
+    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:var(--or)">${cap(grp.type)} Cat</div><div style="font-size:13px;margin-top:3px;">${grp.shape} shape · ${grp.cells.length} cells</div><div style="font-size:13px;color:#72cc60;margin-top:3px;">Base: +${base} pts</div>`;
   } else if(bd.kind==='treat'){
     const gid=bd.gid;
     const ti=G.treats.find(t=>t.gid===gid);
     if(!ti)return;
     const td=ti.tdef;
     const curEf=treatCurrentEf(td);
-    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:9px;color:#9a7ed7;margin-top:2px;">${td.addEf}${curEf?` <span style="color:#e040a0">${curEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
+    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:13px;margin-top:4px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:11px;color:#9a7ed7;margin-top:3px;">${td.addEf}${curEf?` <span style="color:#e040a0">${curEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:11px;color:var(--or);margin-top:3px;">${td.req}</div>`:''}`;
   }
   tip.style.display='block';
   moveBoardTip(e);
@@ -300,7 +300,7 @@ function showBoardTip(e,r,c){
 function moveTip(e){
   const tip=g('board-tip');
   if(tip.style.display==='none')return;
-  tip.style.left=Math.min(e.clientX+14,window.innerWidth-190)+'px';
+  tip.style.left=Math.min(e.clientX+14,window.innerWidth-240)+'px';
   tip.style.top=Math.max(e.clientY-8,4)+'px';
 }
 function moveBoardTip(e){moveTip(e);}
@@ -312,7 +312,7 @@ function showBPTip(e,r,c){
   const fail=treatReqFails(td);
   const tip=g('board-tip');
   const bpCurEf=treatCurrentEf(td);
-  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:9px;color:#9a7ed7;margin-top:2px;">${td.addEf}${bpCurEf?` <span style="color:#e040a0">${bpCurEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:9px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}${fail?'<div style="font-size:9px;color:#f04040;margin-top:3px;">⚠ Requirement not met</div>':''}`;
+  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:13px;margin-top:4px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:11px;color:#9a7ed7;margin-top:3px;">${td.addEf}${bpCurEf?` <span style="color:#e040a0">${bpCurEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:11px;color:var(--or);margin-top:3px;">${td.req}</div>`:''}${fail?'<div style="font-size:11px;color:#f04040;margin-top:4px;">⚠ Requirement not met</div>':''}`;
   tip.style.display='block';
   moveBPTip(e);
 }
