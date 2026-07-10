@@ -199,7 +199,7 @@ function newGame(deckId){
     board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,shopClosed:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
     branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,
-    roundModifier:null,
+    roundModifier:null,roundLog:{},
   };
   // The bp grid in the literal above was sized with getBPR()/getBPC() reading
   // the PREVIOUS game's G (tote ownership, bp-small/bp-large overrides), so it

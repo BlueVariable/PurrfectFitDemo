@@ -73,10 +73,41 @@
   <div class="br-scroll" id="br-body"></div>
 </div>
 
+<!-- THE WORK WEEK (calendar hub between rounds, see js/calendar.js) -->
+<div id="s-calendar" class="scr">
+  <div class="sp-topbar cal-topbar">
+    <button class="sp-back" onclick="exitToMenu()">← Menu</button>
+    <div class="rds-title">THE WORK WEEK</div>
+    <div class="sp-mon">
+      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="cal-cash">0</span></span>
+    </div>
+  </div>
+  <div class="cal-body">
+    <div class="cal-tagline">punch in · place cats · hit your targets — 5 days, 15 fits 🐾</div>
+    <div class="cal-week" id="cal-week"></div>
+    <div class="cal-choose" id="cal-choose">
+      <div class="cal-round-line" id="cal-round-line"></div>
+      <div class="cal-mod" id="cal-mod" style="display:none;"></div>
+      <div class="cal-cards">
+        <div class="cal-card cal-shop-card" onclick="goToShopFromCalendar()">
+          <div class="cal-card-em">🏪</div>
+          <div class="cal-card-nm">GO TO SHOP</div>
+          <div class="cal-card-desc" id="cal-shop-desc">buy treats, then play the round</div>
+        </div>
+        <div class="cal-card cal-cb-card" id="cal-cb-card" onclick="calCoffeeBreak()">
+          <div class="cal-card-em">☕</div>
+          <div class="cal-card-nm" id="cal-cb-title">COFFEE BREAK ☕</div>
+          <div class="cal-card-desc" id="cal-cb-desc">skip today — draft one free treat</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ROUNDS / SHOP (combined) -->
 <div id="s-rounds" class="scr">
   <div class="sp-topbar">
-    <button class="sp-back" onclick="exitToMenu()">← Menu</button>
+    <button class="sp-back" onclick="backToCalendar()">← Week</button>
     <div class="rds-title">PURRFECT FIT</div>
     <div class="sp-mon">
       <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="shop-cash">0</span></span>
@@ -433,5 +464,6 @@
 <script src="js/projection.js"></script>
 <script src="js/shop.js"></script>
 <script src="js/cafe.js"></script>
+<script src="js/calendar.js"></script>
 </body>
 </html>

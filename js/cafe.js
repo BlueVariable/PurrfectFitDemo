@@ -78,7 +78,9 @@ function updateCoffeeBreakButton(){
   // The button lives inside #cb-tip-wrap (button + hover tooltip); toggle the
   // wrapper so a hidden coffee break leaves no phantom flex-gap in .sp-left.
   const wrap=g('cb-tip-wrap');
-  if(wrap)wrap.style.display=coffeeBreakAvailable()?'':'none';
+  // The Coffee Break fork now lives on the work-week calendar (js/calendar.js);
+  // keep the legacy prep-screen button hidden so there's a single fork point.
+  if(wrap)wrap.style.display='none';
 }
 function coffeeBreakClick(){
   if(!coffeeBreakAvailable())return;
@@ -121,6 +123,9 @@ function openCafe(){
   // as goShop(): width reconcile, closure flag, round advance, then the
   // shared advanceRoundSetup() seam.
   _cafeSkippedRound=G.round;
+  // Stamp the skipped day on the work-week calendar (js/calendar.js): a coffee
+  // cup instead of hand-boxes. Coffee Break is non-boss only, so boss:false.
+  if(G.roundLog)G.roundLog[_cafeSkippedRound]={skipped:true,boss:false};
   bpReconcileWidth(); // round end is a pending-grace-shrink retry point on the win path too
   G.shopClosed=true;  // boards up the NEXT prep's shop; cleared by goShop() on the next real round win
   G.round++;
@@ -293,6 +298,6 @@ function cafeDecline(){
 function cafeFinish(){
   // The skip itself was committed at café entry (openCafe) — G.round,
   // G.shopClosed and the next round's setup are already in place. This
-  // just returns to the (already-advanced) next round's prep screen.
-  openRounds();
+  // just returns to the (already-advanced) next round's calendar hub.
+  openCalendar();
 }

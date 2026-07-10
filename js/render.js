@@ -53,7 +53,7 @@ function menuUpdateContinue(){
 }
 function menuContinue(){
   if(!gameInProgress)return;
-  openRounds();
+  openCalendar();
 }
 function menuPlay(){goToBranches();}
 function exitToMenu(){

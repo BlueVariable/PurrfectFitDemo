@@ -698,6 +698,13 @@ function endScoreSequence(total){
 }
 
 function roundWin(){
+  // Stamp the work-week calendar (js/calendar.js): how many of this round's
+  // hands it took to clear (fewer = cleared faster). Recorded here, the single
+  // win funnel, while G.round still points at the just-won round.
+  if(G.roundLog){
+    const _mx=G.maxHands||G.hands;
+    G.roundLog[G.round]={hands:Math.max(0,_mx-G.hands),max:_mx,boss:!!G.roundModifier};
+  }
   // base earn + configurable payout per unused hand remaining (General → unused_hand_bonus, default 1)
   const perHand=CFG.unused_hand_bonus!=null?Number(CFG.unused_hand_bonus):1;
   const bonus=G.hands*perHand;
@@ -756,7 +763,7 @@ function goShop(){
     return;
   }
   advanceRoundSetup();
-  openRounds();
+  openCalendar();
 }
 
 function showBranchWin(){
