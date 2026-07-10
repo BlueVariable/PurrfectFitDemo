@@ -75,7 +75,10 @@ function updateCoffeeBreakButton(){
   if(_cbArmTimer){clearTimeout(_cbArmTimer);_cbArmTimer=null;}
   btn.textContent='COFFEE BREAK ☕';
   btn.classList.remove('armed');
-  btn.style.display=coffeeBreakAvailable()?'':'none';
+  // The button lives inside #cb-tip-wrap (button + hover tooltip); toggle the
+  // wrapper so a hidden coffee break leaves no phantom flex-gap in .sp-left.
+  const wrap=g('cb-tip-wrap');
+  if(wrap)wrap.style.display=coffeeBreakAvailable()?'':'none';
 }
 function coffeeBreakClick(){
   if(!coffeeBreakAvailable())return;
