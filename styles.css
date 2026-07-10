@@ -801,95 +801,100 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   background-size:34px 34px;
 }
 #s-calendar .sp-topbar{background:#59697d;}
-.cal-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:18px;padding:20px 24px 40px;}
-.cal-tagline{font-size:13px;color:rgba(255,255,255,.72);font-style:italic;letter-spacing:.3px;text-align:center;}
+#s-calendar .rds-title{font-size:clamp(20px,1.7vw,30px);letter-spacing:3px;}
+.cal-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:clamp(16px,2.4vh,36px);padding:clamp(18px,3vh,44px) clamp(20px,3vw,48px);}
+.cal-tagline{font-size:clamp(14px,1.15vw,19px);color:rgba(255,255,255,.72);font-style:italic;letter-spacing:.3px;text-align:center;}
 
 /* week grid — one column per day (columns set inline in renderCalendar) */
-.cal-week{display:grid;gap:14px;width:100%;max-width:940px;}
+.cal-week{display:grid;gap:clamp(12px,1.1vw,22px);width:min(1720px,95vw);}
 .cal-day{
-  display:flex;flex-direction:column;gap:7px;
+  display:flex;flex-direction:column;gap:clamp(7px,.6vw,11px);
   background:rgba(255,255,255,.08);
-  border:2.5px solid rgba(26,26,42,.45);border-radius:16px;padding:8px 8px 10px;
+  border:3px solid rgba(26,26,42,.45);border-radius:18px;padding:clamp(9px,.7vw,14px);
   transition:all .15s;
 }
-.cal-day.future{opacity:.62;}
+.cal-day.future{opacity:.6;}
 .cal-day.today{
-  border-color:#f5c200;background:rgba(245,194,0,.13);
-  box-shadow:0 0 0 3px rgba(245,194,0,.28);
+  border-color:#f5c200;background:rgba(245,194,0,.14);
+  box-shadow:0 0 0 clamp(3px,.35vw,5px) rgba(245,194,0,.28);
 }
-.cal-day-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:1px 4px 2px;}
-.cal-day-nm{font-family:'Fredoka One',cursive;font-size:15px;color:#fff;letter-spacing:1.5px;}
+.cal-day-hdr{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px clamp(6px,.5vw,9px);margin-bottom:clamp(2px,.3vw,5px);border-bottom:2px solid rgba(255,255,255,.14);}
+.cal-day-nm{font-family:'Fredoka One',cursive;font-size:clamp(17px,1.5vw,26px);color:#fff;letter-spacing:1.5px;}
 .cal-day.today .cal-day-nm{color:#ffe680;text-shadow:0 1px 3px rgba(0,0,0,.35);}
-.cal-day-lbl{font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;font-weight:800;}
-.cal-slots{display:flex;flex-direction:column;gap:6px;}
+.cal-day-lbl{font-size:clamp(9px,.75vw,13px);color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;font-weight:800;}
+.cal-slots{display:flex;flex-direction:column;gap:clamp(7px,.6vw,11px);}
 
 /* individual round cells */
 .cal-cell{
-  background:#fff;border:2.5px solid #1a1a2a;border-radius:10px;
-  box-shadow:2px 2px 0 #1a1a2a;padding:5px 6px 6px;
-  display:flex;flex-direction:column;gap:2px;min-height:66px;text-align:center;
+  background:#fff;border:3px solid #1a1a2a;border-radius:12px;
+  box-shadow:3px 3px 0 #1a1a2a;padding:clamp(8px,.7vw,13px);
+  display:flex;flex-direction:column;gap:clamp(3px,.35vw,6px);
+  min-height:clamp(84px,9.5vh,128px);text-align:center;
 }
 .cal-cell.done{background:#e7f4e6;}
 .cal-cell.done.skipped{background:#efe4d5;}
-.cal-cell.future{background:rgba(255,255,255,.6);box-shadow:1px 1px 0 rgba(26,26,42,.55);}
-.cal-cell.today{background:#fff7d6;border-color:#c79a00;box-shadow:2px 2px 0 #c79a00;}
+.cal-cell.future{background:rgba(255,255,255,.6);box-shadow:2px 2px 0 rgba(26,26,42,.5);}
+.cal-cell.today{background:#fff7d6;border-color:#c79a00;box-shadow:3px 3px 0 #c79a00;}
 .cal-cell.boss{background:#2d1b69;color:#fff;}
-.cal-cell.boss.today{border-color:#f5c200;box-shadow:2px 2px 0 #c79a00;}
+.cal-cell.boss.today{border-color:#f5c200;box-shadow:3px 3px 0 #c79a00;}
 .cal-cell.boss.future{background:rgba(45,27,105,.6);}
-.cal-cell-top{display:flex;align-items:center;justify-content:center;gap:4px;}
-.cal-rnum{font-family:'Fredoka One',cursive;font-size:12px;color:#1a1a2a;letter-spacing:.5px;}
+.cal-cell-top{display:flex;align-items:center;justify-content:center;gap:clamp(4px,.4vw,7px);flex-wrap:wrap;}
+.cal-rnum{font-family:'Fredoka One',cursive;font-size:clamp(15px,1.15vw,21px);color:#1a1a2a;letter-spacing:.5px;}
 .cal-cell.boss .cal-rnum{color:#fff;}
-.cal-boss-tag{font-size:7px;font-weight:900;letter-spacing:1px;color:#f5c200;text-transform:uppercase;}
-.cal-cell-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:26px;}
-.cal-boxes{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;max-width:56px;}
-.cal-box{width:9px;height:9px;border-radius:2px;border:1.5px solid #3a8030;background:transparent;}
+.cal-boss-tag{font-size:clamp(8px,.6vw,11px);font-weight:900;letter-spacing:1px;color:#f5c200;text-transform:uppercase;}
+.cal-cell-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,.3vw,5px);min-height:clamp(30px,4vh,50px);}
+.cal-boxes{display:flex;gap:clamp(2px,.25vw,4px);flex-wrap:wrap;justify-content:center;max-width:clamp(66px,7vw,104px);}
+.cal-box{width:clamp(10px,.9vw,15px);height:clamp(10px,.9vw,15px);border-radius:3px;border:2px solid #3a8030;background:transparent;}
 .cal-box.fill{background:#5ab855;}
 .cal-cell.boss .cal-box{border-color:rgba(255,255,255,.55);}
 .cal-cell.boss .cal-box.fill{background:#f5c200;border-color:#f5c200;}
-.cal-hands-lbl{font-size:8px;font-weight:900;letter-spacing:.3px;color:#3a8030;text-transform:uppercase;}
+.cal-hands-lbl{font-size:clamp(10px,.8vw,14px);font-weight:900;letter-spacing:.3px;color:#3a8030;text-transform:uppercase;}
 .cal-cell.boss .cal-hands-lbl{color:#f5c200;}
-.cal-tok{font-size:24px;line-height:1;}
+.cal-tok{font-size:clamp(30px,3.2vw,48px);line-height:1;}
 .cal-tok.today-tok{animation:bounce 1.5s ease-in-out infinite;}
-.cal-tok.future-tok{font-size:16px;opacity:.55;}
-.cal-tok.skip-tok{font-size:21px;}
-.cal-cell-foot{font-size:9px;font-weight:800;color:#7a8090;letter-spacing:.2px;}
+.cal-tok.future-tok{font-size:clamp(20px,2vw,30px);opacity:.5;}
+.cal-tok.skip-tok{font-size:clamp(26px,2.6vw,40px);}
+.cal-cell-foot{font-size:clamp(11px,.9vw,15px);font-weight:800;color:#7a8090;letter-spacing:.2px;}
 .cal-cell.boss .cal-cell-foot{color:rgba(255,255,255,.7);}
 .cal-cell.today .cal-cell-foot{color:#8a6a00;}
 
 /* the fork — Go to Shop vs Coffee Break */
 .cal-choose{
-  display:flex;flex-direction:column;align-items:center;gap:11px;
-  background:rgba(0,0,0,.15);border:2px solid rgba(0,0,0,.2);border-radius:18px;
-  padding:15px 20px 18px;max-width:660px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.1vw,16px);
+  background:rgba(0,0,0,.15);border:2.5px solid rgba(0,0,0,.22);border-radius:22px;
+  padding:clamp(16px,1.7vw,26px) clamp(20px,2vw,34px) clamp(18px,1.9vw,30px);
+  max-width:min(1000px,92vw);width:100%;
 }
-.cal-round-line{font-family:'Fredoka One',cursive;font-size:16px;color:#fff;letter-spacing:.4px;text-align:center;}
+.cal-round-line{font-family:'Fredoka One',cursive;font-size:clamp(18px,1.5vw,26px);color:#fff;letter-spacing:.4px;text-align:center;}
 .cal-round-line b{color:#ffe680;}
 .cal-mod{
-  display:flex;align-items:center;gap:9px;background:#2d1b69;
-  border:2px solid #1a1a2a;border-radius:12px;padding:6px 13px;
-  box-shadow:2px 2px 0 #1a1a2a;max-width:540px;
+  display:flex;align-items:center;gap:clamp(9px,.9vw,14px);background:#2d1b69;
+  border:2.5px solid #1a1a2a;border-radius:14px;padding:clamp(7px,.7vw,11px) clamp(12px,1.2vw,18px);
+  box-shadow:3px 3px 0 #1a1a2a;max-width:min(620px,90vw);
 }
-.cal-mod-em{font-size:22px;line-height:1;flex-shrink:0;}
-.cal-mod-tx{font-size:11px;color:rgba(255,255,255,.82);text-align:left;line-height:1.35;}
+.cal-mod-em{font-size:clamp(22px,2vw,30px);line-height:1;flex-shrink:0;}
+.cal-mod-tx{font-size:clamp(12px,1vw,15px);color:rgba(255,255,255,.82);text-align:left;line-height:1.35;}
 .cal-mod-tx b{color:#fff;font-family:'Fredoka One',cursive;font-weight:400;letter-spacing:.3px;}
-.cal-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+.cal-cards{display:flex;gap:clamp(14px,1.6vw,26px);flex-wrap:wrap;justify-content:center;width:100%;}
 .cal-card{
-  width:236px;border:3px solid #1a1a2a;border-radius:16px;cursor:pointer;
-  padding:14px 16px 15px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  flex:1 1 clamp(240px,23vw,380px);max-width:400px;
+  border:3px solid #1a1a2a;border-radius:18px;cursor:pointer;
+  padding:clamp(16px,1.5vw,24px) clamp(18px,1.6vw,28px);
+  display:flex;flex-direction:column;align-items:center;gap:clamp(4px,.5vw,8px);
   text-align:center;transition:all .12s;
 }
-.cal-card:hover{transform:translateY(-2px);}
-.cal-card:active{transform:translateY(2px);}
-.cal-shop-card{background:#5ab855;color:#fff;box-shadow:0 5px 0 #3a8030;}
-.cal-shop-card:hover{box-shadow:0 7px 0 #3a8030;}
+.cal-card:hover{transform:translateY(-3px);}
+.cal-card:active{transform:translateY(3px);}
+.cal-shop-card{background:#5ab855;color:#fff;box-shadow:0 6px 0 #3a8030;}
+.cal-shop-card:hover{box-shadow:0 9px 0 #3a8030;}
 .cal-shop-card:active{box-shadow:0 2px 0 #3a8030;}
-.cal-cb-card{background:#8a6d4a;color:#fff;box-shadow:0 5px 0 #5a4030;}
-.cal-cb-card:hover{box-shadow:0 7px 0 #5a4030;}
+.cal-cb-card{background:#8a6d4a;color:#fff;box-shadow:0 6px 0 #5a4030;}
+.cal-cb-card:hover{box-shadow:0 9px 0 #5a4030;}
 .cal-cb-card:active{box-shadow:0 2px 0 #5a4030;}
-.cal-cb-card.armed{background:#d04545;box-shadow:0 5px 0 #902020;animation:cafe-arm-wiggle .3s ease;}
-.cal-cb-card.disabled{background:#67676f;color:rgba(255,255,255,.62);box-shadow:0 5px 0 #47474f;cursor:not-allowed;}
-.cal-cb-card.disabled:hover{transform:none;box-shadow:0 5px 0 #47474f;}
+.cal-cb-card.armed{background:#d04545;box-shadow:0 6px 0 #902020;animation:cafe-arm-wiggle .3s ease;}
+.cal-cb-card.disabled{background:#67676f;color:rgba(255,255,255,.62);box-shadow:0 6px 0 #47474f;cursor:not-allowed;}
+.cal-cb-card.disabled:hover{transform:none;box-shadow:0 6px 0 #47474f;}
 .cal-cb-card.disabled:active{transform:none;}
-.cal-card-em{font-size:34px;line-height:1;}
-.cal-card-nm{font-family:'Fredoka One',cursive;font-size:17px;letter-spacing:.5px;}
-.cal-card-desc{font-size:11px;opacity:.92;line-height:1.3;}
+.cal-card-em{font-size:clamp(38px,3.4vw,52px);line-height:1;}
+.cal-card-nm{font-family:'Fredoka One',cursive;font-size:clamp(19px,1.6vw,26px);letter-spacing:.5px;}
+.cal-card-desc{font-size:clamp(12px,1vw,15px);opacity:.92;line-height:1.3;}
