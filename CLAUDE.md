@@ -17,13 +17,15 @@ For balance testing, `sim.html` (+ `js/sim/`) runs the real game headlessly in a
 
 ## Architecture
 
-The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`. Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → devfit → render → scoring → projection → shop.
+The game is split across `index.html` (markup + inline styles) and multiple JS files under `js/`. Script load order in `index.html` matters: utils → treat-effects → registry → requirements → treat files → config → branches → state → board → backpack → held → devfit → render → scoring → projection → shop → cafe → calendar.
 
 Global game state lives in `G` (see `js/state.js`). Held/dragged piece state lives in `H`.
 
 ## Gameplay Loop
 
 `doFit()` triggers the score sequence → `runScoreSequence()` animates phases → `endScoreSequence()` checks win/loss → `roundWin()` or next hand dealt via `dealHand()`.
+
+Between rounds the player lands on the **work-week calendar** (`s-calendar`, `js/calendar.js`) — the run laid out as 5 days × 3 rounds (2 regular + 1 boss "deadline" on rounds 3/6/9/12/15, per `General!modifier_rounds`), with past rounds stamped by hands-to-clear (`G.roundLog`; a `☕` stamp for a coffee-break'd round). It is the fork point: 🏪 **Go to Shop** (→ the shop/prep screen, then Play) or ☕ **Coffee Break** (skip, see `js/cafe.js`). `openCalendar()` delegates to `openRounds()` for all state setup, so `goShop()` / `selectBranch()` / `cafeFinish()` / `menuContinue()` route through it without changing the shop-pool generation or single per-round RNG draw the headless sim depends on.
 
 Scoring processes all pieces in scan order (top-left → bottom-right). A running total (`runningTotal`) accumulates as cats are scored. Treats that fire mid-scan are either:
 - **Type A** (affect individual cat scores): buffered in `treatBuffer`; applied when each cat fires. Return `{ bonus }` / `{ bonusMap }` (add) or `{ gids, m }` (mul).

@@ -38,6 +38,13 @@
   config… loading Treats…"). Wait ~3 s for it to reach the PLAY screen.
 - Flow: **PLAY → World Map → London "PLAY"** (only London/`eu_1` is unlocked at
   start; it's the "Wildcat Chaos" branch with a **+1 Hand** modifier).
+- Selecting a branch — and every round win / café exit — lands on the
+  **work-week calendar** (`s-calendar`): the run as **5 days × 3 rounds** (boss
+  "deadline" on the 3rd round of each day, i.e. rounds 3/6/9/12/15). Click
+  **🏪 Go to Shop** to reach the shop/prep screen (then PLAY ROUND), or
+  **☕ Coffee Break** to skip. For scripted play the calendar is screen-only:
+  `startRound()` / `PF.play()` starts the round regardless of which screen is
+  showing (the round advance itself still happens in `goShop`/`advanceRoundSetup`).
 
 ## 2. Coordinate scaling (CRITICAL for mouse clicks)
 
@@ -507,6 +514,13 @@ purchase of a shop visit.
 - After ANY win screen, `#win-inline` stays visible until goShop() runs —
   if you call selectBranch() from a win screen, RESET overlays before
   trusting win-detection (score >= tgt is the only ground truth).
+- After `goShop()`/`selectBranch()`/`cafeFinish()` the **visible screen is the
+  work-week calendar** (`s-calendar`), not the shop — but state (shop pool, round
+  setup, `G.roundModifier`) is fully ready because `openCalendar()` runs
+  `openRounds()` internally. So `startRound()`/`PF.play()` and the shop
+  buy/sell/reroll fns still work directly; you never have to touch the calendar.
+  `G.roundLog[round]` now records `{hands,max,boss}` per cleared round (or
+  `{skipped:true}` for a coffee break) — handy for scripted progress readouts.
 - Pinning too many treat cells can leave a hand with NO legal cat placement;
   doFit() then refuses silently (no cats). De-pin and retry, then discard.
 - The sim's casual/greedy profiles froze the tab on the 59-treat pool
@@ -518,8 +532,9 @@ purchase of a shop visit.
 
 # PART VI — Boss rounds, score preview, and the current difficulty photo
 
-New systems (2026-07-05, latest): **per-round modifiers** on rounds 4/8/12/15
-(Modifiers sheet tab; shown on the prep screen BEFORE you commit — shop with
+New systems: **per-round modifiers** on rounds 3/6/9/12/15 (the boss "deadline"
+round of each of the 5 work-week days; Modifiers sheet tab; shown on the prep
+screen and marked on the work-week calendar BEFORE you commit — shop with
 the modifier in mind), a **projected-score chip** next to FIT (side-effect-free
 projection in js/projection.js — `projectScore(null).total` equals the next
 doFit total exactly; useful for scripted play too), **paw-rating treat
@@ -528,10 +543,12 @@ feedback** on hover (0-3 paws = this spot vs the treat's best spot), and
 purrfect fits, works under the sim's animation stub).
 
 Current difficulty photo (30 games/profile, seed 1, full 59-treat pool +
-modifiers): solver bot 6.7% full-run win rate (deaths R8-15), greedy dies
-R4-6, casual R2-4. Expert manual play (rerolls + dup-stacking): 1 win and
+modifiers; **measured under the old 4/8/12/15 boss cadence — predates the
+move to a 5-day work week with bosses on 3/6/9/12/15, so treat as approximate
+until re-measured**): solver bot 6.7% full-run win rate (deaths R8-15), greedy
+dies R4-6, casual R2-4. Expert manual play (rerolls + dup-stacking): 1 win and
 deaths at R15/R11 across three post-retune runs — build RNG decides which
-wall kills you. Boss round 4 is the first real gate for mid play.
+wall kills you. Boss round 3 is now the first real gate for mid play.
 
 Scripted-play notes: modifiers are drawn in goShop — read G.roundModifier
 after advancing; NIGHT SHIFT's chosen type matters for placement value;
