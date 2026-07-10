@@ -60,17 +60,23 @@
     </div>
   </div>
 </div>
-<!-- BRANCHES (World Map) -->
+<!-- BRANCHES (World Map HQ picker) -->
 <div id="s-branches" class="scr">
-  <div class="br-topbar">
-    <button class="sp-back" onclick="exitToMenu()">← Back</button>
-    <div class="rds-title">WORLD MAP</div>
-    <button class="btn-theme-toggle" onclick="document.getElementById('s-branches').classList.toggle('theme-map')">🗺️</button>
-    <div class="sp-mon">
-      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="br-cash">0</span></span>
-    </div>
+  <div class="hqm-hud">
+    <button class="hqm-back" onclick="exitToMenu()">← Back</button>
+    <div class="hqm-cash"><span class="hqm-coin">🪙</span><span id="br-cash">0</span></div>
   </div>
-  <div class="br-scroll" id="br-body"></div>
+  <div class="hqm-map" id="hqm-map"></div>
+  <div class="hqm-counter"></div>
+  <div class="hqm-watermark">PURRFECT<br>FIT INC.</div>
+  <div class="hqm-rail">
+    <div class="hqm-title">PF INC.<br>HEADQUARTERS</div>
+    <div class="hqm-inst">Select an HQ to start your work day.</div>
+    <div class="hqm-continue" id="hqm-continue" style="display:none;"></div>
+  </div>
+  <div class="hqm-stage"><div class="hqm-carousel" id="hqm-carousel"></div></div>
+  <div class="hqm-dots" id="hqm-dots"></div>
+  <div class="br-scroll" id="br-body" style="display:none;"></div>
 </div>
 
 <!-- THE WORK WEEK (calendar hub between rounds, see js/calendar.js) -->
