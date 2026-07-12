@@ -71,10 +71,17 @@
   <div class="hqm-watermark">PURRFECT<br>FIT INC.</div>
   <div class="hqm-rail">
     <div class="hqm-title">PF INC.<br>HEADQUARTERS</div>
-    <div class="hqm-inst">Select an HQ to start your work day.</div>
+    <div class="hqm-inst">Pick a continent, then choose an HQ.</div>
     <div class="hqm-continue" id="hqm-continue" style="display:none;"></div>
   </div>
-  <div class="hqm-stage"><div class="hqm-carousel" id="hqm-carousel"></div></div>
+  <div class="hqm-stage">
+    <div class="hqm-cont-hd">
+      <button class="hqm-cont-arw" onclick="hqContPrev()" aria-label="Previous continent">‹</button>
+      <span class="hqm-cont-name" id="hqm-cont-lbl"></span>
+      <button class="hqm-cont-arw" onclick="hqContNext()" aria-label="Next continent">›</button>
+    </div>
+    <div class="hqm-carousel" id="hqm-carousel"></div>
+  </div>
   <div class="hqm-dots" id="hqm-dots"></div>
   <div class="br-scroll" id="br-body" style="display:none;"></div>
 </div>
