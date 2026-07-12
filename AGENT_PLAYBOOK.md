@@ -1,637 +1,271 @@
 # AGENT PLAYBOOK — How to *play* Purrfect Fit (notes for the next Claude)
 
-> This is a hand-off from a previous Claude that played the game via the
-> Chrome browser tools. It captures everything that was non-obvious about
-> **actually playing** (not editing) the game, so you don't have to
-> reverse-engineer it again. Read this **before** you start clicking.
+> Hand-off from previous Claudes who played the game via the Chrome browser tools.
+> Everything below is verified against the code as of **2026-07-13**. Read PART A
+> (current truth) before you click anything; PART B is compressed history — read it
+> only for context on why things are the way they are.
 >
 > `CLAUDE.md` covers editing the code/sheet. This file covers playing.
 
 ---
 
-## 0. TL;DR — the fastest path to playing well
-
-1. **Serve the game over HTTP** (the browser extension refuses `file://`):
-   `python -m http.server 8765` in the project dir, then navigate the tab to
-   `http://localhost:8765/index.html`.
-2. **You do NOT need pixel-perfect mouse tiling.** Placing irregular pieces on
-   an irregular board (its shape is fixed per round but re-rolls each new round)
-   by mouse is brutal. Instead, drive
-   placement through the game's own functions in JS (`placeCatOnBoard` /
-   `placeTreatOnBoard`) — these are exactly what a real click calls, so scoring,
-   win/loss, and treat lifecycle all run authentically. Use the mouse for the
-   high-level flow (PLAY, FIT, shop drag-buy, navigation) and screenshots to show
-   the result.
-3. **The board is a packing puzzle.** Use the backtracking solver in §7 to find
-   the max-coverage (or perfect) tiling each hand, then the applier to place it.
-4. **Filling the whole board adds a big "purrfect" bonus that steps up each
-   work-week day** (see §4) — ~15–18% of the round target on Monday, rising to
-   ~22–28% by Friday. Always aim for a full "purrfect" fit when possible.
-
----
-
-## 1. Launch / environment
-
-- **Local file URLs are blocked** by the Claude-in-Chrome extension
-  ("Can't interact with browser-internal or unparseable URLs"). Run a static
-  server and use `http://localhost:<port>/index.html`.
-- The title screen does a live fetch of config from Google Sheets ("Loading
-  config… loading Treats…"). Wait ~3 s for it to reach the PLAY screen.
-- Flow: **PLAY → World Map → London "PLAY"** (only London/`eu_1` is unlocked at
-  start; it's the "Wildcat Chaos" branch with a **+1 Hand** modifier).
-- Selecting a branch — and every round win / café exit — lands on the
-  **work-week calendar** (`s-calendar`): the run as **5 days × 3 rounds** (boss
-  "deadline" on the 3rd round of each day, i.e. rounds 3/6/9/12/15). Click
-  **🏪 Go to Shop** to reach the shop/prep screen (then PLAY ROUND), or
-  **☕ Coffee Break** to skip. For scripted play the calendar is screen-only:
-  `startRound()` / `PF.play()` starts the round regardless of which screen is
-  showing (the round advance itself still happens in `goShop`/`advanceRoundSetup`).
-
-## 2. Coordinate scaling (CRITICAL for mouse clicks)
-
-The screenshot/`computer`-tool coordinate space is **not** the page's CSS-pixel
-space. On the machine this was played on:
-
-- `window.innerWidth = 2400`, screenshot width `= 1568` → **scale ≈ 0.653**
-  (`screenshot_x = css_x * 0.653`, same factor vertically).
-- `devicePixelRatio` was `0.8`; don't trust it directly — compute the factor from
-  `screenshot_width / window.innerWidth`.
-
-So if you ever click by coordinate, get the element's
-`getBoundingClientRect()` center in CSS px and multiply by the scale. **The
-window also silently resizes** between some screenshots (1568×699 ↔ 1536×639),
-which shifts everything — re-screenshot before precise clicks. This fragility is
-the main reason the JS-driven placement approach (below) is preferred.
-
-## 3. Game state model (globals on `window`)
-
-- `G` — all game state. Useful fields:
-  - `G.tgt` target score, `G.score` accumulated this round, `G.lastScore`
-  - `G.hands` hands left, `G.disc` discards left
-  - `G.bsr/G.bsc` board rows/cols (5×5 grid), `G.board[r][c]` cells with
-    `{filled, blocked, offShape, kind:'cat'|'treat', type, ...}`
-  - `G.hand[]` current cat pieces: `{id, type, shape, cells}` where `cells` is a
-    2-D 0/1 grid (e.g. duo `[[1,1]]`, cross `[[0,1,0],[1,1,1],[0,1,0]]`)
-  - `G.bpGroups[]` treats in the backpack: `{gid, tdef:{id, bpS, ...}}`
-    (`bpS` is the treat's 0/1 shape grid)
-  - `G.cats[]`, `G.treats[]` — pieces currently placed on the board this fit
-- `H` — the "held" piece while dragging. Placement reads `H.cells`,
-  `H.grabDr/grabDc`, `H.handIdx`.
-- Key functions (in `js/board.js`, `js/held.js`, `js/utils.js`):
-  - `rotC(cells, rot)` — rotate a 0/1 grid 90°·rot **clockwise**
-  - `boardCanPlace(cells, or, oc)` — validity check (bounds/blocked/offShape/filled)
-  - `placeCatOnBoard(r, c)` — places `H` (a cat) with origin `(r-grabDr, c-grabDc)`
-  - `placeTreatOnBoard(r, c)` — same for a treat held in `H`
-  - `pickupTreat()` — moves `G.selBpGid` treat from backpack into `H`
-  - `doDiscard()` — discards the held cat, draws a replacement
-  - `doFit()` — runs the score sequence (or click the **FIT!** button)
-
-## 4. Scoring (verified by playing, not guessed)
-
-Per fit, pieces are scanned **top-left → bottom-right (row-major)**:
-
-- **Each cat scores `cells × base_score_per_cell`**, `base_score_per_cell = 10`.
-  (Type/colour gives **no** bonus by itself — only treats key off type.)
-- **Board-fill ("purrfect") bonus** when every playable cell is filled:
-  `playableCells × perCell`, where **`perCell` scales with the work-week DAY**:
-  `perCell = fill_bonus_base × day`, where `day = ceil(round / 3)` (rounds 1-3 =
-  day 1 … 13-15 = day 5; General tab, default base `5` → **MON 5/cell, TUE 10,
-  WED 15, THU 20, FRI 25/cell**). If `fill_bonus_base` is absent it falls back to
-  the legacy flat `board_fill_bonus` (10). The bonus is added **AFTER** all
-  treats/multipliers and is itself **un-multiplied** (the `fill_bonus_mult` boss
-  modifier still scales it if present).
-- **Treats fill cells too** (`kind:'treat'`), so they count toward "board full."
-- **Score accumulates across all hands** in the round toward `G.tgt`.
-
-**The big insight:** the purrfect bonus is a large flat term that steps up once
-per work-week day (`+base` per cell each day, so MON 5 → FRI 25 with base 5). Its
-share of the round target grows through the week — roughly ~15–18% on Monday
-(day 1) rising to ~22–28% by Friday (day 5). A full fill is worth far more than a
-partial one — always chase it. The live per-cell value is printed on the prep
-screen ("DAY N · PURRFECT +N/cell") and in the game-screen target card, so **read
-it off the UI** rather than assuming a fixed number.
-
-Worked example (Round 1 = day 1, hand 1, `perCell = 5`): cross(5)+trio(3)+duo(2)+
-duo(2)=12 cat cells → 120 base; full 16-cell board → 80 purrfect (16×5); POKER
-FACE +150 → **350**. ✔ (On a Friday round, day 5, the same fill would be 16×25 =
-400 purrfect instead.)
-
-## 5. The board — "Wildcat Chaos"
-
-- The board is a 5×5 grid with most cells `offShape` (not part of the playable
-  silhouette). Playable region is an irregular **diamond/plus** of ~16–18 cells.
-- **The shape is RANDOMIZED once per round** (at round start) and stays fixed for
-  every hand in that round; it re-randomizes when the next round begins. Some cells
-  may also be `blocked` (shown with diagonal stripes). Placed cats still clear
-  between hands, so re-read `G.board` each hand; never reuse last hand's *cat*
-  coordinates even though the silhouette itself is stable within a round.
-- Get the current shape cheaply:
-  ```js
-  (()=>{let g='';for(let r=0;r<G.bsr;r++){let s='';for(let c=0;c<G.bsc;c++){const b=G.board[r][c];s+=(!b.blocked&&!b.offShape)?(b.filled?'#':'.'):' ';}g+=s+'\n';}return g;})()
-  ```
-
-## 6. Treats — mechanics that matter for play
-
-- Treats are **bought in the shop** (drag the card onto a backpack cell) and
-  later **placed on the board during a fit** (they occupy cells but help fill the
-  board for the purrfect bonus).
-- **Lifecycle:** a treat triggers **at most once per round**; after a fit it moves
-  to `usedTreats` and is gone for the rest of the round, then restored at round
-  end (unless it self-expires). Some have a chance to **REAPPEAR** mid-round.
-- **Scan order matters for some treats.** Treats fire at their cell's scan
-  position. Place "first-mover" treats at the **top-left** of the board.
-- Treats seen so far and how to use them:
-  - **POKER FACE** 😐 (S-tetromino, 4 cells, ~$5): `+50 per DISCARD remaining`,
-    1-in-2 chance to reappear. **Tension:** every discard you spend costs 50 of
-    its payout, so hoard discards and solve the board by packing skill instead.
-    Bonus: its **S shape fits the S-shaped pocket** these diamond boards keep
-    producing — it plugs the hardest gap *and* pays out.
-  - **BIG BITE** 🍖 (domino, 2 cells, ~$5): `+200, −10 per cat scored before it`.
-    Place it covering the **top-left-most** playable cell so ~0 cats precede it →
-    near-full +200. (Got +190 when one cat unavoidably scanned first.)
-  - **SHADOW FEAST** 🟣 (cross, 5 cells, ~$10): `×2 each BLACK cat`. Strong only
-    if you'll place several black cats; costs a lot of board area.
-  - **PUREBRED** 🏅 (×1.2 growing, all cats must be SAME TYPE): very restrictive
-    with random hands — skipped it.
-  - **CATNADO** 🌪️ (×2 but DESTROY 1 random treat): risky with a small treat set.
-- Buying = **drag the shop card onto a backpack cell** (a plain click only
-  selects/highlights, it does not buy). Cash is top-right.
-
-## 7. The reusable solver + applier (the workhorse)
-
-Run this in the page (`javascript_tool`) **after a hand is dealt**. It finds the
-maximum-coverage tiling of the current board with the current hand and **places
-it** via the real game functions. (For an exact/perfect-only search, return early
-when `filled===total`.) The "grab 0,0 + grid-from-abs-coords" trick guarantees
-each piece lands on the exact cells the solver chose.
-
-```js
-(() => {
-  const R=G.bsr,C=G.bsc, playable=[];
-  for(let r=0;r<R;r++)for(let c=0;c<C;c++){const b=G.board[r][c];if(!b.blocked&&!b.offShape)playable.push([r,c]);}
-  const total=playable.length, occ={},skip={};
-  playable.forEach(([r,c])=>{occ[r+','+c]=false;skip[r+','+c]=false;});
-  const norm=cs=>{const o=[];cs.forEach((row,dr)=>row.forEach((v,dc)=>{if(v)o.push([dr,dc]);}));return o;};
-  const rotsFor=cs=>{const seen=new Set(),res=[];for(let rot=0;rot<4;rot++){const fl=norm(rotC(cs,rot));
-    const mr=Math.min(...fl.map(p=>p[0])),mc=Math.min(...fl.map(p=>p[1]));
-    const nf=fl.map(p=>[p[0]-mr,p[1]-mc]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
-    const k=JSON.stringify(nf);if(!seen.has(k)){seen.add(k);res.push(nf);}}return res;};
-  const pieces=G.hand.map(h=>({id:h.id,rots:rotsFor(h.cells),used:false}));
-  const cur=[]; let filled=0, best={filled:-1,placements:[]};
-  const firstOpen=()=>{for(const [r,c] of playable){const k=r+','+c;if(!occ[k]&&!skip[k])return [r,c];}return null;};
-  const canPlace=abs=>abs.every(([r,c])=>r>=0&&c>=0&&r<R&&c<C&&!G.board[r][c].blocked&&!G.board[r][c].offShape&&!occ[r+','+c]);
-  function dfs(){
-    if(filled>best.filled)best={filled,placements:cur.map(p=>({id:p.id,abs:p.abs.slice()}))};
-    if(filled===total)return;                       // <-- perfect fill found
-    const fu=firstOpen(); if(!fu)return; const [r,c]=fu;
-    for(const p of pieces){if(p.used)continue;for(const rt of p.rots){
-      const a=rt[0],or=r-a[0],oc=c-a[1],abs=rt.map(([dr,dc])=>[or+dr,oc+dc]);
-      if(canPlace(abs)){abs.forEach(([rr,cc])=>occ[rr+','+cc]=true);filled+=abs.length;p.used=true;cur.push({id:p.id,abs});
-        dfs();
-        cur.pop();p.used=false;filled-=abs.length;abs.forEach(([rr,cc])=>occ[rr+','+cc]=false);}}}
-    skip[r+','+c]=true; dfs(); skip[r+','+c]=false;  // branch: leave this cell empty
-  }
-  dfs();
-  // ---- APPLY best placement via real game logic ----
-  const log=[];
-  for(const pl of best.placements){
-    const idx=G.hand.findIndex(h=>h.id===pl.id); if(idx<0)continue; const cat=G.hand[idx];
-    const rs=pl.abs.map(a=>a[0]),cs=pl.abs.map(a=>a[1]);
-    const mr=Math.min(...rs),mc=Math.min(...cs),Mr=Math.max(...rs),Mc=Math.max(...cs);
-    const grid=Array.from({length:Mr-mr+1},()=>Array(Mc-mc+1).fill(0));
-    pl.abs.forEach(([r,c])=>grid[r-mr][c-mc]=1);
-    H={kind:'cat',source:'hand',data:cat,cells:grid,rot:0,color:cat.col,em:cat.em,
-       handIdx:idx,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};
-    placeCatOnBoard(mr,mc); log.push(cat.shape+'/'+cat.type+'@'+mr+','+mc);
-  }
-  const f=G.board.flat().filter(c=>c.filled).length;
-  return JSON.stringify({maxCoverage:best.filled,total,filledNow:f,boardFull:f===total,log});
-})()
-```
-
-Then click the **FIT!** button (mouse) and `wait` ~3–4 s for the score animation.
-
-### Including treats in the tiling
-
-Treats must be placed for their bonus, and they help fill the board. Add them as
-**mandatory pieces** to the search (rots from `tdef.bpS`) and require they're all
-`used` before accepting a full solution. To apply a treat, route it through the
-real pickup so it leaves the backpack:
-
-```js
-const grp=G.bpGroups.find(x=>x.tdef.id===TREAT_ID);
-G.selBpGid=grp.gid; pickupTreat();             // removes from backpack, fills H
-H.cells=grid; H.rot=0; H.grabDr=0; H.grabDc=0; // grid built from chosen abs cells
-placeTreatOnBoard(minR,minC);
-```
-
-Enumerate several full solutions and pick the one where **BIG BITE's cells are
-earliest in row-major order** (maximizes its +200).
-
-### Gotchas learned the hard way
-
-- **`rotC` may return a grid with leading empty rows/cols.** Don't pair the
-  solver's normalized `or/oc` with a raw `rotC` grid. Build `H.cells` from the
-  exact absolute cells and place with `grabDr=grabDc=0` and origin `=(minR,minC)`.
-- **`placeCatOnBoard` splices `G.hand[H.handIdx]`.** If you place by fixed index,
-  do it in **descending index order**, or (better) re-`findIndex` by `h.id` each
-  time — the applier above does the latter.
-- Placing a treat with `placeTreatOnBoard` **does not** remove it from
-  `G.bpGroups`; you must `pickupTreat()` first (or it'll exist twice).
-- Max coverage is genuinely sometimes < full (e.g. 13/16, 15/18) — the diamond +
-  blocked cells + your specific shapes just don't tile. That's fine; score
-  accumulates across hands. Consider a discard only if it would *complete* a fill
-  (the purrfect bonus, ~+playable×perCell — day-scaled, see §4 — easily beats
-  one POKER FACE discard = 50).
-
-## 8. Shopping strategy
-
-- Round 1 had ~$10; Rounds clear for ~$10–13 (base earn + $1 per unused hand).
-- Best value found: **POKER FACE** (cheap, reliable, reusable, S-shape plugs the
-  hard pocket) and **BIG BITE** (flat +200 if placed top-left). Two flat-bonus
-  treats added ~+350/hand for $10 and still helped fill the board.
-- Treats eat board cells, but since they fill toward the purrfect bonus, the
-  "cost" is mostly the cat coverage you'd otherwise place there. High-value-per-
-  cell treats (POKER FACE = +150 for 4 cells) beat raw cats (10/cell).
-
-## 9. Run log (London / `eu_1`, +1 Hand)
-
-| Round | Target | Final | Notes |
-|------:|-------:|------:|-------|
-| 1 | 700 | **880** | Bought POKER FACE. Perfect fit #1 = 430 (POKER FACE in the S-pocket). Won in 3 of 6 hands. |
-| 2 | 800 | **920** | Bought BIG BITE + POKER FACE. Perfect fit #1 = 620 (BIG BITE top-left +190, POKER FACE +150). |
-
-Both rounds won comfortably; reached Round 3 shop with ~$20. Strategy scales:
-buy 1–2 flat/multiplier treats, full-fill with the solver, keep discards.
-
----
-
-# PART II — Scan order, intelligent play, and a fast autopilot
-
-Added after playing through Round 6. Two big themes: (a) **scan order is the
-core of high scoring**, and (b) there are **two ways to drive the game** — a fast
-heuristic autopilot, and an agent-in-the-loop decision API. Use the latter when
-choices actually require judgment (shop value, multiplier timing, discards).
-
-## 10. Scoring, refined (this changes how you place)
-
-Pieces score in **scan order: top-left → bottom-right (row-major)**. A running
-total accumulates. Critically:
-
-- **The purrfect (board-fill) bonus is added at the very END and is NOT
-  multiplied.** Multipliers only act on the running total of cats + flat treats
-  that scanned *before* them.
-- So the optimal layout is **positional**:
-  - **Flat "+N" treats that scan-first → top-left.** `big_bite` (+200 −10 per cat
-    scored before it) specifically wants to be the *first* piece → cover the
-    top-left-most cell.
-  - **Multiplier treats (×N) → bottom-right.** They multiply everything before
-    them, so you want max base + flats already counted. Two `morning_stretch`
-    (×1.5) stacked bottom-right compound to ×2.25 over the whole board.
-  - **Other flats (`copycat` +100, `quick_paws` +50/hand, `catnip`) go in the
-    middle** — before the multipliers so they get multiplied too.
-  - **`catnip` (+50 per cat in its ROW) → a row you pack with cats.** Placed in a
-    5-cat row that's +250 for one cell. Placed in a treat-only row it's +0
-    (watch for this).
-- **Counter-intuitive but verified:** one ×1.5 on a *full* board often beats two
-  ×1.5 on a *partial* board, because the purrfect bonus is a large flat term and
-  the extra cats add multiplied base. In Round 6, `big_bite`+`quick_paws`+`catnip`
-  + one `morning_stretch` on a full 26-cell board scored **+1415 in a single
-  hand** (target 1200) — and saved the 2nd multiplier + 2nd big_bite + copycat
-  for later. Always compare "stack multipliers" vs "one multiplier + full board".
-
-## 11. More mechanics learned
-
-- **Treats carry over between rounds.** At round end, non-expired used treats are
-  restored to the backpack (`goShop` → `bpRestoreUsedTreats`, exact remembered
-  spot + rotation first, overflow queue instead of loss). So your arsenal compounds
-  across a run — **don't re-buy duplicates**, and don't treat each shop as a blank
-  slate. By Round 6 the bp held 7 treats from earlier rounds.
-- **You can't place your whole arsenal in one hand** (treats eat cells and you
-  need cats). Each treat triggers once per round, so **spread deployment across
-  the round's hands**, using each where it's strongest (multipliers on the
-  highest-base hand; `quick_paws` early when "hands remaining" is highest).
-- **Reroll the shop** for **$3** (`getRerollCost()` / `rerollTreats()`) when the
-  offerings don't fit your build — cheaper than buying a treat you won't use.
-- **Discards** (`doDiscard`, 3/round) swap a held cat for a fresh draw. Worth it
-  to *complete* a fill (purrfect ≈ +playable×perCell, day-scaled) but remember `poker_face` pays
-  +50 per *unused* discard, so there's a real cost.
-
-## 12. Two ways to drive the game
-
-### (A) Fast autopilot — `AUTO_ROUND()` (speed)
-A self-contained function that plays an **entire round per call**: advances past
-the win screen, auto-buys by a priority table, then loops hands solving +
-placing + fitting with the **score animation bypassed** (temporarily stub
-`runScoreSequence` → `endScoreSequence(total)`; the score is already computed, the
-animation is purely visual). Whole round resolves in‑page in **~75 ms**. Treats
-are **optional pieces** in a single max-coverage solve (never mandatory — making
-them mandatory clogs the board and starves cats; `doFit` needs ≥1 cat). This is
-"good, fast, and dumb": fixed heuristics, no judgment.
-
-### (B) Agent-in-the-loop — the `PF` decision API (intelligence)
-Thin layer that **surfaces the situation + candidate plans and executes the
-agent's choices**, so *you* make the calls:
-- `PF.state()` → phase, round, target, score, need, hands, discards, cash,
-  `bpTreats` (with **effect text**), `hand`, `shop` (when in prep, with
-  effect/price/affordable/owned), `boardAscii`.
-- `PF.candidates()` → ready plans (`fill`, `fillNoTreats`, `bigbiteFirst`) each
-  with an ASCII preview + filled/total/treatsUsed.
-- `PF.smart({early:[ids], late:[ids], fillTreats:'all'|[ids]})` → scan-order-aware
-  plan: `early` treats pinned top-left (scan first), `late` pinned bottom-right
-  (multipliers), the rest filled with cats + chosen treats. Returns ASCII preview.
-- `PF.commit(key)` / `PF.commitSmart()` → apply a previewed plan + fit (instant).
-- `PF.buy(id)`, `PF.sell(id)`, `PF.reroll()`, `PF.play()` (start round),
-  `PF.nextRound()` (goShop), `PF.discard(pieceId)`.
-
-Loop: `state()` → reason about shop (buy/reroll) → `play()` → per hand,
-`smart(...)` with your scan-order intent → eyeball the ASCII → `commitSmart()`.
-This costs more round-trips than the autopilot but every decision is yours.
-
-### The fast solver core (used by both)
-Branch-and-bound max-coverage. Two changes made it ~175× faster (13 s → 75 ms):
-1. **Group identical cat shapes** (same rotation-set) into one piece with a count
-   — kills duplicate-permutation branching.
-2. **Prune hard:** stop the moment `best.filled === total` (perfect fill found);
-   and bound with `if (total - skipped <= best.filled) return` (remaining open
-   cells can't beat the best). Try **larger pieces first** so a high `best` is
-   found early and prunes more.
-
-## 13. Gotchas added in Part II
-
-- Treats as **mandatory** solver pieces → board clogs, no room for cats →
-  `doFit` aborts (it early-returns on `!G.cats.length`). Keep treats **optional**;
-  if you want a specific treat placed, pre-place it (`PF.smart` early/late) rather
-  than marking it mandatory.
-- Autobuy must **dedupe against carried-over treats** and cap total, or it
-  re-buys what you already own.
-- After bypassing the animation, `endScoreSequence` runs synchronously and itself
-  calls `dealHand()` (next hand) or `roundWin()`. Detect round end via
-  `G.score >= G.tgt` or `#win-inline.classList.contains('visible')`.
-
-## 14. Run log (cont.)
-
-| Round | Target | Final | How |
-|------:|-------:|------:|-----|
-| 3 | 900 | **980** | `AUTO_ROUND()` — full round in 1 call, 213 ms |
-| 4 | 1000 | **1228** | autopilot; exposed the "treats mandatory" bug → fixed to optional |
-| 5 | 1100 | **1285** | autopilot after solver speed-up (74 ms, both hands PURRFECT) |
-| 6 | 1200 | **1415** | **agent-driven** (`PF`): reasoned shop buys + scan-order placement, 1-hand win |
-
-Run record so far: **6/6 rounds won** on London (`eu_1`), every round cleared
-with hands to spare.
-
----
-
-# PART III — Post-nerf full run (2026-07-05), duplicate stacking, and bug traps
-
-Config changed: **deep_deck nerfed +15 → +8 per deck card** (sheet-only; code
-parses the number from the effect text). **all_or_nothing increment reduced
-+0.2 → +0.1 per trigger** (user edit). Round targets were rebalanced before
-this session too (R1 = 450, R15 = 1900) — ignore Part I/II target numbers.
-
-## 15. Full-run log (London `eu_1`, all 15 rounds WON, optimal-solver play)
-
-| R | Target | Final | Hands | Notes |
-|--:|-------:|------:|:-----:|-------|
-| 1 | 450 | 580 | 2 | Perfect hand 1 = 430 — **one-hand clear now impossible** |
-| 2 | 550 | 580 | 2 | crowd_pleaser died on first reappear flip |
-| 3 | 650 | 670 | 2 | gold_star paid +0 on a purrfect (see §16) |
-| 4 | 750 | 984 | 3 | nerfed deep_deck = +184; wild_dice missed (×1) |
-| 5 | 875 | 1184 | 3 | catnip +150; encore did nothing visible |
-| 6 | 1000 | 1034 | 1 | flat-add stack online: bb+qp+dd+catnip = +684 |
-| 7 | 1100 | 1488 | 2 | **duplicate deep_deck bought & stacked: +184 ×2** |
-| 8 | 1200 | 1678 | 2 | hand 1 = 1198/1200, so close |
-| 9 | 1300 | 1466 | 1 | bought all_or_nothing (+0.1 era) |
-| 10 | 1350 | 1504 | 1 | aon ×1.3 |
-| 11 | 1450 | 1689 | 1 | treat_encore placed with 5 add treats: **+0** (see §16) |
-| 12 | 1500 | 1692 | 1 | aon ×1.5 |
-| 13 | 1600 | 1678 | 3 | 9% blocked cells → 2 imperfect boards; aon correctly SKIPPED |
-| 14 | 1750 | 1905 | 1 | aon ×1.6 |
-| 15 | 1900 | 1985 | 1 | aon ×1.7 — final margin only 4.5% vs maxed engine |
-
-Economy: $10 start → **$245 end** with everything I wanted bought. Cash is
-never the constraint — the **backpack is** (see §16).
-
-## 16. Bug traps & mechanics discovered this run (verify before relying on)
-
-- **Shop sells duplicates of treats you own.** Two deep_decks both trigger
-  (+184 each, same hand). Best stacking line in the game right now.
-- **Round-end restore is now home-based and loss-free** (2026-07-12). `goShop`
-  restores each used treat to its remembered backpack cells + rotation
-  (`bpRestoreUsedTreats` → `G.bpHomes`); if the home is occupied it auto-fits
-  with rotations, and if even that fails the treat is parked in `G.bpPending`
-  (still owned, re-seated when space frees) — never destroyed. Buys can still
-  fail (`no-bp-room`) on fragmentation, but the player/agent can rearrange the
-  backpack (drag within the grid, R/RMB to rotate) to defragment first.
-- **gold_star can never count the purrfect fit it's placed in** — the
-  purrfect counter increments in `doFit` *after* the treat scan runs (the
-  sheet Explanation claims otherwise). Placed hand 1 it pays +0; place it
-  hand 2+ after banking purrfects.
-- **encore / treat_encore ignore Type B results.** Their re-fire wrappers
-  handle `bonus`/`bonusMap`/`gids` (Type A) but not `scoreBonus` (Type B) —
-  and nearly all flat adds (big_bite, deep_deck, quick_paws, catnip, milk,
-  feather) are Type B. Both cards visibly did nothing across multiple hands.
-- **50% reappear flips are brutal:** 4 of 6 flips this run killed the treat
-  on first use (poker_face, crowd_pleaser, gold_star eventually).
-- Blocked-cell probability (up to ~10% late) genuinely breaks perfect fills —
-  hand shapes + blocked geometry made 2 of 3 hands imperfect in R13.
-
-## 17. Post-nerf strategy that won 15/15
-
-1. Rounds 1–5: buy the best cheap flat add each shop (poker_face, catnip,
-   bench_warmer class); expect 2–3 hands per round; margins are thin — a
-   perfect fill every hand matters (fill bonus ≈ 30–60% of a hand's value).
-2. Round 6+: assemble the **flat-add stack** — big_bite (+200), quick_paws
-   (+250 on hand 1 with London's 5 hands), deep_deck ×2 (+368), catnip — all
-   pinned early/top-left, then **all_or_nothing pinned bottom-right** (×1.2
-   growing +0.1/purrfect-trigger; it skips safely on imperfect boards).
-3. Sell treats that don't earn their backpack cells (rainbow_row paid +0 in
-   every single fit across both runs; encore/treat_encore are broken — skip).
-4. The `PF` harness (v2, this session) handles duplicate treat ids in
-   early/late/use lists and auto-schedules FIRST/LAST-HAND treats.
-
----
-
-# PART IV — Difficulty retune (2026-07-05, later), dup-ladder fix, simulator
-
-Config changed again in this session — re-read the sheet, don't trust Part III
-numbers: **targets steepened R6–15** (now 450, 550, 650, 750, 875, 1050, 1200,
-1350, 1500, 1650, 1850, 2050, 2300, 2600, **3000**), **earn flattened to $10
-every round**, bench_warmer +50 → **+30**/hand-cat, rainbow_row redesigned
-(**+30 per row with 2+ types, duo shape** — finally pays), and
-**all_or_nothing scales once per ROUND** (dup copies read the same m; the old
-per-trigger counter let two copies ladder to ×2.7 × ×2.8 by R14).
-
-## 18. Run logs 3 & 4 (both 15/15 at solver level, but the texture changed)
-
-- Run 3 (pre-retune, flat earn): R1 one-handed 484/450 with deep_deck +184 —
-  34-point margin. Dup big_bite (3 copies = +600/hand) + bench_warmer(+300 old
-  numbers) + morning_stretch made R7+ one-hand wins. Treat-flooding line
-  discovered: 6-7 treats + 1 cat, skip the packing puzzle entirely.
-- Run 4 (post-retune): **R6 and R15 went to the LAST HAND** (1084/1050 and
-  3488/3000, zero hands left) — the target curve now bites even optimal play
-  when shop RNG runs cold. R14 hit 5356 in one hand via the aon dup ladder
-  (since fixed). Late-round blocked cells (9-10%) are the design's quiet MVP:
-  they veto purrfect fills, which zeroes the aon stack AND the fill bonus, and
-  hand values crash from ~2000 to ~400.
-- Economy after retune: cash hovers $33-45 all run (was $104-245). Reroll
-  digging ($4/$5 escalating) is now a real spend decision.
-
-## 19. Balance facts for playing well post-retune
-
-- quick_paws pays +250 on hand 1 of a 5-hand round — biggest clean flat now.
-- Dup-stacking still works for flats (2× big_bite = +400) and dup Type B muls
-  still multiply together (×m each) — but aon copies share one per-round
-  scaler, so the second copy adds ×m, not a ladder.
-- bench_warmer synergizes with treat-flooding (fewer cats placed = more in
-  hand) but at +30 the max is +180 — no longer carries a round alone.
-- New treats pending review (Enabled=FALSE, ToBeImplemented, rows 48-60 of the
-  Treats tab): ten "bet everything on the board" spatial treats + empty_bowl
-  (poverty scaling), nine_lives (last-hand flat), clean_plate (flat purrfect
-  reward). If they're Approved, the flat-add meta gets real competition.
-
-## 20. The balance simulator (sim.html)
-
-`sim.html` + `js/sim/` batch-runs the REAL game in a hidden iframe with three
-bot profiles (solver / greedy / casual), seeded RNG, and a dashboard (clear
-rate per round × profile, hands used, cash curves, treat pick rates) + JSON
-export. Key implementation fact: the game's `let/const` globals (G, TDEFS,
-RCFG…) are NOT on `window` — the sim injects `js/sim/bridge.js` INTO the
-iframe document to reach them; plain function declarations (doFit, goShop,
-selectBranch…) are reachable as `iframe.contentWindow.fn` directly. Run a
-batch before and after any sheet tuning change and diff the exported JSON.
-
----
-
-# PART V — The spatial-treat era (2026-07-05, latest)
-
-Thirteen new treats are LIVE (59 enabled total): ten placement-driven ones
-(opening_act ×3-next-cat, fashionably_late +25/prior-cat, snack_stack
-+40/adjacent-treat, cat_pile +10/largest-blob-cell, potluck
-+40/adjacent-type, string_theory +50/completed-line, cuddle_puddle ×1.4 if
-enclosed, twin_paws ×2 same-shape-adjacent, high_rise +30/row-with-cat,
-roadblock_party +20/blocked-cell) plus empty_bowl (+20 per $1 below $10),
-nine_lives (+100 LAST HAND, $3) and clean_plate (+120 on purrfect, $5).
-
-## 21. Run 5 — first LOSS of the session (by design)
-
-Playing a spatial-first build (no flat-dup stack): rounds 1–14 won with
-last-hand finishes at R11/R13, then **R15 FAILED 2491/3000** — the spatial
-toolkit alone is a real build but a notch under the maxed flat-dup stack,
-which cleared 3488 in run 4. Scan-order chains work as designed: opening_act
-tripled a chonker (50→150), clean_plate paid every purrfect, cuddle_puddle's
-enclosure is near-automatic on purrfect boards (hence its ×1.5→×1.4 tune).
-empty_bowl pays +0 unless you're actually broke — buy it only as your LAST
-purchase of a shop visit.
-
-## 22. Harness traps discovered (for anyone driving the game by script)
-
-- After ANY win screen, `#win-inline` stays visible until goShop() runs —
-  if you call selectBranch() from a win screen, RESET overlays before
-  trusting win-detection (score >= tgt is the only ground truth).
-- After `goShop()`/`selectBranch()`/`cafeFinish()` the **visible screen is the
-  work-week calendar** (`s-calendar`), not the shop — but state (shop pool, round
-  setup, `G.roundModifier`) is fully ready because `openCalendar()` runs
-  `openRounds()` internally. So `startRound()`/`PF.play()` and the shop
-  buy/sell/reroll fns still work directly; you never have to touch the calendar.
-  `G.roundLog[round]` now records `{hands,max,boss}` per cleared round (or
-  `{skipped:true}` for a coffee break) — handy for scripted progress readouts.
-- Pinning too many treat cells can leave a hand with NO legal cat placement;
-  doFit() then refuses silently (no cats). De-pin and retry, then discard.
-- The sim's casual/greedy profiles froze the tab on the 59-treat pool
-  (unbounded sampling somewhere in bot logic — fix in progress); solver
-  slows drastically with many optional treat pieces per solve. Cap the
-  optional-treat set per solve.
-
----
-
-# PART VI — Boss rounds, score preview, and the current difficulty photo
-
-New systems: **per-round modifiers** on rounds 3/6/9/12/15 (the boss "deadline"
-round of each of the 5 work-week days; Modifiers sheet tab; shown on the prep
-screen and marked on the work-week calendar BEFORE you commit — shop with
-the modifier in mind), a **projected-score chip** next to FIT (side-effect-free
-projection in js/projection.js — `projectScore(null).total` equals the next
-doFit total exactly; useful for scripted play too), **paw-rating treat
-feedback** on hover (0-3 paws = this spot vs the treat's best spot), and
-**purrfect-streak / near-miss callouts** (G.purrfectStreak tracks consecutive
-purrfect fits, works under the sim's animation stub).
-
-Current difficulty photo (30 games/profile, seed 1, full 59-treat pool +
-modifiers; **measured under the old 4/8/12/15 boss cadence — predates the
-move to a 5-day work week with bosses on 3/6/9/12/15, so treat as approximate
-until re-measured**): solver bot 6.7% full-run win rate (deaths R8-15), greedy
-dies R4-6, casual R2-4. Expert manual play (rerolls + dup-stacking): 1 win and
-deaths at R15/R11 across three post-retune runs — build RNG decides which
-wall kills you. Boss round 3 is now the first real gate for mid play.
-
-Scripted-play notes: modifiers are drawn in goShop — read G.roundModifier
-after advancing; NIGHT SHIFT's chosen type matters for placement value;
-ROCKSLIDE/TIGHT SQUEEZE shrink solvable space (expect imperfect fills);
-projectScore is the cheap way to compare candidate plans without committing.
-
----
-
-# PART VII — Ready-made harness in the repo (2026-07-07)
-
-**Stop re-deriving the solver from §7/§12 — a maintained, injectable harness now
-lives at [`agent/pf-harness.js`](agent/pf-harness.js).** Load it into the running
-game page with one `javascript_tool` call:
+# PART A — CURRENT TRUTH (read this, play well)
+
+## 0. The design principle you are playing inside
+
+**Treats and packing strategy are the heroes. The purrfect-fit bonus is a real prize
+you should chase every hand — but it can never carry a round on its own.** The target
+curve is explicitly tuned so that **four purrfect fills (a whole round's hands) do not
+cover a round's target** (Rounds sheet helper column `Target ÷ PerfectFit (k)`, k ≳ 1.15
+everywhere; at best a full-fill-every-hand run covers ~88% of R7's target). So:
+full-fill when you can, but you win rounds with a **treat engine** — scan-order-aware
+flat adds early, multipliers late. A "cheap filler treats, no strategy" build no longer
+clears the run.
+
+## 1. Launch
+
+- **Serve over HTTP** — the browser extension refuses `file://`:
+  `python -m http.server 8765` in the project dir → `http://localhost:8765/index.html`.
+  (If a stale server is already on your port it may be serving a *different* checkout —
+  use a fresh port and grep the served file for your change.)
+- The title screen live-fetches config from Google Sheets; wait ~3 s.
+- Flow: **PLAY → World Map → pick an HQ → WORK**. All HQs are unlocked
+  (`isBranchUnlocked()` returns true). London (`eu_1`) = wild deck, **+1 Hand**;
+  other branches trade that for +1 discard or +$10 start.
+- After every branch select / round win / café exit the visible screen is the
+  **work-week calendar** (`s-calendar`) — 5 days × 3 rounds, boss "deadline" on rounds
+  3/6/9/12/15. It's screen-only for scripted play: state (shop pool, round setup,
+  `G.roundModifier`) is already fully set up by `openCalendar()` → `openRounds()`, so
+  `startRound()` / `PF.playRound()` and the shop fns work directly.
+
+## 2. Drive the game with the harness — don't re-derive a solver
+
+**`agent/pf-harness.js` is maintained and injectable.** One call in `javascript_tool`:
 
 ```js
 fetch('/agent/pf-harness.js').then(r=>r.text()).then(eval)
 ```
 
-It installs `window.PF` with: `state()`, `buy(id)`, `sell(id)`, `reroll()`,
-`playRound()`, `plan({K, treats:[{id, bias:'early'|'late'}]})` (best-of-K
-layouts scored by `projectScore`, leaves the winner placed), `fit()`,
-`discard(catId)`, `nextRound()`. Usage rules are documented in the file header.
+Installs `window.PF`:
 
-Two traps it bakes in — do not "improve" them away:
+| call | does |
+|------|------|
+| `PF.state()` | phase, round, target, score, hands, discards, cash, `hand`, backpack treats (with effect text + `req`), shop (price/affordable/owned), `boardAscii` |
+| `PF.plan({K, treats:[{id, bias:'early'\|'late'}]})` | best-of-K layouts scored with `projectScore`; **leaves the winner placed**; returns `{proj, filled, playable, full, board}` |
+| `PF.fit()` | `doFit()` — then `wait` ~8 s for the animation |
+| `PF.fitFast()` | resolves the hand synchronously (animation bypassed; the score is computed in `doFit` before the animation, so results are authentic) |
+| `PF.buy(id)` / `PF.sell(id)` / `PF.reroll()` | shop ops; `buy` returns `'no-bp-room'` rather than destroying anything |
+| `PF.playRound()` / `PF.nextRound()` / `PF.discard(catId)` / `PF.ascii()` | flow control |
 
-- **Never use `bpRepackAll([td])` as a buy fallback.** It rebuilds the backpack
-  and silently DESTROYS every treat that doesn't re-fit, while leaving the new
-  treat in without charging for it. (Cost one live run 3 treats.) The harness's
-  `buy` uses `bpAutoPlaceRot` only and returns `'no-bp-room'` — sell something
-  and retry, like a human would.
-- **Keep every injected evaluation synchronous** (no awaited timers — CDP
-  wedges). `fit()` returns immediately; wait ~8 s with the computer tool's
-  `wait`, then read `PF.state()`.
+Rules baked into it — do not "improve" them away:
 
-Sell price note: sell-back is via `sellTreatFromShop(gid)` (shop screen);
-observed ~80% of purchase price (twin_paws: bought $10, sold $8).
+- **Every injected evaluation must be synchronous.** Never `await` a timer inside a
+  `javascript_tool` call — it wedges the CDP channel. Use the computer tool's `wait`.
+- **javascript_tool has a ~15-20 s execution budget.** Best-of-K planning with 8+ treats
+  on a 26-cell board blows it and can strand treats mid-plan. Keep `K ≤ 25` and do ONE
+  plan+fit per call. Stranded treats are recoverable (they're in `G.treats`; the next
+  `clearBoard()` returns them to the bag).
+- **Never call `bpRepackAll([td])` as a buy fallback.** It rebuilds the bag and silently
+  destroys treats that don't re-fit (it has zero game callers now, it's a debug utility).
+  `'no-bp-room'` means sell or rearrange first — exactly the choice a human faces.
+- **Read `req` before planning.** `all_or_nothing` requires a PURRFECT FIT (placing it on a
+  hand that can't full-fill wastes its once-per-round trigger *and* its growth — and its own
+  cell is sometimes exactly what makes the fill impossible). `morning_stretch` is
+  FIRST-HAND-only. `bell` requires NO OTHER TREAT.
+- `projectScore(null).total` **equals** the next `doFit` total exactly — the cheap way to
+  compare candidate plans without committing.
 
-## Part VII addenda (2026-07-08 session — 3 runs: R5†, R10†, LOSS at boss R12)
+### If you need to go under the harness
 
-- **`PF.fitFast()` is now in the harness** — resolves a whole hand synchronously
-  (animation bypassed; the score is computed in doFit before the animation, so
-  results are authentic). A full round becomes 1-2 javascript_tool calls.
-- **javascript_tool has a hard execution budget (~15-20 s).** Multi-combo
-  best-of-K planning across 8+ treats on 24-cell boards blows it ("Internal
-  error") and leaves treats stranded on the board mid-plan. Keep K ≤ 25 and do
-  ONE plan+fit per call. Stranded treats are recoverable — they're in
-  `G.treats`; the next `clearBoard()` returns them.
-- **Read `req` before planning** (state() now surfaces it): `all_or_nothing`
-  requires a PURRFECT FIT — placing it on a hand that can't full-fill wastes
-  its once-per-round trigger AND its once-per-round growth; test the fill
-  without it first (its own 1 cell is sometimes exactly what makes the fill
-  impossible). `morning_stretch` is FIRST-HAND-only. `bell` is solo-only.
-- **clearBoard() no longer destroys treats** (fixed 2026-07-12): board treats
-  return to their remembered backpack pose (`bpReturnTreat`), falling back to
-  rotation-aware auto-fit and then to the `G.bpPending` overflow queue —
-  never silently dropped. (Historical note: it used to be a rotation-less
-  `bpAutoPlace` with the return value ignored, and cycling clearBoard with a
-  fragmented backpack lost milk, morning_stretch, big_bite, poker_face across
-  runs.)
-- **Browser-extension tab groups do not survive MCP reconnects.** Twice this
-  session the session's tab group vanished mid-run — the page (and the run) is
-  unrecoverable. There is no save system; budget for restarts, log results as
-  you go, and prefer fewer/faster calls late in a run.
-- Loss screen "Try Again 🔄" **abandons the entire run** (back to world map,
-  everything gone) despite the label suggesting a round retry.
+State (`G`, `js/state.js`): `tgt`/`score`/`lastScore`, `hands`/`disc`, `bsr`/`bsc` +
+`board[r][c]` (`{filled, blocked, offShape, kind:'cat'|'treat', type, gid}`), `hand[]`
+(`{id, type, shape, cells}` — `cells` is a 0/1 grid), `bpGroups[]`
+(`{gid, tdef, cells, or, oc, shape, rot}`), `bpPending[]` (overflowed but owned),
+`cats[]`/`treats[]` (placed this fit), `usedTreats[]`, `roundModifier`, `roundLog`.
+`H` is the held piece (`cells`, `grabDr/grabDc`, `handIdx`).
+
+Functions: `rotC(cells,rot)` (clockwise), `boardCanPlace(cells,or,oc)`,
+`placeCatOnBoard(r,c)` / `placeTreatOnBoard(r,c)` (place `H`, origin `= (r-grabDr, c-grabDc)`),
+`pickupTreat()` (moves the `G.selBpGid` treat from the bag into `H` — placing a treat without
+this leaves a duplicate in the bag), `doDiscard()`, `clearBoard()`, `doFit()`, `goShop()`.
+Two traps if you hand-roll placement: `rotC` can return leading empty rows/cols (build `H.cells`
+from the exact absolute cells and place with `grabDr=grabDc=0` at `(minR,minC)`), and
+`placeCatOnBoard` splices `G.hand[H.handIdx]` (re-`findIndex` by `h.id` between placements).
+
+## 3. Scoring (verified in `js/scoring.js`)
+
+Pieces are scanned **top-left → bottom-right** (the `mirror_mood` boss modifier reverses it).
+A running total accumulates.
+
+- **Each cat scores `cells × 10`** (`base_score_per_cell`). Colour/type gives no bonus by
+  itself — only treats key off type.
+- **Purrfect (board-fill) bonus** when every playable cell is filled:
+  `playableCells × perCell`, where **`perCell` scales with the work-week DAY**:
+
+  ```
+  day     = ceil(round / 3)                 // R1-3 = day 1 (MON) … R13-15 = day 5 (FRI)
+  perCell = fill_bonus_base × day           // base 5 → MON 5, TUE 10, WED 15, THU 20, FRI 25
+  ```
+
+  Read the live value off the UI rather than assuming: prep-screen chip
+  "✨ DAY N · PURRFECT +N/cell", the in-game target card chip, and the FIT projection
+  tooltip all print it.
+- **The purrfect bonus is added at the very END and is NOT multiplied** by any treat
+  multiplier (only the `fill_bonus_mult` boss modifier scales it). Multipliers only act on
+  cats + flat treats that scanned *before* them. This is what makes positional play matter.
+- **Treats fill cells too**, so they count toward "board full".
+- Score accumulates across all hands of the round toward `G.tgt`.
+
+**Positional consequences (this is the whole game):**
+
+- **Flat "+N" treats → top-left** (they scan first, then get multiplied by everything after).
+- **`big_bite` decays over the whole RUN, not the hand** — its payout is
+  `base − dec × (G.catsScoredRun + cats scanned before it this fit)`, and `G.catsScoredRun`
+  is cumulative across every fit of the run. It is an **early-run** treat that fades to +0;
+  buying it late is close to worthless. (Older notes here promised "+200 if placed top-left"
+  — that is only true on your first hands.)
+- **Multiplier treats (×N) → bottom-right.** They multiply everything already counted.
+- **`catnip`-style "+N per cat in ROW/COL" → a line you actually pack with cats** (in a
+  treat-only row it pays +0).
+- One multiplier on a **full** board often beats two multipliers on a partial board — the
+  purrfect bonus is a big un-multiplied term and the extra cats add multiplied base. Compare
+  both with `projectScore` before committing.
+
+## 4. Round curve, board, economy (live sheet values, 2026-07-13)
+
+| R | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|---:|---:|---:|---:|---:|---:|
+| **Target** | 450 | 550 | 650 | 900 | 950 | 1100 | 1500 | 1600 | 1700 | 2200 | 2300 | 2400 | 3000 | 3200 | 3400 |
+| **Board cells** | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 24 | 25 | 25 | 26 | 27 | 28 |
+| **Blocked prob** | 0 | 0 | .02 | .03 | .04 | .05 | .06 | .06 | .07 | .07 | .08 | .08 | .09 | .10 | .10 |
+| **One purrfect** | 80 | 85 | 90 | 190 | 200 | 210 | 330 | 345 | 360 | 480 | 500 | 500 | 650 | 675 | 700 |
+
+*(Any target numbers you find in PART B's run logs are historical and superseded — this
+table is the current curve.)*
+
+- **Board**: a generated polyomino of that many playable cells (`setupBoardLayout` →
+  `generatePolyomino`), **rolled once per round** and fixed for every hand of that round;
+  it re-rolls next round. Some cells are `blocked` (striped). The grid dims (`G.bsr/G.bsc`)
+  come from the polyomino — don't assume 5×5.
+- **Hands**: 4/round (`hand_count`), +1 in London. **Discards**: 3 (+1 in Paris/Bangkok/…).
+  **Hand size**: 7 cards. Rounds 3/6/9/12/15 also carry a boss modifier.
+- **Economy**: start $5; each round pays $5 + $1 per unused hand. Shop stocks 3 treats;
+  reroll costs escalate **3 → 5 → 8 → 12** within a round (resets each round). **Sell-back is
+  50% of buy price** (`sell_price_coef`).
+- Buying = **drag the shop card onto a backpack cell** (a click only selects). You choose the
+  cell *and* the rotation.
+
+## 5. Treats — lifecycle facts that decide your play
+
+- **Each treat triggers at most once per round.** After a fit, every treat that was on the
+  board leaves the inventory for the rest of the round and is restored at round end. So
+  **spread deployment across the round's hands** — multiplier on the highest-base hand,
+  "+N per hand remaining" treats on hand 1.
+- **A failed 1-in-2 REAPPEAR flip does NOT destroy the treat.** On a successful flip the treat
+  bounces straight back to the bag and can be replayed **this round**; on a failure it just
+  takes the normal used-treat path and is **restored at round end**. (Older notes in this file
+  claimed these flips "killed" treats — they never did.)
+- **Only two things permanently remove a treat:** `catnado` (destroys a random *inventory*
+  treat when it fires) and self-expiry — `final_feast`, `hiss_and_miss`, `second_breakfast`,
+  `treat_encore` (the last two: 1-in-2 per use), plus `soft_landing`, which burns itself to
+  convert a failed round into a win. Each of these pops a **toast** (the "loss ceremony",
+  `js/treat-loss.js`) so you can see exactly what left the bag and why.
+- **Treats carry over between rounds** — your arsenal compounds. Don't re-buy duplicates
+  unless you're deliberately stacking (duplicates of flat adds and Type B muls do both fire;
+  `all_or_nothing` copies share one per-round scaler, so a second copy adds ×m, no ladder).
+- **`gold_star` can never count the purrfect it is placed in** — `G.purrfectsThisRound`
+  increments in `doFit` *after* the treat scan. Play it on hand 2+ after banking a purrfect.
+
+### The backpack is player-managed (and loss-proof)
+
+- Treats in the bag can be **picked up, rotated (R / right-click) and re-placed**, on both the
+  game and shop screens. Each treat remembers its cells *and* rotation, and returns to that
+  exact pose after a board trip or at round end.
+- Every return path (`clearBoard()`, a cancelled drag, a failed drop, `dealHand()`, the
+  round-end restore) goes through `bpReturnTreat()`: **remembered pose → rotation-aware
+  auto-fit → `G.bpPending` overflow queue**. A treat that fits nowhere is **parked, still
+  owned, never destroyed** — it shows as a dimmed "no room — make space" row in the shop
+  inventory and re-seats itself automatically when you sell or rearrange.
+- Practical upshot: if a buy fails with no room, **defragment the bag** (drag + rotate) rather
+  than selling blind. The old warnings that `clearBoard()` / the round-end restore silently ate
+  treats are **obsolete** (fixed 2026-07-12) — but `bpRepackAll()` still destroys and must
+  never be called.
+
+## 6. Current difficulty photo (2026-07-13, after the target raise)
+
+- **Sim** (30 games × solver/greedy/casual, seed 1, London): solver 100% survival through R6,
+  33% still alive entering R10, 3% entering R12, **0% by R13**; greedy dies R4-7; casual dies at
+  the R3 boss. Full-run win rate **0%** for all three scripted profiles — the late game demands a
+  real treat engine the bots can't assemble. Expert manual play with a good engine is the
+  intended way through Days 4-5.
+- **Geometry gates purrfects**: even at solver strength with a filler-stuffed bag, only ~50% of
+  late hands can be full-filled (7-10% blocked cells + 7-card hand shapes). Never plan a round
+  assuming every hand fills.
+- **Known open issue (NOT fixed):** multiplier-class treats are shop-RNG-bound — one observed run
+  saw a single multiplier offered across 13 shops + rerolls. With the raised targets the treat
+  engine is load-bearing on Days 4-5, so a **multiplier pity-timer / guaranteed multiplier slot**
+  is the leading proposal. If you play and never see a multiplier, that's the bug, not you.
+
+## 7. Scripted-play traps (still live)
+
+- **Treats as *mandatory* solver pieces clog the board** → no room for cats → `doFit()` aborts
+  silently (it early-returns on `!G.cats.length`). Keep treats optional; pin specific ones with
+  `PF.plan`'s `bias` instead.
+- After any win screen, `#win-inline` stays visible until `goShop()` runs. **`G.score >= G.tgt` is
+  the only ground truth** for win detection.
+- Boss modifiers are drawn in the round advance — read `G.roundModifier` after advancing. Live
+  pool (Modifiers tab): NO SECONDS (0 discards), ROCKSLIDE (2× blocked cells), SLIM PICKINGS
+  (−1 card/hand), TIGHT SQUEEZE (−3 board cells), PICKY JUDGE (+15% target), TAX SEASON (−$1 per
+  treat played), MIRROR MOOD (scan runs bottom-right → top-left, so your early/late pinning
+  **inverts**). ROCKSLIDE / TIGHT SQUEEZE shrink solvable space — expect imperfect fills.
+- Autobuy must dedupe against carried-over treats, or it re-buys what you already own.
+- **Browser-extension tab groups do not survive MCP reconnects** — the page (and the run) is then
+  unrecoverable. There is no save system: budget for restarts, log results as you go, prefer
+  fewer/faster calls late in a run.
+- Loss screen "Try Again 🔄" **abandons the entire run** (back to the world map), despite the label.
 
 ---
 
-*Maintained by Claude. If you discover new treats, board behaviours, or better
-strategies while playing, append them here for the next agent.*
+# PART B — COMPRESSED HISTORY (why things are the way they are)
+
+Dated results, kept only where they still teach something. **All target numbers quoted below are
+from the config of their day and are superseded by the table in §4.**
+
+- **2026-07-05 — post-nerf full run, 15/15 won (old flat fill bonus, R15 target 1900).** Established
+  the flat-add stack (`big_bite` + `quick_paws` + `deep_deck`×2 + `catnip` pinned early, multiplier
+  pinned late) as the strongest line, and that duplicate treats stack. Also proved cash is never the
+  constraint — the **backpack** is.
+- **2026-07-05 (later) — difficulty retune + simulator.** Targets steepened, earn flattened,
+  `all_or_nothing` fixed to scale once per ROUND (dup copies no longer ladder). `sim.html` +
+  `js/sim/` added: batch-runs the REAL game in a hidden iframe with seeded RNG and 3 bot profiles.
+  Implementation fact still true: the game's `let/const` globals (G, TDEFS, RCFG…) are NOT on
+  `window` — the sim injects `js/sim/bridge.js` into the iframe to reach them, while plain function
+  declarations (`doFit`, `goShop`…) are reachable as `iframe.contentWindow.fn`. Run a batch before
+  and after any tuning change and diff the exported JSON.
+- **2026-07-05 — spatial-treat era.** Ten placement-driven treats went live (`opening_act`,
+  `snack_stack`, `cat_pile`, `cuddle_puddle`, `twin_paws`, `string_theory`, …). Lesson: scan-order
+  chains work as designed and a spatial build is real, but it finished a notch under the flat-dup
+  stack (first loss of that session: R15 2491/3000). `empty_bowl` pays +0 unless you're actually
+  broke — buy it last in a shop visit.
+- **2026-07-06 — boss rounds + projection.** Per-round modifiers on the boss rounds, the FIT
+  projected-score chip (`projectScore`), paw-rating treat hover feedback, purrfect-streak callouts.
+- **2026-07-07/08 — the harness.** `agent/pf-harness.js` replaced hand-rolled solvers;
+  `PF.fitFast()` made a round 1-2 calls. The destructive-`bpRepackAll` trap and the CDP-timer trap
+  were learned here (both still apply — §2).
+- **2026-07-12 — backpack made player-managed and loss-proof.** Rotation + rearrange in the bag,
+  remembered poses, `G.bpPending` overflow queue, treat-loss toasts. Retired the old "clearBoard
+  eats treats" / "round-end restore eats treats" warnings.
+- **2026-07-13 — purrfect bonus became day-scaled; targets raised (§3, §4).** Motivation: a
+  deliberately dumb "cheapest smallest treats as board filler, chase a purrfect every hand" build
+  cleared R1-R14 under the old targets, with the fill bonus contributing **40-51%** of late-round
+  scores. Under the new curve four purrfect fills cover at most ~87% of a target, so that exploit is
+  dead and the treat engine is mandatory again.
+- **Fixed, so stop repeating them:** `encore` / `treat_encore` DO propagate Type B results
+  (`scoreBonus` / `scoreMultiplier`) — the old "they do nothing" note is wrong. `rainbow_row` was
+  redesigned (+N per row with 2+ types) and now pays. Failed REAPPEAR flips never destroyed
+  anything.
+
+---
+
+*Maintained by Claude. If you discover new treats, board behaviours, or better strategies while
+playing, update PART A in place (keep it true and short) and add a one-line dated entry to PART B.*
