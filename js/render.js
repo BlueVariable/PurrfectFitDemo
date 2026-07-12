@@ -102,7 +102,10 @@ function renderRoundsTrack(){
   const re=g('rds-earn');if(re)re.textContent='+$'+G.earn;
   const rb=g('rds-board');if(rb)rb.textContent=(cfg.boardSize||(G.bsr*G.bsc))+' cells';
   const rp=g('rds-purrfect');
-  if(rp&&typeof purrfectPerCell==='function')rp.textContent=`✨ PURRFECT BONUS +${purrfectPerCell(G.round)}/cell`;
+  if(rp&&typeof purrfectPerCell==='function'){
+    const _day=(typeof purrfectDay==='function')?purrfectDay(G.round):Math.ceil(G.round/3);
+    rp.textContent=`✨ DAY ${_day} · PURRFECT +${purrfectPerCell(G.round)}/cell`;
+  }
   renderRoundModifierCard();
   // Coffee Break button visibility + confirm-state reset (js/cafe.js).
   // typeof-guarded: render.js loads before cafe.js in index.html.
