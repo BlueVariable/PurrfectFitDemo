@@ -66,6 +66,8 @@ body::before{display:none;}
 .card .bv{font-family:'Fredoka One',cursive;font-size:29px;color:var(--tx);line-height:1.05;}
 .card .bv.or{color:#e05040;}
 .card .bv.co{color:var(--co);}
+/* Live purrfect (board-fill) per-cell bonus — small gold notepad chip under the target */
+.pf-rate{font-family:'Fredoka One',cursive;font-size:10px;color:#c07810;background:#fff4d8;border:1.5px solid #f0c060;border-radius:7px;padding:2px 7px;margin-top:4px;display:inline-block;letter-spacing:.3px;}
 .earn-b{display:inline-flex;align-items:center;gap:6px;background:#f5a820;color:#1a1a2a;font-family:'Fredoka One',cursive;font-size:16px;border-radius:8px;padding:3px 10px;border:2px solid #1a1a2a;box-shadow:0 3px 0 #c07810;margin-top:3px;}
 .pr{display:flex;gap:6px;margin-top:3px;}
 .pl{flex:1;border-radius:8px;padding:4px 6px;text-align:center;box-shadow:0 3px 0 rgba(0,0,0,.22);}
@@ -483,6 +485,8 @@ body::before{display:none;}
 .rds-rc-div{width:1px;height:32px;background:rgba(0,0,0,.12);}
 .rds-rc-sv{font-family:'Fredoka One',cursive;font-size:22px;color:#f5a820;}
 .rds-rc-sl{font-size:10px;color:#7a8090;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+/* Live purrfect (board-fill) per-cell bonus chip under the round stats */
+.rds-purrfect{font-family:'Fredoka One',cursive;font-size:12px;color:#c07810;background:#fff4d8;border:2px solid #f0c060;border-radius:10px;padding:4px 12px;margin-top:14px;display:inline-block;letter-spacing:.4px;}
 .rds-mod-card{display:flex;align-items:center;gap:10px;background:#2d1b69;border-radius:16px;padding:10px 16px;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;max-width:280px;}
 .rds-mod-em{font-size:28px;line-height:1;flex-shrink:0;}
 .rds-mod-body{display:flex;flex-direction:column;gap:2px;text-align:left;}

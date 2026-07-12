@@ -201,7 +201,7 @@ function projectScore(hypothetical){
     const filledCells=G.board.flat().filter(c=>c.filled).length;
     const playableCells=G.board.flat().filter(c=>!c.blocked&&!c.offShape).length;
     const boardFull=filledCells===playableCells&&playableCells>0;
-    const boardBonus=boardFull?boardFillBonus(playableCells,CFG.board_fill_bonus||5,G.roundModifier):0;
+    const boardBonus=boardFull?boardFillBonus(playableCells,purrfectPerCell(G.round),G.roundModifier):0;
     const total=runningTotal+boardBonus;
 
     out={total,boardBonus,boardFull,perPiece};

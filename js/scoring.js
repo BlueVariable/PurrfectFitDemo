@@ -19,6 +19,28 @@ function boardFillBonus(playableCells,perCell,mod){
   if(mod&&mod.effect==='fill_bonus_mult')return Math.round(base*(mod.mag||1));
   return base;
 }
+// Coerce a raw CFG value to a finite number the same way config.js ingests
+// General rows (numeric strings → Number, everything else → NaN). Empty
+// string / null / undefined are treated as "absent" (NaN), not 0.
+function _cfgNum(v){
+  if(v===undefined||v===null||v==='')return NaN;
+  const n=Number(v);
+  return isFinite(n)?n:NaN;
+}
+// Current purrfect (board-fill) per-cell bonus. Scales with the round so the
+// board-fill bonus stays a roughly fixed share of the round target across a
+// run:  perCell = fill_bonus_base + fill_bonus_per_round × round.
+// Falls back to the LEGACY flat CFG.board_fill_bonus (default 10) whenever
+// either new key is missing or unparseable — so cached configs and the
+// headless sim keep working. Shared verbatim by doFit() and projectScore()
+// so the committed fit and the preview never disagree.
+function purrfectPerCell(round){
+  const base=_cfgNum(CFG.fill_bonus_base);
+  const per=_cfgNum(CFG.fill_bonus_per_round);
+  if(!isNaN(base)&&!isNaN(per))return base+per*(Number(round)||0);
+  const legacy=_cfgNum(CFG.board_fill_bonus);
+  return !isNaN(legacy)?legacy:10;
+}
 // Comparator for allPieces.sort — normally row-major ascending (topmost-then-
 // leftmost trigger cell fires first). mirror_mood (scan_reverse) inverts it so
 // the scan runs bottom-right → top-left instead. Shared verbatim by doFit() and
@@ -128,7 +150,7 @@ function doFit(){
   const filledCells=G.board.flat().filter(c=>c.filled).length;
   const playableCells=G.board.flat().filter(c=>!c.blocked&&!c.offShape).length;
   const boardFull=filledCells===playableCells&&playableCells>0;
-  const boardBonus=boardFull?boardFillBonus(playableCells,CFG.board_fill_bonus||5,G.roundModifier):0;
+  const boardBonus=boardFull?boardFillBonus(playableCells,purrfectPerCell(G.round),G.roundModifier):0;
   G.totalFits=(G.totalFits||0)+1;
   // Run-level cumulative count of cats scored — persists across hands AND rounds
   // (reset only by newGame). big_bite reads it so its decay carries over the whole
