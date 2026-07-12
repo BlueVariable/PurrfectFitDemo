@@ -24,9 +24,9 @@
    the result.
 3. **The board is a packing puzzle.** Use the backtracking solver in §7 to find
    the max-coverage (or perfect) tiling each hand, then the applier to place it.
-4. **Filling the whole board adds a big round-scaled "purrfect" bonus** (see §4)
-   — tuned to stay ~25–32% of the round target every round. Always aim for a
-   full "purrfect" fit when possible.
+4. **Filling the whole board adds a big "purrfect" bonus that steps up each
+   work-week day** (see §4) — ~15–18% of the round target on Monday, rising to
+   ~22–28% by Friday. Always aim for a full "purrfect" fit when possible.
 
 ---
 
@@ -93,25 +93,28 @@ Per fit, pieces are scanned **top-left → bottom-right (row-major)**:
 - **Each cat scores `cells × base_score_per_cell`**, `base_score_per_cell = 10`.
   (Type/colour gives **no** bonus by itself — only treats key off type.)
 - **Board-fill ("purrfect") bonus** when every playable cell is filled:
-  `playableCells × perCell`, where **`perCell` now scales with the round**:
-  `perCell = fill_bonus_base + fill_bonus_per_round × round` (General tab;
-  defaults `5 + 2×round` → **R1 = 7/cell, R15 = 35/cell**). If those two keys
-  are ever absent it falls back to the legacy flat `board_fill_bonus` (10). The
-  bonus is added **AFTER** all treats/multipliers and is itself **un-multiplied**
-  (the `fill_bonus_mult` boss modifier still scales it if present).
+  `playableCells × perCell`, where **`perCell` scales with the work-week DAY**:
+  `perCell = fill_bonus_base × day`, where `day = ceil(round / 3)` (rounds 1-3 =
+  day 1 … 13-15 = day 5; General tab, default base `5` → **MON 5/cell, TUE 10,
+  WED 15, THU 20, FRI 25/cell**). If `fill_bonus_base` is absent it falls back to
+  the legacy flat `board_fill_bonus` (10). The bonus is added **AFTER** all
+  treats/multipliers and is itself **un-multiplied** (the `fill_bonus_mult` boss
+  modifier still scales it if present).
 - **Treats fill cells too** (`kind:'treat'`), so they count toward "board full."
 - **Score accumulates across all hands** in the round toward `G.tgt`.
 
-**The big insight:** the purrfect bonus is a large flat term deliberately tuned to
-stay ~25–32% of the round target at *every* round (it grows +2/cell each round to
-keep pace with the target curve). A full fill is worth far more than a partial one
-— always chase it. The live per-cell value is printed on the prep screen
-("PURRFECT BONUS +N/cell") and in the game-screen target card, so **read it off
-the UI** rather than assuming a fixed number.
+**The big insight:** the purrfect bonus is a large flat term that steps up once
+per work-week day (`+base` per cell each day, so MON 5 → FRI 25 with base 5). Its
+share of the round target grows through the week — roughly ~15–18% on Monday
+(day 1) rising to ~22–28% by Friday (day 5). A full fill is worth far more than a
+partial one — always chase it. The live per-cell value is printed on the prep
+screen ("DAY N · PURRFECT +N/cell") and in the game-screen target card, so **read
+it off the UI** rather than assuming a fixed number.
 
-Worked example (Round 1, hand 1, `perCell = 7`): cross(5)+trio(3)+duo(2)+duo(2)=12
-cat cells → 120 base; full 16-cell board → 112 purrfect (16×7); POKER FACE +150 →
-**382**. ✔ (Under the old flat `board_fill_bonus = 10` the fill was 160 → 430.)
+Worked example (Round 1 = day 1, hand 1, `perCell = 5`): cross(5)+trio(3)+duo(2)+
+duo(2)=12 cat cells → 120 base; full 16-cell board → 80 purrfect (16×5); POKER
+FACE +150 → **350**. ✔ (On a Friday round, day 5, the same fill would be 16×25 =
+400 purrfect instead.)
 
 ## 5. The board — "Wildcat Chaos"
 
@@ -238,7 +241,7 @@ earliest in row-major order** (maximizes its +200).
 - Max coverage is genuinely sometimes < full (e.g. 13/16, 15/18) — the diamond +
   blocked cells + your specific shapes just don't tile. That's fine; score
   accumulates across hands. Consider a discard only if it would *complete* a fill
-  (the purrfect bonus, ~+playable×perCell — round-scaled, see §4 — easily beats
+  (the purrfect bonus, ~+playable×perCell — day-scaled, see §4 — easily beats
   one POKER FACE discard = 50).
 
 ## 8. Shopping strategy
@@ -311,7 +314,7 @@ total accumulates. Critically:
 - **Reroll the shop** for **$3** (`getRerollCost()` / `rerollTreats()`) when the
   offerings don't fit your build — cheaper than buying a treat you won't use.
 - **Discards** (`doDiscard`, 3/round) swap a held cat for a fresh draw. Worth it
-  to *complete* a fill (purrfect ≈ +playable×perCell, round-scaled) but remember `poker_face` pays
+  to *complete* a fill (purrfect ≈ +playable×perCell, day-scaled) but remember `poker_face` pays
   +50 per *unused* discard, so there's a real cost.
 
 ## 12. Two ways to drive the game

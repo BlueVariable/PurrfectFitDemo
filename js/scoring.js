@@ -27,17 +27,26 @@ function _cfgNum(v){
   const n=Number(v);
   return isFinite(n)?n:NaN;
 }
-// Current purrfect (board-fill) per-cell bonus. Scales with the round so the
-// board-fill bonus stays a roughly fixed share of the round target across a
-// run:  perCell = fill_bonus_base + fill_bonus_per_round × round.
-// Falls back to the LEGACY flat CFG.board_fill_bonus (default 10) whenever
-// either new key is missing or unparseable — so cached configs and the
-// headless sim keep working. Shared verbatim by doFit() and projectScore()
-// so the committed fit and the preview never disagree.
+// Work-week DAY (1-based) a round belongs to: rounds 1-3 → day 1, 4-6 → day 2,
+// … 13-15 → day 5 (day = ceil(round / rounds-per-day)). Derives the "3" from the
+// calendar's CAL_ROUNDS_PER_DAY (js/calendar.js) so the scorer and the work-week
+// calendar can never disagree; falls back to 3 (the work-week structure) if that
+// constant isn't loaded. NOT clamped — if round_count ever grows past 15, day 6+
+// simply continues the progression.
+function purrfectDay(round){
+  const perDay=(typeof CAL_ROUNDS_PER_DAY==='number'&&CAL_ROUNDS_PER_DAY>0)?CAL_ROUNDS_PER_DAY:3;
+  return Math.ceil((Number(round)||0)/perDay);
+}
+// Current purrfect (board-fill) per-cell bonus. Steps up once per work-week day
+// so the board-fill bonus grows through the week:  perCell = fill_bonus_base ×
+// day  (base 5 → MON 5/cell, TUE 10, WED 15, THU 20, FRI 25). Falls back to the
+// LEGACY flat CFG.board_fill_bonus (default 10) whenever fill_bonus_base is
+// missing or unparseable — so cached configs and the headless sim keep working.
+// Shared verbatim by doFit() and projectScore() so the committed fit and the
+// preview never disagree.
 function purrfectPerCell(round){
   const base=_cfgNum(CFG.fill_bonus_base);
-  const per=_cfgNum(CFG.fill_bonus_per_round);
-  if(!isNaN(base)&&!isNaN(per))return base+per*(Number(round)||0);
+  if(!isNaN(base))return base*purrfectDay(round);
   const legacy=_cfgNum(CFG.board_fill_bonus);
   return !isNaN(legacy)?legacy:10;
 }
