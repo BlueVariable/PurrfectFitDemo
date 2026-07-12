@@ -24,7 +24,8 @@
    the result.
 3. **The board is a packing puzzle.** Use the backtracking solver in §7 to find
    the max-coverage (or perfect) tiling each hand, then the applier to place it.
-4. **Filling the whole board ≈ doubles your points** (see §4). Always aim for a
+4. **Filling the whole board adds a big round-scaled "purrfect" bonus** (see §4)
+   — tuned to stay ~25–32% of the round target every round. Always aim for a
    full "purrfect" fit when possible.
 
 ---
@@ -92,17 +93,25 @@ Per fit, pieces are scanned **top-left → bottom-right (row-major)**:
 - **Each cat scores `cells × base_score_per_cell`**, `base_score_per_cell = 10`.
   (Type/colour gives **no** bonus by itself — only treats key off type.)
 - **Board-fill ("purrfect") bonus** when every playable cell is filled:
-  `playableCells × board_fill_bonus`, **`board_fill_bonus = 10`**.
+  `playableCells × perCell`, where **`perCell` now scales with the round**:
+  `perCell = fill_bonus_base + fill_bonus_per_round × round` (General tab;
+  defaults `5 + 2×round` → **R1 = 7/cell, R15 = 35/cell**). If those two keys
+  are ever absent it falls back to the legacy flat `board_fill_bonus` (10). The
+  bonus is added **AFTER** all treats/multipliers and is itself **un-multiplied**
+  (the `fill_bonus_mult` boss modifier still scales it if present).
 - **Treats fill cells too** (`kind:'treat'`), so they count toward "board full."
 - **Score accumulates across all hands** in the round toward `G.tgt`.
 
-**The big insight:** because `board_fill_bonus == base_score_per_cell == 10`, a
-**full board doubles** the cat base (every filled cell ≈ 10 base + 10 purrfect),
-*plus* any treat bonuses. A perfect fit is worth far more than a partial one —
-always chase the full fill.
+**The big insight:** the purrfect bonus is a large flat term deliberately tuned to
+stay ~25–32% of the round target at *every* round (it grows +2/cell each round to
+keep pace with the target curve). A full fill is worth far more than a partial one
+— always chase it. The live per-cell value is printed on the prep screen
+("PURRFECT BONUS +N/cell") and in the game-screen target card, so **read it off
+the UI** rather than assuming a fixed number.
 
-Worked example (Round 1, hand 1): cross(5)+trio(3)+duo(2)+duo(2)=12 cat cells →
-120 base; full 16-cell board → 160 purrfect; POKER FACE +150 → **430**. ✔
+Worked example (Round 1, hand 1, `perCell = 7`): cross(5)+trio(3)+duo(2)+duo(2)=12
+cat cells → 120 base; full 16-cell board → 112 purrfect (16×7); POKER FACE +150 →
+**382**. ✔ (Under the old flat `board_fill_bonus = 10` the fill was 160 → 430.)
 
 ## 5. The board — "Wildcat Chaos"
 
@@ -229,7 +238,8 @@ earliest in row-major order** (maximizes its +200).
 - Max coverage is genuinely sometimes < full (e.g. 13/16, 15/18) — the diamond +
   blocked cells + your specific shapes just don't tile. That's fine; score
   accumulates across hands. Consider a discard only if it would *complete* a fill
-  (the purrfect bonus, ~+playable×10, easily beats one POKER FACE discard = 50).
+  (the purrfect bonus, ~+playable×perCell — round-scaled, see §4 — easily beats
+  one POKER FACE discard = 50).
 
 ## 8. Shopping strategy
 
@@ -290,7 +300,8 @@ total accumulates. Critically:
 ## 11. More mechanics learned
 
 - **Treats carry over between rounds.** At round end, non-expired used treats are
-  restored to the backpack (`goShop` → `bpAutoPlace`). So your arsenal compounds
+  restored to the backpack (`goShop` → `bpRestoreUsedTreats`, exact remembered
+  spot + rotation first, overflow queue instead of loss). So your arsenal compounds
   across a run — **don't re-buy duplicates**, and don't treat each shop as a blank
   slate. By Round 6 the bp held 7 treats from earlier rounds.
 - **You can't place your whole arsenal in one hand** (treats eat cells and you
@@ -300,7 +311,7 @@ total accumulates. Critically:
 - **Reroll the shop** for **$3** (`getRerollCost()` / `rerollTreats()`) when the
   offerings don't fit your build — cheaper than buying a treat you won't use.
 - **Discards** (`doDiscard`, 3/round) swap a held cat for a fresh draw. Worth it
-  to *complete* a fill (purrfect ≈ +playable×10) but remember `poker_face` pays
+  to *complete* a fill (purrfect ≈ +playable×perCell, round-scaled) but remember `poker_face` pays
   +50 per *unused* discard, so there's a real cost.
 
 ## 12. Two ways to drive the game
@@ -403,11 +414,13 @@ never the constraint — the **backpack is** (see §16).
 
 - **Shop sells duplicates of treats you own.** Two deep_decks both trigger
   (+184 each, same hand). Best stacking line in the game right now.
-- **Silent treat loss at round end.** `goShop` restores used treats via
-  `bpAutoPlace`, which scans greedily with **no rotations** and **ignores
-  failure** — a fragmented backpack ate my $10 wild_dice with zero feedback.
-  Keep the backpack tidy; sell dead treats before round end. Buys also fail
-  (`no-bp-room`) even with enough total free cells if they're fragmented.
+- **Round-end restore is now home-based and loss-free** (2026-07-12). `goShop`
+  restores each used treat to its remembered backpack cells + rotation
+  (`bpRestoreUsedTreats` → `G.bpHomes`); if the home is occupied it auto-fits
+  with rotations, and if even that fails the treat is parked in `G.bpPending`
+  (still owned, re-seated when space frees) — never destroyed. Buys can still
+  fail (`no-bp-room`) on fragmentation, but the player/agent can rearrange the
+  backpack (drag within the grid, R/RMB to rotate) to defragment first.
 - **gold_star can never count the purrfect fit it's placed in** — the
   purrfect counter increments in `doFit` *after* the treat scan runs (the
   sheet Explanation claims otherwise). Placed hand 1 it pays +0; place it
@@ -601,12 +614,13 @@ observed ~80% of purchase price (twin_paws: bought $10, sold $8).
   its once-per-round trigger AND its once-per-round growth; test the fill
   without it first (its own 1 cell is sometimes exactly what makes the fill
   impossible). `morning_stretch` is FIRST-HAND-only. `bell` is solo-only.
-- **clearBoard() can silently destroy treats** (board.js:127-131: rotation-less
-  `bpAutoPlace`, return value ignored). Any planning loop that cycles
-  clearBoard with a fragmented backpack WILL eventually lose treats (this
-  session: milk, morning_stretch, big_bite, poker_face across runs). The
-  harness shields it in `plan()`, but the shield is best-effort — keep the
-  backpack tidy and treat counts ≤ ~8.
+- **clearBoard() no longer destroys treats** (fixed 2026-07-12): board treats
+  return to their remembered backpack pose (`bpReturnTreat`), falling back to
+  rotation-aware auto-fit and then to the `G.bpPending` overflow queue —
+  never silently dropped. (Historical note: it used to be a rotation-less
+  `bpAutoPlace` with the return value ignored, and cycling clearBoard with a
+  fragmented backpack lost milk, morning_stretch, big_bite, poker_face across
+  runs.)
 - **Browser-extension tab groups do not survive MCP reconnects.** Twice this
   session the session's tab group vanished mid-run — the page (and the run) is
   unrecoverable. There is no save system; budget for restarts, log results as

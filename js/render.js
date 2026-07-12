@@ -101,6 +101,8 @@ function renderRoundsTrack(){
   const rt=g('rds-tgt');if(rt)rt.textContent=G.tgt.toLocaleString();
   const re=g('rds-earn');if(re)re.textContent='+$'+G.earn;
   const rb=g('rds-board');if(rb)rb.textContent=(cfg.boardSize||(G.bsr*G.bsc))+' cells';
+  const rp=g('rds-purrfect');
+  if(rp&&typeof purrfectPerCell==='function')rp.textContent=`✨ PURRFECT BONUS +${purrfectPerCell(G.round)}/cell`;
   renderRoundModifierCard();
   // Coffee Break button visibility + confirm-state reset (js/cafe.js).
   // typeof-guarded: render.js loads before cafe.js in index.html.
@@ -146,9 +148,10 @@ function updateProjectedScoreUI(){
   const stillNeeded=(G.tgt||0)-(G.score||0);
   const clears=val>=stillNeeded;
   el.classList.toggle('fit-proj-ready',clears);
-  el.title=clears
+  const pcNote=(typeof purrfectPerCell==='function')?` · purrfect fill adds +${purrfectPerCell(G.round)}/cell`:'';
+  el.title=(clears
     ?`Projected +${val.toLocaleString()} — clears the round!`
-    :`Projected +${val.toLocaleString()} — need ${Math.max(0,stillNeeded-val).toLocaleString()} more`;
+    :`Projected +${val.toLocaleString()} — need ${Math.max(0,stillNeeded-val).toLocaleString()} more`)+pcNote;
 }
 
 // ── Feature 2b: treat spot-rating (paw tooltip + affected-cell pulse) ──
@@ -236,6 +239,8 @@ function renderStats(){
   g('g-deck').textContent=G.deck.length;
   if(g('g-round-top'))g('g-round-top').textContent=G.round;
   g('g-bsize').textContent=`${G.bsr}×${G.bsc} board`;
+  const pfEl=g('g-purrfect-rate');
+  if(pfEl&&typeof purrfectPerCell==='function')pfEl.textContent=`✨ +${purrfectPerCell(G.round)}/cell purrfect`;
   const trashBadge=g('trash-badge');
   if(trashBadge) trashBadge.textContent=G.disc;
   const trashEl=g('trash-drop');
@@ -488,14 +493,14 @@ function renderBP(){
             document.removeEventListener('mousemove',onMove);
             document.removeEventListener('mouseup',onUp);
             dropHeld();
+            const pose=bpPoseOf(grp);
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            const pickedShape=grp.shape||grp.tdef.bpS;
-            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
-            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
+            const gDr=Math.max(0,Math.min(pose.shape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:gDr,grabDc:gDc,dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
           }
         };
@@ -532,14 +537,14 @@ function renderBP(){
             document.removeEventListener('touchmove',onTMove);
             document.removeEventListener('touchend',onTEnd);
             dropHeld();
+            const pose=bpPoseOf(grp);
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            const pickedShape=grp.shape||grp.tdef.bpS;
-            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
-            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
+            const gDr=Math.max(0,Math.min(pose.shape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:gDr,grabDc:gDc,dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
           }
         };

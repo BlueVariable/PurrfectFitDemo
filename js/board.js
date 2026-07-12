@@ -58,7 +58,7 @@ function onBoardClick(r,c){
         const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(treatGroup.oc??c)));
         H={kind:'treat',source:'board',data:tdef,cells:pickedShape,rot:0,
            color:tdef.col,em:tdef.em,handIdx:null,boardGid:gid,bpGid:null,
-           grabDr:gDr,grabDc:gDc,dragging:false};
+           grabDr:gDr,grabDc:gDc,dragging:false,bpOrigin:treatGroup.bpHome||null};
         updateGhost();showHUD();clrBoardPrev();renderAll();
       }
       return;
@@ -92,7 +92,9 @@ function placeTreatOnBoard(r,c){
     G.board[rr][cc]={filled:true,col:H.color,kind:'treat',em:H.em,gid,shape:null,type:null};
     placed.push([rr,cc]);
   }));
-  const tInst={cells:placed,gid,tdef:H.data,or,oc,shapeGrid:H.cells};
+  // bpHome: the treat's remembered backpack pose (spot + rotation), carried
+  // along so it can return exactly there after the fit / a board pickup.
+  const tInst={cells:placed,gid,tdef:H.data,or,oc,shapeGrid:H.cells,bpHome:H.bpOrigin||null};
   G.treats.push(tInst);
   if(H.data.onPlace) H.data.onPlace(tInst,G.board);
   H=resetH();updateGhost();hideHUD();clrBoardPrev();renderAll();checkBoardFull();
@@ -127,7 +129,7 @@ function clearBoard(){
   G.treats.forEach(bt=>{
     // clear all board cells for this treat
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
-    bpAutoPlace(bt.tdef);
+    bpReturnTreat(bt.tdef,bt.bpHome||null); // home pose first, never destroyed
   });
   G.cats=[];G.treats=[];
   if(H.kind==='cat'||H.kind==='treat'){H=resetH();updateGhost();hideHUD();}

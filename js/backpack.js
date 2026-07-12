@@ -23,8 +23,9 @@ function onBPMouseUp(r,c){
   // Use grab offset so treat anchors correctly
   const or=r-H.grabDr, oc=c-H.grabDc;
   if(!bpCanAt(H.cells,or,oc))return;
-  bpPlaceAt(H.data,H.cells,or,oc);
+  bpPlaceAt(H.data,H.cells,or,oc,H.rot);
   H=resetH();
+  bpRetryPending(); // the rearrange may have defragged room for an overflowed treat
   updateGhost();hideHUD();clrBPPrev();renderBP();
 }
 function getBPCell(r,c){return g('bpg').querySelectorAll('.bpc')[r*getBPC()+c]||null;}
@@ -46,11 +47,11 @@ function bpEnsureWidth(){
 
 // Full reconciliation, including shrink when tote ownership ends (sold,
 // destroyed by catnado, refunded at round end). Shrinking must never destroy
-// a treat: if the doomed column is occupied we try a full repack at the
-// narrow width, and if even that fails the bag temporarily STAYS WIDE
-// (G._bpGraceC) and we retry at the next reconcile point (end of each score
-// sequence, shop sell/pickup, round end, new game). Returns true if the
-// physical width changed.
+// a treat OR reshuffle the player's arrangement: if the doomed column is
+// occupied we relocate only its occupants (rotation-aware), and if even that
+// fails the bag temporarily STAYS WIDE (G._bpGraceC) and we retry at the
+// next reconcile point (end of each score sequence, shop sell/pickup, round
+// end, new game). Returns true if the physical width changed.
 function bpReconcileWidth(){
   if(!G.bp||!G.bp.length)return false;
   // Target width deliberately IGNORES G._bpGraceC: grace is this function's
@@ -67,20 +68,27 @@ function bpReconcileWidth(){
   // Shrinking. Fast path: doomed column(s) empty — just truncate.
   const overflow=(G.bpGroups||[]).some(gr=>gr.cells.some(([,c])=>c>=want));
   if(!overflow){G.bp.forEach(row=>{row.length=want;});G._bpGraceC=0;return true;}
-  // Occupied: reflow everything into the narrow bag via a full repack.
-  const snapBp=G.bp,snapGroups=G.bpGroups;
+  // Occupied: relocate ONLY the groups overlapping the doomed column(s).
+  // Everything else stays exactly where the player arranged it — the bag is
+  // player-managed, so a width change must never trigger a full reshuffle.
+  const snapBp=G.bp.map(row=>row.slice()),snapGroups=G.bpGroups.slice();
   G._bpGraceC=0;
-  const failed=bpRepackAll([]); // rebuilds G.bp at the now-narrow getBPC()
-  if(!failed.length)return true;
+  const doomed=G.bpGroups.filter(gr=>gr.cells.some(([,c])=>c>=want));
+  doomed.forEach(gr=>removeBpGid(gr.gid));
+  G.bp.forEach(row=>{row.length=want;});
+  if(doomed.every(gr=>bpAutoPlaceRot(gr.tdef)))return true;
   // Genuinely no room at the narrow width: restore the wide packing untouched
-  // (bpRepackAll built fresh arrays/groups, so the snapshot is intact) and
-  // keep the extra column alive until space frees up.
+  // (the snapshot rows/groups were copied before any mutation) and keep the
+  // extra column alive until space frees up.
   G.bp=snapBp;G.bpGroups=snapGroups;
   G._bpGraceC=have-getBPCBase();
   return false;
 }
 
 // ── BP helpers ──
+// Greedy, rotation-less first-fit. NOTE: callers must handle a false return
+// — for returning an owned treat to the bag, use bpReturnTreat() instead
+// (remembered pose first, overflow queue on failure, never destroys).
 function bpAutoPlace(tdef){
   const shape=tdef.bpS;
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c);return true;}
@@ -88,12 +96,12 @@ function bpAutoPlace(tdef){
 }
 
 // ── Rotation-aware auto-place: tries all 4 rotations of the stored shape
-//    before giving up. Used by the round-end restore path so a treat isn't
-//    lost just because its default orientation no longer fits. ──
+//    before giving up. Used by every automatic placement path so a treat
+//    isn't lost just because its default orientation no longer fits. ──
 function bpAutoPlaceRot(tdef){
   for(let rot=0;rot<4;rot++){
     const shape=rotC(tdef.bpS,rot);
-    for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c);return true;}
+    for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c)){bpPlaceAt(tdef,shape,r,c,rot);return true;}
   }
   return false;
 }
@@ -101,7 +109,10 @@ function bpShapeCellCount(shape){return shape.reduce((s,row)=>s+row.filter(Boole
 
 // ── Full repack: clear the backpack and re-place every current group's tdef
 //    plus `extraTdefs`, largest-first, with rotation support. Returns the
-//    tdefs (from either source) that still would not fit anywhere. ──
+//    tdefs (from either source) that still would not fit anywhere.
+//    NOTE: no game path calls this anymore — the backpack arrangement is
+//    player-owned (see bpReturnTreat below) and must never be reshuffled.
+//    Kept only as a manual/debug utility. ──
 function bpRepackAll(extraTdefs){
   const all=[...G.bpGroups.map(gr=>gr.tdef),...extraTdefs];
   all.sort((a,b)=>bpShapeCellCount(b.bpS)-bpShapeCellCount(a.bpS));
@@ -112,19 +123,75 @@ function bpRepackAll(extraTdefs){
   return failed;
 }
 
-// ── Round-end restore: rotation-aware placement first; if a treat still
-//    doesn't fit, repack the whole backpack (a valid packing existed before
-//    the round started, so this should nearly always succeed); if it STILL
-//    can't fit, refund its sell price rather than silently destroying it. ──
+// ══════════════════════════════════════════════════════
+//  PLAYER-MANAGED ARRANGEMENT
+//  Every bpGroup remembers its pose: anchor (or,oc) + rotated shape grid +
+//  rot index (bpPlaceAt below). When a treat leaves the bag its pose travels
+//  with it — H.bpOrigin across a drag, tInst.bpHome across a board trip,
+//  G.bpHomes across the usedTreats round-trip — and every return path is
+//  exact-pose-first, so the game never reshuffles the player's arrangement.
+//  A treat that truly cannot fit is parked in G.bpPending (NEVER destroyed)
+//  and retried whenever space can free up.
+// ══════════════════════════════════════════════════════
+function bpPoseOf(grp){return{or:grp.or,oc:grp.oc,shape:grp.shape||grp.tdef.bpS,rot:grp.rot||0};}
+
+// Exact remembered pose first, then rotation-aware auto-fit anywhere.
+// Never repacks: every other treat stays exactly where the player put it.
+function bpPlaceHomeOrAuto(tdef,home){
+  if(home&&home.shape&&bpCanAt(home.shape,home.or,home.oc)){bpPlaceAt(tdef,home.shape,home.or,home.oc,home.rot);return true;}
+  return bpAutoPlaceRot(tdef);
+}
+
+// Park an unplaceable treat in the overflow queue and log the event for a
+// future notification UI. The treat stays owned and is retried by
+// bpRetryPending() — this is the ONLY legal outcome for "no room".
+function bpSendToPending(tdef){
+  (G.bpPending=G.bpPending||[]).push(tdef);
+  (G.treatLossEvents=G.treatLossEvents||[]).push({id:tdef.id,name:tdef.nm||tdef.id,em:tdef.em||'',reason:'no-room'});
+  console.warn(`[backpack] no room for "${tdef.nm||tdef.id}" — parked in overflow (G.bpPending); it will return when space frees up.`);
+  // Loss ceremony flush: announce the overflow the moment it happens, on
+  // whichever screen the player is on (round-end restore, board clear, a
+  // cancelled drag). Recording above stays a pure state push; the flush is
+  // display-only, drains the queue, and no-ops under the headless sim.
+  if(typeof treatLossFlush==='function')treatLossFlush();
+}
+
+// Single safe entry point for returning a treat to the inventory.
+// Order: remembered pose → rotation-aware auto-fit → pending queue.
+function bpReturnTreat(tdef,home){
+  if(bpPlaceHomeOrAuto(tdef,home))return true;
+  bpSendToPending(tdef);
+  return false;
+}
+
+// Re-attempt overflowed treats. Called wherever space can free up: a sell,
+// a player rearrange drop, and the round-end restore. Returns count seated.
+function bpRetryPending(){
+  if(!G.bpPending||!G.bpPending.length)return 0;
+  const still=[];let placed=0;
+  G.bpPending.forEach(td=>{if(bpAutoPlaceRot(td))placed++;else still.push(td);});
+  G.bpPending=still;
+  return placed;
+}
+
+// Claim (and consume) the remembered home for this tdef instance, if any.
+// Duplicate copies share a tdef reference; each claim consumes one record,
+// so two copies of the same treat each get a home (order may swap — they
+// are identical, so it doesn't matter).
+function bpClaimHome(tdef){
+  if(!G.bpHomes||!G.bpHomes.length)return null;
+  const i=G.bpHomes.findIndex(h=>h.tdef===tdef);
+  return i<0?null:G.bpHomes.splice(i,1)[0];
+}
+
+// ── Round-end restore: every used treat goes back to its REMEMBERED home
+//    cells at its remembered rotation (claimed from G.bpHomes). Its home is
+//    normally still free — nothing auto-fills it — but if occupied (player
+//    rearranged mid-round, standing_ovation clone squatted it, new buy over
+//    the gap) it falls back to rotation-aware auto-fit; if even that fails
+//    it is parked in G.bpPending. Never repacked, never destroyed. ──
 function bpRestoreUsedTreats(tdefs){
-  const unplaced=[];
-  tdefs.forEach(td=>{if(!bpAutoPlaceRot(td))unplaced.push(td);});
-  if(!unplaced.length)return;
-  const stillFailed=bpRepackAll(unplaced);
-  stillFailed.forEach(td=>{
-    G.cash+=td.sp||0;
-    console.warn(`[bpRestoreUsedTreats] "${td.nm||td.id}" would not fit back into the backpack even after a full repack — refunded $${td.sp||0} instead of destroying it.`);
-  });
+  tdefs.forEach(td=>{bpReturnTreat(td,bpClaimHome(td));});
 }
 function bpCanAt(cells,r,c){
   bpEnsureWidth(); // physical G.bp may lag getBPC() right after tote ownership begins
@@ -142,14 +209,16 @@ function bpCanFit(shape){for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++)
 // cards' "no room" state (js/cafe.js) so a card is only selectable when the
 // grant is guaranteed to succeed.
 function bpCanFitRot(shape){for(let rot=0;rot<4;rot++)if(bpCanFit(rotC(shape,rot)))return true;return false;}
-function bpPlaceAt(tdef,cells,r,c){
+// `rot` (0-3, optional) records which rotation of tdef.bpS `cells` is, so a
+// later pickup can resume the rotate cycle from the saved orientation.
+function bpPlaceAt(tdef,cells,r,c,rot){
   const gid=uid();const placed=[];
   cells.forEach((row,dr)=>row.forEach((v,dc)=>{
     if(!v)return;const rr=r+dr,cc=c+dc;
     G.bp[rr][cc]={filled:true,col:tdef.col,em:tdef.em,gid,tdef};
     placed.push([rr,cc]);
   }));
-  G.bpGroups.push({gid,tdef,cells:placed,or:r,oc:c,shape:cells});
+  G.bpGroups.push({gid,tdef,cells:placed,or:r,oc:c,shape:cells,rot:rot||0});
 }
 function removeBpGid(gid){
   const grp=G.bpGroups.find(g=>g.gid===gid);if(!grp)return;
@@ -167,6 +236,7 @@ function sellTreatFromShop(gid){
   // column); selling anything else may free the room a pending shrink
   // (G._bpGraceC) was waiting for.
   bpReconcileWidth();
+  bpRetryPending(); // the sale may have freed room for an overflowed treat
   renderAll(); // update backpack display
   renderShopFull(); // refresh shop listing
   g('shop-cash').textContent=G.cash;

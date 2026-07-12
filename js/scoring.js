@@ -19,6 +19,28 @@ function boardFillBonus(playableCells,perCell,mod){
   if(mod&&mod.effect==='fill_bonus_mult')return Math.round(base*(mod.mag||1));
   return base;
 }
+// Coerce a raw CFG value to a finite number the same way config.js ingests
+// General rows (numeric strings → Number, everything else → NaN). Empty
+// string / null / undefined are treated as "absent" (NaN), not 0.
+function _cfgNum(v){
+  if(v===undefined||v===null||v==='')return NaN;
+  const n=Number(v);
+  return isFinite(n)?n:NaN;
+}
+// Current purrfect (board-fill) per-cell bonus. Scales with the round so the
+// board-fill bonus stays a roughly fixed share of the round target across a
+// run:  perCell = fill_bonus_base + fill_bonus_per_round × round.
+// Falls back to the LEGACY flat CFG.board_fill_bonus (default 10) whenever
+// either new key is missing or unparseable — so cached configs and the
+// headless sim keep working. Shared verbatim by doFit() and projectScore()
+// so the committed fit and the preview never disagree.
+function purrfectPerCell(round){
+  const base=_cfgNum(CFG.fill_bonus_base);
+  const per=_cfgNum(CFG.fill_bonus_per_round);
+  if(!isNaN(base)&&!isNaN(per))return base+per*(Number(round)||0);
+  const legacy=_cfgNum(CFG.board_fill_bonus);
+  return !isNaN(legacy)?legacy:10;
+}
 // Comparator for allPieces.sort — normally row-major ascending (topmost-then-
 // leftmost trigger cell fires first). mirror_mood (scan_reverse) inverts it so
 // the scan runs bottom-right → top-left instead. Shared verbatim by doFit() and
@@ -128,7 +150,7 @@ function doFit(){
   const filledCells=G.board.flat().filter(c=>c.filled).length;
   const playableCells=G.board.flat().filter(c=>!c.blocked&&!c.offShape).length;
   const boardFull=filledCells===playableCells&&playableCells>0;
-  const boardBonus=boardFull?boardFillBonus(playableCells,CFG.board_fill_bonus||5,G.roundModifier):0;
+  const boardBonus=boardFull?boardFillBonus(playableCells,purrfectPerCell(G.round),G.roundModifier):0;
   G.totalFits=(G.totalFits||0)+1;
   // Run-level cumulative count of cats scored — persists across hands AND rounds
   // (reset only by newGame). big_bite reads it so its decay carries over the whole
@@ -171,7 +193,7 @@ function doFit(){
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
     if(bt.tdef.addEf&&/REAPPEAR/i.test(bt.tdef.addEf)&&Math.random()<0.5){
-      if(bpAutoPlaceRot(bt.tdef)){
+      if(bpPlaceHomeOrAuto(bt.tdef,bt.bpHome||null)){
         // Tag the matching scanResults entry (matched by instance, not id, so
         // duplicate copies of the same treat flip independently) so the
         // animation log can announce the bounce-back.
@@ -181,8 +203,16 @@ function doFit(){
       }
     }
     G.usedTreats.push(bt.tdef);
+    // Remember its backpack pose so the round-end restore (bpRestoreUsedTreats)
+    // can put it back exactly where the player kept it.
+    if(bt.bpHome)(G.bpHomes=G.bpHomes||[]).push({tdef:bt.tdef,or:bt.bpHome.or,oc:bt.bpHome.oc,shape:bt.bpHome.shape,rot:bt.bpHome.rot||0});
   });
   G.treats=[];
+
+  // Loss ceremony flush: any mid-scan destruction recorded above (catnado)
+  // becomes visible NOW, while the player is still on the game screen —
+  // pure UI, drains G.treatLossEvents, no-op under the headless sim.
+  if(typeof treatLossFlush==='function')treatLossFlush();
 
   runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,cellsUnfilled);
 }
@@ -689,6 +719,14 @@ function endScoreSequence(total){
     if(slGrp){
       slGrp.tdef._expired=true;
       removeBpGid(slGrp.gid);
+      // Loss ceremony: soft_landing burns itself to convert this fail into a
+      // win — record it (pure state push) and announce it on the win screen.
+      (G.treatLossEvents=G.treatLossEvents||[]).push({
+        id:slGrp.tdef.id,name:slGrp.tdef.nm||slGrp.tdef.id,em:slGrp.tdef.em||'',
+        reason:'expired',
+        msg:String(slGrp.tdef.nm||'Soft Landing').toUpperCase()+' cushioned the fall — and was used up',
+      });
+      if(typeof treatLossFlush==='function')treatLossFlush();
       roundWin();
       return;
     }
@@ -744,13 +782,27 @@ function goShop(){
   const wi=g('win-inline');
   wi.classList.remove('visible');
   wi.style.display='none';
+  // Loss ceremony: every _expired treat in usedTreats is about to be dropped
+  // for good (filtered out of the restore below) — record each one so the
+  // toast layer can announce it. Pure state pushes; sim-safe. Covers every
+  // self-expiring treat generically (final_feast, hiss_and_miss,
+  // second_breakfast, treat_encore, and any future _expired setter).
+  (G.usedTreats||[]).forEach(td=>{
+    if(td._expired)(G.treatLossEvents=G.treatLossEvents||[]).push({id:td.id,name:td.nm||td.id,em:td.em||'',reason:'expired'});
+  });
   bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
   G.usedTreats=[];
+  G.bpHomes=[]; // all remembered homes claimed (or dropped with expired treats)
   // bottomless_tote: the tote may have just left the player's possession (it
-  // was in usedTreats until the line above; bpRestoreUsedTreats can refund it
-  // when even a repack can't seat it) — and round end is also the natural
-  // retry point for a pending grace shrink. Resync width now.
+  // was in usedTreats until the line above; bpRestoreUsedTreats can park it
+  // in G.bpPending when nothing fits — where it still counts as owned) — and
+  // round end is also the natural retry point for a pending grace shrink.
   bpReconcileWidth();
+  bpRetryPending(); // overflowed treats get first crack at any space that freed up
+  // Loss ceremony flush: expired + no-room events recorded above surface as
+  // toasts on whatever screen comes next (calendar). Fixed-position stack,
+  // so it survives the screen switch; drained here, shown exactly once.
+  if(typeof treatLossFlush==='function')treatLossFlush();
   // Coffee Break's shop closure lasts exactly one prep screen — a round
   // actually played and won always reopens the shop.
   G.shopClosed=false;
