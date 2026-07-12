@@ -32,6 +32,11 @@
 //    doFit total (projectScore treats RNG effects as non-triggering).
 //  - Treat gids change every clearBoard(); the harness always re-resolves by
 //    tdef.id. Duplicate ids are handled (each copy placed once).
+//  - Backpack arrangement is player-owned: bpGroups remember {or,oc,shape,rot},
+//    used treats restore to their remembered home pose (G.bpHomes), and a
+//    treat that truly cannot fit is parked in G.bpPending — never destroyed —
+//    and re-seated automatically when space frees (sell/rearrange/round end).
+//    bpAutoPlaceRot / pickupTreat signatures are unchanged.
 // ═══════════════════════════════════════════════════════════════════
 window.PF = (() => {
   const cellCnt = g => g.reduce((s, row) => s + row.filter(Boolean).length, 0);

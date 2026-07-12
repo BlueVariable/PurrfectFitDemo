@@ -488,14 +488,14 @@ function renderBP(){
             document.removeEventListener('mousemove',onMove);
             document.removeEventListener('mouseup',onUp);
             dropHeld();
+            const pose=bpPoseOf(grp);
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            const pickedShape=grp.shape||grp.tdef.bpS;
-            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
-            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
+            const gDr=Math.max(0,Math.min(pose.shape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:gDr,grabDc:gDc,dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
           }
         };
@@ -532,14 +532,14 @@ function renderBP(){
             document.removeEventListener('touchmove',onTMove);
             document.removeEventListener('touchend',onTEnd);
             dropHeld();
+            const pose=bpPoseOf(grp);
             removeBpGid(gid);
             G.selBpGid=null;hideTTP();
-            const pickedShape=grp.shape||grp.tdef.bpS;
-            const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
-            const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
-            H={kind:'treat',source:'bp',data:grp.tdef,cells:pickedShape,rot:0,
+            const gDr=Math.max(0,Math.min(pose.shape.length-1,r-(grp.or??r)));
+            const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-(grp.oc??c)));
+            H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-               grabDr:gDr,grabDc:gDc,dragging:true};
+               grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
           }
         };

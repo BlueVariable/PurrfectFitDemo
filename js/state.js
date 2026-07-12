@@ -21,6 +21,9 @@ function bpToteOwned(){
   if((G.bpGroups||[]).some(gr=>gr.tdef&&gr.tdef.id===BOTTOMLESS_TOTE_ID))return true;
   if((G.treats||[]).some(t=>t.tdef&&t.tdef.id===BOTTOMLESS_TOTE_ID))return true;
   if((G.usedTreats||[]).some(td=>td&&td.id===BOTTOMLESS_TOTE_ID))return true;
+  // Overflow-parked tote still counts as owned: keeping its column alive is
+  // exactly what gives the pending tote a chance to seat itself again.
+  if((G.bpPending||[]).some(td=>td&&td.id===BOTTOMLESS_TOTE_ID))return true;
   if(typeof H==='object'&&H&&(H.kind==='treat'||H.kind==='shop-treat')&&H.data&&H.data.id===BOTTOMLESS_TOTE_ID)return true;
   return false;
 }
@@ -35,7 +38,7 @@ let gameInProgress=false;
 let curDeck='classic';
 
 // ── Shared helpers ──
-function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false};}
+function resetH(){return{kind:null,source:null,data:null,cells:null,rot:0,color:null,em:null,handIdx:null,boardGid:null,bpGid:null,grabDr:0,grabDc:0,dragging:false,bpOrigin:null};}
 function emptyCell(){return{filled:false,col:null,kind:null,em:null,gid:null,shape:null,type:null,blocked:false,offShape:false};}
 
 // Touch drag tracking — true once finger has moved enough to constitute a drag
@@ -196,7 +199,7 @@ function newGame(deckId){
     deckId,deck:[],hand:[],
     bp:mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null})),
     bpGroups:[],
-    board:[],cats:[],treats:[],usedTreats:[],treatPlayCounts:{},
+    board:[],cats:[],treats:[],usedTreats:[],bpPending:[],bpHomes:[],treatLossEvents:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,shopClosed:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
     branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,
     roundModifier:null,roundLog:{},
@@ -295,8 +298,8 @@ function dealHand(){
     G.newCardIndices.add(G.hand.length);
     G.hand.push(G.deck.shift());
   }
-  // return any board treats to backpack
-  G.treats.forEach(bt=>bpAutoPlace(bt.tdef));
+  // return any board treats to backpack — home pose first, never destroyed
+  G.treats.forEach(bt=>bpReturnTreat(bt.tdef,bt.bpHome||null));
   G.cats=[];G.treats=[];
   H=resetH();
   // Board shape + block mask are rolled once per round at round start

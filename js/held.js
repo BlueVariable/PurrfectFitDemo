@@ -64,20 +64,23 @@ function pickupTreat(){
   const grp=G.bpGroups.find(g=>g.gid===G.selBpGid);
   if(!grp)return;
   dropHeld();
-  // remove from BP
+  // remove from BP, remembering the player's saved pose (spot + rotation)
+  const pose=bpPoseOf(grp);
   removeBpGid(G.selBpGid);
   G.selBpGid=null;hideTTP();
-  const[_tDr,_tDc]=snapGrab(grp.tdef.bpS,Math.floor(grp.tdef.bpS.length/2),Math.floor(grp.tdef.bpS[0].length/2));
-  H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+  const[_tDr,_tDc]=snapGrab(pose.shape,Math.floor(pose.shape.length/2),Math.floor(pose.shape[0].length/2));
+  H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
      color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:grp.gid,
-     grabDr:_tDr,grabDc:_tDc,dragging:false};
+     grabDr:_tDr,grabDc:_tDc,dragging:false,bpOrigin:pose};
   updateGhost();showHUD();renderBP();
 }
 
 function dropHeld(){
   if(!H.kind)return;
   if(H.kind==='treat'&&(H.source==='bp'||H.source==='board')){
-    bpAutoPlace(H.data);
+    // Revert to the exact cells/rotation it was picked up from (its origin
+    // cells stay free while it is held); auto-fit only if that spot is gone.
+    bpReturnTreat(H.data,H.bpOrigin||null);
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
@@ -97,10 +100,11 @@ function rotate(){
     [H.grabDr,H.grabDc]=snapGrab(H.cells,Math.floor(H.cells.length/2),Math.floor(H.cells[0].length/2));
   }
   updateGhost();
-  clrBoardPrev();clrBPPrev();
+  clrBoardPrev();clrBPPrev();shopBPLeave();
   // re-fire hover preview if we know last hovered cell
   if(H._lastBoardR!==undefined) onBoardEnter(H._lastBoardR,H._lastBoardC);
   if(H._lastBpR!==undefined) onBPEnter(H._lastBpR,H._lastBpC);
+  if(H._lastShopBpR!==undefined) shopBPEnter(H._lastShopBpR,H._lastShopBpC);
 }
 
 // right-click = rotate
@@ -150,11 +154,11 @@ document.addEventListener('mouseup',e=>{
       const sr=shopBpEl.getBoundingClientRect();
       if(e.clientX>=sr.left&&e.clientX<=sr.right&&e.clientY>=sr.top&&e.clientY<=sr.bottom){
         if(!H.kind)return; // shopDropOnBP already handled it
-        bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderShopFull();return;
+        bpReturnTreat(H.data,H.bpOrigin||null);H=resetH();updateGhost();hideHUD();renderShopFull();return;
       }
     }
     const boardEl=g('board');
-    if(!boardEl){bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();if(g('shop-bpg'))renderShopFull();return;}
+    if(!boardEl){bpReturnTreat(H.data,H.bpOrigin||null);H=resetH();updateGhost();hideHUD();renderBP();if(g('shop-bpg'))renderShopFull();return;}
     const boardRect=boardEl.getBoundingClientRect();
     const inside=e.clientX>=boardRect.left&&e.clientX<=boardRect.right&&e.clientY>=boardRect.top&&e.clientY<=boardRect.bottom;
     if(inside){
@@ -178,8 +182,8 @@ document.addEventListener('mouseup',e=>{
       if(found){
         // placeTreatOnBoard already reset H and rendered
       } else {
-        // Can't place — return to BP
-        bpAutoPlace(H.data);
+        // Can't place — revert to its remembered backpack spot
+        bpReturnTreat(H.data,H.bpOrigin||null);
         H=resetH();
         updateGhost();hideHUD();renderBP();clrBoardPrev();
       }
@@ -191,15 +195,15 @@ document.addEventListener('mouseup',e=>{
         const onBP=e.clientX>=bpRect.left&&e.clientX<=bpRect.right&&e.clientY>=bpRect.top&&e.clientY<=bpRect.bottom;
         if(onBP){
           // If onBPMouseUp already placed the treat, H was reset and we never reach here.
-          // Otherwise (gap between cells or placement failed), return treat to BP.
-          bpAutoPlace(H.data);
+          // Otherwise (gap between cells or illegal spot), revert to where it was.
+          bpReturnTreat(H.data,H.bpOrigin||null);
           H=resetH();
           updateGhost();hideHUD();clrBoardPrev();renderBP();
           if(g('shop-bpg'))renderShopFull();return;
         }
       }
-      // Outside board + not on BP — return to BP
-      bpAutoPlace(H.data);
+      // Outside board + not on BP — revert to its remembered backpack spot
+      bpReturnTreat(H.data,H.bpOrigin||null);
       H=resetH();
       updateGhost();hideHUD();renderBP();clrBoardPrev();
       if(g('shop-bpg'))renderShopFull();
@@ -327,8 +331,8 @@ function handleTouchDrop(cx,cy){
       const idx=cellAtPoint(cells,cx,cy);
       if(idx>=0){const r=Math.floor(idx/getBPC()),c=idx%getBPC();onBPMouseUp(r,c);if(!H.kind)return;}
     }
-    // Fall back: return treat to BP
-    bpAutoPlace(H.data);H=resetH();updateGhost();hideHUD();renderBP();clrBoardPrev();
+    // Fall back: revert treat to its remembered backpack spot
+    bpReturnTreat(H.data,H.bpOrigin||null);H=resetH();updateGhost();hideHUD();renderBP();clrBoardPrev();
     if(g('shop-bpg'))renderShopFull();
     return;
   }

@@ -171,7 +171,7 @@ function doFit(){
   G.treats.forEach(bt=>{
     bt.cells.forEach(([r,c])=>{G.board[r][c]=emptyCell();});
     if(bt.tdef.addEf&&/REAPPEAR/i.test(bt.tdef.addEf)&&Math.random()<0.5){
-      if(bpAutoPlaceRot(bt.tdef)){
+      if(bpPlaceHomeOrAuto(bt.tdef,bt.bpHome||null)){
         // Tag the matching scanResults entry (matched by instance, not id, so
         // duplicate copies of the same treat flip independently) so the
         // animation log can announce the bounce-back.
@@ -181,6 +181,9 @@ function doFit(){
       }
     }
     G.usedTreats.push(bt.tdef);
+    // Remember its backpack pose so the round-end restore (bpRestoreUsedTreats)
+    // can put it back exactly where the player kept it.
+    if(bt.bpHome)(G.bpHomes=G.bpHomes||[]).push({tdef:bt.tdef,or:bt.bpHome.or,oc:bt.bpHome.oc,shape:bt.bpHome.shape,rot:bt.bpHome.rot||0});
   });
   G.treats=[];
 
@@ -746,11 +749,13 @@ function goShop(){
   wi.style.display='none';
   bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
   G.usedTreats=[];
+  G.bpHomes=[]; // all remembered homes claimed (or dropped with expired treats)
   // bottomless_tote: the tote may have just left the player's possession (it
-  // was in usedTreats until the line above; bpRestoreUsedTreats can refund it
-  // when even a repack can't seat it) — and round end is also the natural
-  // retry point for a pending grace shrink. Resync width now.
+  // was in usedTreats until the line above; bpRestoreUsedTreats can park it
+  // in G.bpPending when nothing fits — where it still counts as owned) — and
+  // round end is also the natural retry point for a pending grace shrink.
   bpReconcileWidth();
+  bpRetryPending(); // overflowed treats get first crack at any space that freed up
   // Coffee Break's shop closure lasts exactly one prep screen — a round
   // actually played and won always reopens the shop.
   G.shopClosed=false;

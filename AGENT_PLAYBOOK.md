@@ -290,7 +290,8 @@ total accumulates. Critically:
 ## 11. More mechanics learned
 
 - **Treats carry over between rounds.** At round end, non-expired used treats are
-  restored to the backpack (`goShop` → `bpAutoPlace`). So your arsenal compounds
+  restored to the backpack (`goShop` → `bpRestoreUsedTreats`, exact remembered
+  spot + rotation first, overflow queue instead of loss). So your arsenal compounds
   across a run — **don't re-buy duplicates**, and don't treat each shop as a blank
   slate. By Round 6 the bp held 7 treats from earlier rounds.
 - **You can't place your whole arsenal in one hand** (treats eat cells and you
@@ -403,11 +404,13 @@ never the constraint — the **backpack is** (see §16).
 
 - **Shop sells duplicates of treats you own.** Two deep_decks both trigger
   (+184 each, same hand). Best stacking line in the game right now.
-- **Silent treat loss at round end.** `goShop` restores used treats via
-  `bpAutoPlace`, which scans greedily with **no rotations** and **ignores
-  failure** — a fragmented backpack ate my $10 wild_dice with zero feedback.
-  Keep the backpack tidy; sell dead treats before round end. Buys also fail
-  (`no-bp-room`) even with enough total free cells if they're fragmented.
+- **Round-end restore is now home-based and loss-free** (2026-07-12). `goShop`
+  restores each used treat to its remembered backpack cells + rotation
+  (`bpRestoreUsedTreats` → `G.bpHomes`); if the home is occupied it auto-fits
+  with rotations, and if even that fails the treat is parked in `G.bpPending`
+  (still owned, re-seated when space frees) — never destroyed. Buys can still
+  fail (`no-bp-room`) on fragmentation, but the player/agent can rearrange the
+  backpack (drag within the grid, R/RMB to rotate) to defragment first.
 - **gold_star can never count the purrfect fit it's placed in** — the
   purrfect counter increments in `doFit` *after* the treat scan runs (the
   sheet Explanation claims otherwise). Placed hand 1 it pays +0; place it
@@ -601,12 +604,13 @@ observed ~80% of purchase price (twin_paws: bought $10, sold $8).
   its once-per-round trigger AND its once-per-round growth; test the fill
   without it first (its own 1 cell is sometimes exactly what makes the fill
   impossible). `morning_stretch` is FIRST-HAND-only. `bell` is solo-only.
-- **clearBoard() can silently destroy treats** (board.js:127-131: rotation-less
-  `bpAutoPlace`, return value ignored). Any planning loop that cycles
-  clearBoard with a fragmented backpack WILL eventually lose treats (this
-  session: milk, morning_stretch, big_bite, poker_face across runs). The
-  harness shields it in `plan()`, but the shield is best-effort — keep the
-  backpack tidy and treat counts ≤ ~8.
+- **clearBoard() no longer destroys treats** (fixed 2026-07-12): board treats
+  return to their remembered backpack pose (`bpReturnTreat`), falling back to
+  rotation-aware auto-fit and then to the `G.bpPending` overflow queue —
+  never silently dropped. (Historical note: it used to be a rotation-less
+  `bpAutoPlace` with the return value ignored, and cycling clearBoard with a
+  fragmented backpack lost milk, morning_stretch, big_bite, poker_face across
+  runs.)
 - **Browser-extension tab groups do not survive MCP reconnects.** Twice this
   session the session's tab group vanished mid-run — the page (and the run) is
   unrecoverable. There is no save system; budget for restarts, log results as

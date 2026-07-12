@@ -68,7 +68,8 @@ function renderShopBPGrid(){
       div.style.borderColor=bd.col;
       div.style.position='relative';
       div.textContent=bd.em||'';
-      // Rearrange: drag from shop BP
+      // Rearrange: drag from shop BP — keeps the treat's saved rotation, and
+      // remembers its origin pose so an illegal drop reverts it exactly there
       div.addEventListener('mousedown',(e)=>{
         if(H.kind==='shop-treat')return;
         if(e.button!==0)return;
@@ -76,10 +77,13 @@ function renderShopBPGrid(){
         const grp=G.bpGroups.find(g=>g.gid===gid);
         if(!grp)return;
         e.stopPropagation();
+        const pose=bpPoseOf(grp);
         removeBpGid(gid);
-        H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+        const gDr=Math.max(0,Math.min(pose.shape.length-1,r-pose.or));
+        const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-pose.oc));
+        H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
            color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-           grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+           grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
         updateGhost();showHUD();renderShopBPGrid();
       });
       // Touch: drag from shop BP
@@ -91,16 +95,19 @@ function renderShopBPGrid(){
         e.preventDefault();
         e.stopPropagation();
         _touchMovedWhileHeld=false;
+        const pose=bpPoseOf(grp);
         removeBpGid(gid);
-        H={kind:'treat',source:'bp',data:grp.tdef,cells:grp.tdef.bpS,rot:0,
+        const gDr=Math.max(0,Math.min(pose.shape.length-1,r-pose.or));
+        const gDc=Math.max(0,Math.min(pose.shape[0].length-1,c-pose.oc));
+        H={kind:'treat',source:'bp',data:grp.tdef,cells:pose.shape,rot:pose.rot,
            color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
-           grabDr:Math.floor(grp.tdef.bpS.length/2),grabDc:Math.floor(grp.tdef.bpS[0].length/2),dragging:true};
+           grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
         updateGhost();showHUD();renderShopBPGrid();
       },{passive:false});
     }
-    div.addEventListener('mouseenter',(e)=>{shopBPEnter(r,c);showShopBPTip(e,r,c);});
+    div.addEventListener('mouseenter',(e)=>{H._lastShopBpR=r;H._lastShopBpC=c;delete H._lastBpR;delete H._lastBoardR;shopBPEnter(r,c);showShopBPTip(e,r,c);});
     div.addEventListener('mousemove',(e)=>moveShopBPTip(e));
-    div.addEventListener('mouseleave',()=>{shopBPLeave();hideShopBPTip();});
+    div.addEventListener('mouseleave',()=>{delete H._lastShopBpR;delete H._lastShopBpC;shopBPLeave();hideShopBPTip();});
     div.addEventListener('mouseup',()=>shopDropOnBP(r,c));
     div.addEventListener('click',()=>shopDropOnBP(r,c));
     grid.appendChild(div);
@@ -141,7 +148,8 @@ function hideShopBPTip(){g('board-tip').style.display='none';}
 function renderShopBPList(){
   const el=g('shop-bp-list');if(!el)return;
   el.innerHTML='';
-  if(G.bpGroups.length===0){
+  const pending=G.bpPending||[];
+  if(G.bpGroups.length===0&&pending.length===0){
     el.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.35);font-style:italic;text-align:center;padding:6px;">Backpack is empty</div>';
     return;
   }
@@ -152,6 +160,17 @@ function renderShopBPList(){
     d.innerHTML=`<span class="sp-inv-em">${t.em}</span>
       <span class="sp-inv-nm">${t.nm}</span>
       <button class="sp-inv-sell" onclick="sellTreatFromShop('${grp.gid}')">Sell $${t.sp}</button>`;
+    el.appendChild(d);
+  });
+  // Overflowed treats (G.bpPending): still owned, waiting for room. They hop
+  // back in automatically after a sell / rearrange frees space.
+  pending.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='sp-inv-row';
+    d.style.opacity='.55';
+    d.innerHTML=`<span class="sp-inv-em">${t.em}</span>
+      <span class="sp-inv-nm">${t.nm}</span>
+      <span style="font-family:'Fredoka One',cursive;font-size:10px;color:#ffd27a;font-style:italic;white-space:nowrap;">no room — make space</span>`;
     el.appendChild(d);
   });
 }
@@ -193,7 +212,9 @@ function renderTreatsRow(){
     // of empty cells, which its uno shape always fits — so a full bag must not
     // disable its card (the buy-check would otherwise run before the ownership
     // it grants). An already-owned duplicate adds no column: normal check.
-    const noSpc=!bpCanFit(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
+    // Rotation-aware: the player can rotate (R / right-click) while dragging
+    // the purchase, so any orientation that fits keeps the card buyable.
+    const noSpc=!bpCanFitRot(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
     const dis=broke||noSpc;
     const card=document.createElement('div');
     card.className='tc'+(dis?' tc-dis':'');
@@ -255,8 +276,9 @@ function shopDropOnBP(r,c){
   if(H.kind==='treat'){
     const or=r-H.grabDr, oc=c-H.grabDc;
     if(!bpCanAt(H.cells,or,oc))return;
-    bpPlaceAt(H.data,H.cells,or,oc);
+    bpPlaceAt(H.data,H.cells,or,oc,H.rot);
     H=resetH();
+    bpRetryPending(); // the rearrange may have defragged room for an overflowed treat
     updateGhost();hideHUD();clrBPPrev();
     renderShopFull();
     return;
@@ -268,7 +290,7 @@ function shopDropOnBP(r,c){
   const or=r-H.grabDr, oc=c-H.grabDc;
   if(!bpCanAt(H.cells,or,oc)){dropHeld();return;}
   G.cash-=td.pr;
-  bpPlaceAt(td,H.cells,or,oc);
+  bpPlaceAt(td,H.cells,or,oc,H.rot);
   shopBoughtIds.add(td.id);
   if(td.id==='purrfect_record'&&G.purrfectRecordBuyFits===undefined){
     G.purrfectRecordBuyFits=G.totalFits||0;
