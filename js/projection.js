@@ -70,6 +70,11 @@ function projectScore(hypothetical){
   const _bpGroups0=G.bpGroups.slice();
   const _bp0=G.bp.map(row=>row.slice());
 
+  // G.treatLossEvents — catnado records a 'destroyed' loss-ceremony event
+  // when it fires; a projection must never leak phantom events into the
+  // toast queue (length-truncated back in finally).
+  const _tle0=(G.treatLossEvents||[]).length;
+
   // G.board — siamese_twins mutates an existing filled cat cell's
   // col/em/type IN PLACE (not a wholesale replace), so every cell needs a
   // shallow per-object clone, not just an array-of-arrays reference copy.
@@ -208,6 +213,7 @@ function projectScore(hypothetical){
     G.deck=_deck0;
     G.treatPlayCounts=_tpc0;
     G.bpGroups=_bpGroups0;G.bp=_bp0;
+    if(G.treatLossEvents&&G.treatLossEvents.length>_tle0)G.treatLossEvents.length=_tle0;
     G.cats.length=_catsLen0;
     G.cats.forEach((c,i)=>{c.type=_catsTypes0[i];});
     G.treats.length=_treatsLen0;

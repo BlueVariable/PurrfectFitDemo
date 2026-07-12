@@ -187,6 +187,11 @@ function doFit(){
   });
   G.treats=[];
 
+  // Loss ceremony flush: any mid-scan destruction recorded above (catnado)
+  // becomes visible NOW, while the player is still on the game screen —
+  // pure UI, drains G.treatLossEvents, no-op under the headless sim.
+  if(typeof treatLossFlush==='function')treatLossFlush();
+
   runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,cellsUnfilled);
 }
 
@@ -692,6 +697,14 @@ function endScoreSequence(total){
     if(slGrp){
       slGrp.tdef._expired=true;
       removeBpGid(slGrp.gid);
+      // Loss ceremony: soft_landing burns itself to convert this fail into a
+      // win — record it (pure state push) and announce it on the win screen.
+      (G.treatLossEvents=G.treatLossEvents||[]).push({
+        id:slGrp.tdef.id,name:slGrp.tdef.nm||slGrp.tdef.id,em:slGrp.tdef.em||'',
+        reason:'expired',
+        msg:String(slGrp.tdef.nm||'Soft Landing').toUpperCase()+' cushioned the fall — and was used up',
+      });
+      if(typeof treatLossFlush==='function')treatLossFlush();
       roundWin();
       return;
     }
@@ -747,6 +760,14 @@ function goShop(){
   const wi=g('win-inline');
   wi.classList.remove('visible');
   wi.style.display='none';
+  // Loss ceremony: every _expired treat in usedTreats is about to be dropped
+  // for good (filtered out of the restore below) — record each one so the
+  // toast layer can announce it. Pure state pushes; sim-safe. Covers every
+  // self-expiring treat generically (final_feast, hiss_and_miss,
+  // second_breakfast, treat_encore, and any future _expired setter).
+  (G.usedTreats||[]).forEach(td=>{
+    if(td._expired)(G.treatLossEvents=G.treatLossEvents||[]).push({id:td.id,name:td.nm||td.id,em:td.em||'',reason:'expired'});
+  });
   bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
   G.usedTreats=[];
   G.bpHomes=[]; // all remembered homes claimed (or dropped with expired treats)
@@ -756,6 +777,10 @@ function goShop(){
   // round end is also the natural retry point for a pending grace shrink.
   bpReconcileWidth();
   bpRetryPending(); // overflowed treats get first crack at any space that freed up
+  // Loss ceremony flush: expired + no-room events recorded above surface as
+  // toasts on whatever screen comes next (calendar). Fixed-position stack,
+  // so it survives the screen switch; drained here, shown exactly once.
+  if(typeof treatLossFlush==='function')treatLossFlush();
   // Coffee Break's shop closure lasts exactly one prep screen — a round
   // actually played and won always reopens the shop.
   G.shopClosed=false;

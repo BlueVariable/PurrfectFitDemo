@@ -149,6 +149,11 @@ function bpSendToPending(tdef){
   (G.bpPending=G.bpPending||[]).push(tdef);
   (G.treatLossEvents=G.treatLossEvents||[]).push({id:tdef.id,name:tdef.nm||tdef.id,em:tdef.em||'',reason:'no-room'});
   console.warn(`[backpack] no room for "${tdef.nm||tdef.id}" — parked in overflow (G.bpPending); it will return when space frees up.`);
+  // Loss ceremony flush: announce the overflow the moment it happens, on
+  // whichever screen the player is on (round-end restore, board clear, a
+  // cancelled drag). Recording above stays a pure state push; the flush is
+  // display-only, drains the queue, and no-ops under the headless sim.
+  if(typeof treatLossFlush==='function')treatLossFlush();
 }
 
 // Single safe entry point for returning a treat to the inventory.
