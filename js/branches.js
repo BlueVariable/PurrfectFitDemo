@@ -52,7 +52,7 @@ function getModifierLabel(modString){
 // ══════════════════════════════════════════════════════
 //  Interactive world-map HQ picker
 // ══════════════════════════════════════════════════════
-let hqIndex=0, hqDir=1;  // hqDir: +1 slid-in from right, -1 from left
+let hqCont=0, hqIndex=0, hqDir=1;  // hqCont: active continent · hqIndex: branch within it · hqDir: slide direction
 const HQ_CONT_PINS={
   'N. America':[248,168],'North America':[248,168],
   'S. America':[332,384],'South America':[332,384],
@@ -62,7 +62,9 @@ const HQ_CONT_PINS={
   'Oceania':[856,460],'Australia':[856,460],
   'Antarctica':[520,588],
 };
-const HQ_OFFSETS=[[0,0],[34,16],[-28,20],[16,-24],[-30,-10],[40,-16],[-10,30]];
+// Continents in branch-order, each carrying its own branches (see getContinents()).
+function hqContinents(){ return getContinents(); }
+function hqActiveCont(){ const cs=hqContinents(); if(!cs.length)return null; return cs[Math.max(0,Math.min(hqCont,cs.length-1))]; }
 // Stylized-but-recognizable continents (viewBox 0 0 1000 640), white land on blue paper.
 const WORLD_LAND=[
   // North America
@@ -85,13 +87,7 @@ const WORLD_LAND=[
   "M812,452 C800,442 818,432 832,432 C868,424 894,444 890,468 C878,494 840,502 820,490 C806,478 806,462 812,452 Z",
 ];
 
-function hqBranches(){ return BRANCHES.slice(); }  // already sorted by order in config
-
-function hqPinPos(br,idxInCont){
-  const base=HQ_CONT_PINS[br.continent]||[520+((br.order*67)%340)-170,300+((br.order*53)%170)-85];
-  const off=HQ_OFFSETS[idxInCont%HQ_OFFSETS.length];
-  return [base[0]+off[0],base[1]+off[1]];
-}
+function hqBranches(){ const c=hqActiveCont(); return c?c.branches.slice():[]; }  // branches of the active continent
 
 function hqDeckFaces(br){
   const em=(DECK_META[br.deck]||{}).em||'🐱';
@@ -105,41 +101,46 @@ function hqDeckFaces(br){
   }).join('');
 }
 
-function hqMapSvg(list,activeId){
+function hqMapSvg(){
   const progress=loadProgress();
+  const conts=hqContinents();
   const lands=WORLD_LAND.map(d=>`<path d="${d}" fill="#e9edf1"/>`).join('');
   const routes='<path d="M258,168 C440,116 610,146 752,214" fill="none" stroke="#1a1a2a" stroke-width="2.6" stroke-dasharray="1.5 11" stroke-linecap="round" opacity=".5"/>'
     +'<path d="M258,168 C305,268 385,332 452,372 C520,406 552,336 566,300 C655,346 800,410 852,462" fill="none" stroke="#1a1a2a" stroke-width="2.6" stroke-dasharray="1.5 11" stroke-linecap="round" opacity=".5"/>';
   const folds='<path d="M336,86 L340,568" stroke="rgba(255,255,255,.5)" stroke-width="3"/><path d="M346,86 L350,568" stroke="rgba(40,44,64,.1)" stroke-width="3"/><path d="M632,80 L636,576" stroke="rgba(255,255,255,.5)" stroke-width="3"/><path d="M642,80 L646,576" stroke="rgba(40,44,64,.1)" stroke-width="3"/><path d="M820,74 L824,580" stroke="rgba(255,255,255,.5)" stroke-width="3"/><path d="M830,74 L834,580" stroke="rgba(40,44,64,.1)" stroke-width="3"/>';
-  const contCount={};
-  const pins=list.map((br,i)=>{
-    const k=br.continent||'?'; const io=(contCount[k]=(contCount[k]||0),contCount[k]++);
-    const [px,py]=hqPinPos(br,io);
-    const done=progress.completed.includes(br.id);
-    const unlocked=isBranchUnlocked(br.id);
-    const active=br.id===activeId;
-    const fill=done?'#5ab855':(unlocked?'#e05040':'#8a93a3');
-    const cls='hqm-pin'+(active?' hqm-pin-active':'')+((unlocked||done)?'':' hqm-pin-locked');
-    const ring=active?'<circle cx="0" cy="-39" r="17" fill="none" stroke="#f5c200" stroke-width="4"/>':'';
-    return `<g class="${cls}" transform="translate(${px},${py})" onclick="hqGo(${i})"><g class="hqm-pin-in">`
+  // One pin per continent. Green once every HQ on the continent is cleared, otherwise red.
+  const pins=conts.map((cont,ci)=>{
+    const [px,py]=HQ_CONT_PINS[cont.name]||[500,300];
+    const allDone=cont.branches.length>0&&cont.branches.every(b=>progress.completed.includes(b.id));
+    const active=ci===hqCont;
+    const fill=allDone?'#5ab855':'#e05040';
+    const cls='hqm-pin'+(active?' hqm-pin-active':'');
+    const ring=active?'<circle cx="0" cy="-39" r="20" fill="none" stroke="#f5c200" stroke-width="4"/>':'';
+    const emTxt=cont.em?`<text x="0" y="-38" text-anchor="middle" dominant-baseline="central" font-size="13">${cont.em}</text>`:'';
+    return `<g class="${cls}" transform="translate(${px},${py})" onclick="hqSelCont(${ci})"><g class="hqm-pin-in">`
       +`<path d="M0,0 C-15,-18 -21,-30 -21,-39 A21,21 0 1 1 21,-39 C21,-30 15,-18 0,0 Z" fill="${fill}" stroke="#1a1a2a" stroke-width="2.6"/>`
-      +`<circle cx="0" cy="-39" r="8.5" fill="#fff" stroke="#1a1a2a" stroke-width="2.2"/>${ring}</g></g>`;
+      +`<circle cx="0" cy="-39" r="11" fill="#fff" stroke="#1a1a2a" stroke-width="2.2"/>${ring}${emTxt}</g></g>`;
   }).join('');
-  return `<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="world map of headquarters">`
+  return `<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="world map of headquarters by continent">`
     +`<path d="M50,96 C200,60 360,86 520,68 C700,48 850,80 966,64 L980,556 C832,600 660,574 500,592 C340,610 190,584 54,600 Z" fill="#93a8c6" stroke="#fbfcfe" stroke-width="13" stroke-linejoin="round"/>`
     +folds+lands+routes+pins+`</svg>`;
 }
 
 // ── Render branches screen (world-map HQ picker) ──
 function renderBranches(){
-  const list=hqBranches();
+  const cs=hqContinents();
   const car=g('hqm-carousel');
-  if(!list.length){ if(car)car.innerHTML='<div class="hqm-empty">No destinations loaded yet.</div>'; return; }
+  if(!cs.length){ if(car)car.innerHTML='<div class="hqm-empty">No destinations loaded yet.</div>'; return; }
   const progress=loadProgress();
-  let def=list.findIndex(b=>gameInProgress&&b.id===G.branchId);
-  if(def<0)def=list.findIndex(b=>isBranchUnlocked(b.id)&&!progress.completed.includes(b.id));
-  if(def<0)def=0;
-  hqIndex=def;
+  // Default to the in-progress branch, else the first unplayed HQ, else the very first.
+  let defBr=gameInProgress?BRANCHES.find(b=>b.id===G.branchId):null;
+  if(!defBr)defBr=BRANCHES.find(b=>isBranchUnlocked(b.id)&&!progress.completed.includes(b.id));
+  if(!defBr)defBr=BRANCHES[0];
+  const ci=defBr?cs.findIndex(c=>c.branches.some(b=>b.id===defBr.id)):-1;
+  hqCont=ci<0?0:ci;
+  const bi=defBr?cs[hqCont].branches.findIndex(b=>b.id===defBr.id):-1;
+  hqIndex=bi<0?0:bi;
+  hqDir=1;
   hqRender();
 }
 
@@ -151,6 +152,16 @@ function hqGo(i){
 }
 function hqNav(d){ hqGo(hqIndex+d); }
 
+// Continent selection — map pins, heading arrows, and up/down keys all route here.
+function hqSelCont(c){
+  const cs=hqContinents(); const n=cs.length; if(!n)return;
+  const nc=(c%n+n)%n;
+  if(nc===hqCont)return;
+  hqDir=1; hqCont=nc; hqIndex=0; hqRender();  // jump to the continent's first HQ
+}
+function hqContPrev(){ hqSelCont(hqCont-1); }
+function hqContNext(){ hqSelCont(hqCont+1); }
+
 function hqRender(){
   const list=hqBranches(); if(!list.length)return;
   hqIndex=Math.max(0,Math.min(hqIndex,list.length-1));
@@ -158,12 +169,16 @@ function hqRender(){
   const active=list[hqIndex];
   const activeId=active.id;
 
-  const mapEl=g('hqm-map'); if(mapEl)mapEl.innerHTML=hqMapSvg(list,activeId);
+  const mapEl=g('hqm-map'); if(mapEl)mapEl.innerHTML=hqMapSvg();
+
+  const actCont=hqActiveCont();
+  const lblEl=g('hqm-cont-lbl');
+  if(lblEl)lblEl.innerHTML=actCont?`<span class="hqm-cont-em">${actCont.em||'📍'}</span>${(actCont.name||'').toUpperCase()}`:'';
 
   const cont=g('hqm-continue');
   if(cont){
     if(gameInProgress&&G.branchId){
-      const cb=list.find(b=>b.id===G.branchId)||{name:G.branchId};
+      const cb=BRANCHES.find(b=>b.id===G.branchId)||{name:G.branchId};
       cont.style.display='';
       cont.innerHTML=`<div class="hqm-cont-lbl">or continue to unfinished day</div>`
         +`<div class="hqm-cont-city">${cb.name} <b>#${G.round||1}</b></div>`
@@ -215,6 +230,8 @@ document.addEventListener('keydown',function(e){
   if(!sc||!sc.classList.contains('on'))return;
   if(e.key==='ArrowLeft')hqNav(-1);
   else if(e.key==='ArrowRight')hqNav(1);
+  else if(e.key==='ArrowUp')hqContPrev();
+  else if(e.key==='ArrowDown')hqContNext();
 });
 
 // ── Select and start a branch ──
