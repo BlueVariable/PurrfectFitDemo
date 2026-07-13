@@ -12,6 +12,20 @@ function rotC(cells,rot){
   }
   return c;
 }
+// True iff two rectangular 0/1 grids are identical.
+function gridsEqual(a,b){
+  if(!a||!b||a.length!==b.length||a[0].length!==b[0].length)return false;
+  for(let r=0;r<a.length;r++)for(let c=0;c<a[0].length;c++)if(a[r][c]!==b[r][c])return false;
+  return true;
+}
+// Inverse of rotC: the # of 90°-CW turns that takes `base` onto `grid` (0 if
+// they don't match). Lets a piece lifted off the board recover the rotation it
+// was placed at, instead of the caller assuming 0.
+function rotOfGrid(base,grid){
+  if(!base||!grid)return 0;
+  for(let k=0;k<4;k++){ if(gridsEqual(rotC(base,k),grid))return k; }
+  return 0;
+}
 function sfl(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function weightedSample(items,n,weightFn){
   const result=[];const pool=[...items];

@@ -54,9 +54,12 @@ function onBoardClick(r,c){
         G.treats.splice(ti,1);
         const tdef=treatGroup.tdef;
         const pickedShape=treatGroup.shapeGrid||tdef.bpS;
+        // Same as the cat path: keep the rotation the treat was placed at, so
+        // `rotate()` continues from it instead of snapping back to bpS.
+        const pickedRot=rotOfGrid(tdef.bpS,pickedShape);
         const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(treatGroup.or??r)));
         const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(treatGroup.oc??c)));
-        H={kind:'treat',source:'board',data:tdef,cells:pickedShape,rot:0,
+        H={kind:'treat',source:'board',data:tdef,cells:pickedShape,rot:pickedRot,
            color:tdef.col,em:tdef.em,handIdx:null,boardGid:gid,bpGid:null,
            grabDr:gDr,grabDc:gDc,dragging:false,bpOrigin:treatGroup.bpHome||null};
         updateGhost();showHUD();clrBoardPrev();renderAll();

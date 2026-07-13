@@ -43,8 +43,7 @@ const CAT_ART_ASSET_GRID = {
 function catArtDrawRot(shape){
   const a=CAT_ART_ASSET_GRID[shape];
   if(!a||typeof CSHAPES==='undefined'||!CSHAPES[shape])return 0;
-  for(let k=0;k<4;k++){ if(catGridsEqual(rotC(a,k),CSHAPES[shape]))return k; }
-  return 0;
+  return rotOfGrid(a,CSHAPES[shape]);
 }
 
 function catArtInfo(shape,type){
@@ -54,21 +53,12 @@ function catArtInfo(shape,type){
 }
 function hasCatArt(shape,type){ return !!catArtInfo(shape,type); }
 
-// True iff two rectangular 0/1 grids are identical.
-function catGridsEqual(a,b){
-  if(!a||!b||a.length!==b.length||a[0].length!==b[0].length)return false;
-  for(let r=0;r<a.length;r++)for(let c=0;c<a[0].length;c++)if(a[r][c]!==b[r][c])return false;
-  return true;
-}
-
 // Recover a placed cat's rotation (0..3, # of 90°-CW turns off the canonical
 // grid) by matching its stored shapeGrid against rotations of CSHAPES[shape].
 // Lets board art rotate exactly with the piece regardless of placement path.
 function catArtDeriveRot(shape,shapeGrid){
   const base=(typeof CSHAPES!=='undefined')&&CSHAPES[shape];
-  if(!base||!shapeGrid)return 0;
-  for(let k=0;k<4;k++){ if(catGridsEqual(rotC(base,k),shapeGrid))return k; }
-  return 0;
+  return rotOfGrid(base,shapeGrid);
 }
 
 // Widest bounding-box span (in cells) across every shape that has art — 4 for

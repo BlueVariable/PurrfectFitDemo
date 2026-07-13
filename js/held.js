@@ -50,9 +50,15 @@ function pickupCatFromBoard(r,c){
   G.hand.push(grp.cat);
   const idx=G.hand.length-1;
   const pickedShape=grp.shapeGrid||rotC(grp.cat.cells,0);
+  // `pickedShape` is the grid the cat was PLACED with, so H.rot must be the
+  // rotation that produced it — not 0. The ghost draws the illustration at
+  // H.rot (updateGhost) and `rotate()` continues from it, so claiming 0 for a
+  // cat lifted back off the board drew the art off-axis inside its own
+  // footprint and made the first R press snap it back to the base pose.
+  const pickedRot=rotOfGrid(grp.cat.cells,pickedShape);
   const gDr=Math.max(0,Math.min(pickedShape.length-1,r-(grp.or??r)));
   const gDc=Math.max(0,Math.min(pickedShape[0].length-1,c-(grp.oc??c)));
-  H={kind:'cat',source:'board',data:grp.cat,cells:pickedShape,rot:0,
+  H={kind:'cat',source:'board',data:grp.cat,cells:pickedShape,rot:pickedRot,
      color:grp.cat.col,em:grp.cat.em,handIdx:idx,boardGid:grp.gid,bpGid:null,
      grabDr:gDr,grabDc:gDc,dragging:false};
   updateGhost();showHUD();renderAll();
