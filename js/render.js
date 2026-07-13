@@ -411,7 +411,9 @@ function renderHand(){
     const isHeld=H.kind==='cat'&&H.handIdx===i;
     const d=document.createElement('div');
     d.className='cslot'+(isHeld?' held':'');
-    const handArt=(typeof catArtHTML==='function')&&catArtHTML(cat.shape,cat.type,110);
+    // 130 = the longest cat (straight, 4 cells) end-to-end; the 150px slot fits
+    // it, and every other cat scales off the same per-cell size.
+    const handArt=(typeof catArtHTML==='function')&&catArtHTML(cat.shape,cat.type,130);
     d.innerHTML=(handArt||shpHTML(cat.cells,cat.col,25))+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;

@@ -71,15 +71,32 @@ function catArtDeriveRot(shape,shapeGrid){
   return 0;
 }
 
-// Thumbnail HTML for hand cards / deck preview. `maxDim` bounds the whole
-// bounding box (px) so long shapes (straight) don't overflow their slot.
+// Widest bounding-box span (in cells) across every shape that has art — 4 for
+// `straight`. Read from the LIVE CSHAPES so a Shapes-tab edit can't silently
+// break the scale.
+function catArtMaxSpan(){
+  if(typeof CSHAPES==='undefined')return 1;
+  let m=1;
+  for(const s in CAT_ART_SHAPE){
+    const grid=CSHAPES[s];
+    if(!grid||!grid.length)continue;
+    m=Math.max(m,grid.length,grid[0].length);
+  }
+  return m;
+}
+
+// Thumbnail HTML for hand cards / deck preview. `maxDim` bounds the LONGEST
+// shape (straight); every other cat is drawn at the same px-per-cell, so a duo
+// is genuinely half the length of a straight instead of being blown up to the
+// same box. Sizing per-shape (maxDim / that shape's own span) is what made some
+// cats look bigger than others.
 // Returns null when the cat has no art, so callers can fall back to shpHTML.
 function catArtHTML(shape,type,maxDim){
   const info=catArtInfo(shape,type);
   if(!info||typeof CSHAPES==='undefined')return null;
   const base=CSHAPES[shape]; if(!base)return null;
   const bR=base.length, bC=base[0].length;
-  const cell=maxDim/Math.max(bR,bC);
+  const cell=maxDim/catArtMaxSpan();
   const odd=info.drawRot%2===1;
   const wrapW=bC*cell, wrapH=bR*cell;
   const imgW=(odd?bR:bC)*cell, imgH=(odd?bC:bR)*cell;
