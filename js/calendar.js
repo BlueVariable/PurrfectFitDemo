@@ -109,13 +109,36 @@ function calCell(r, lg){
          (lg && lg.skipped ? ' skipped' : '') + '">' + top + mid + foot + '</div>';
 }
 
+// Compact status summary shown in a collapsed *completed* day's header row.
+function calDayMini(rounds, log){
+  let h = '<div class="cal-day-mini">';
+  rounds.forEach(r => {
+    const lg = log[r];
+    let cls = 'cal-mini-badge' + (calIsBoss(r) ? ' boss' : ''), txt;
+    if(lg && lg.skipped){ cls += ' skip'; txt = '☕'; }
+    else if(lg)         { txt = lg.hands + 'h'; }
+    else                { txt = '✓'; }
+    h += '<span class="' + cls + '">' + txt + '</span>';
+  });
+  return h + '</div>';
+}
+
+// Expand/collapse a completed day (today is fixed-open, future stays locked).
+function calToggleDay(d){
+  const week = g('cal-week'); if(!week) return;
+  const el = week.querySelector('.cal-day[data-day="' + d + '"]');
+  if(!el || !el.classList.contains('past')) return;
+  el.classList.toggle('open');
+  el.classList.toggle('collapsed');
+}
+
 function renderCalendar(){
   const cashEl = g('cal-cash'); if(cashEl) cashEl.textContent = G.cash;
   const log = G.roundLog || {};
   const nDays = calDayCount();
   const week = g('cal-week');
+  const choose = g('cal-choose');   // captured before innerHTML wipe so we can relocate it
   if(week){
-    week.style.gridTemplateColumns = 'repeat(' + nDays + ',minmax(96px,1fr))';
     let html = '';
     for(let d = 0; d < nDays; d++){
       const rounds = [];
@@ -125,13 +148,28 @@ function renderCalendar(){
       }
       const isToday = rounds.includes(G.round);
       const isPast = rounds.length > 0 && rounds.every(r => r < G.round);
-      html += '<div class="cal-day ' + (isToday ? 'today' : isPast ? 'past' : 'future') + '">' +
-                '<div class="cal-day-hdr"><span class="cal-day-nm">' + calDayName(d) + '</span>' +
-                '<span class="cal-day-lbl">Day ' + (d + 1) + '</span></div>' +
+      const state = isToday ? 'today' : isPast ? 'past' : 'future';
+      // Today is always open; completed days start collapsed but can be opened;
+      // future days stay collapsed and locked.
+      const open = isToday;
+      const aff = isToday ? '<span class="cal-day-aff today-aff">● TODAY</span>'
+                : isPast  ? '<span class="cal-day-aff toggle-aff">▾</span>'
+                          : '<span class="cal-day-aff lock-aff">🔒</span>';
+      const right = '<div class="cal-day-right">' + (isPast ? calDayMini(rounds, log) : '') + aff + '</div>';
+      html += '<div class="cal-day ' + state + (open ? ' open' : ' collapsed') + '" data-day="' + d + '">' +
+                '<div class="cal-day-hdr"' + (isPast ? ' onclick="calToggleDay(' + d + ')"' : '') + '>' +
+                  '<span class="cal-day-nm">' + calDayName(d) + '</span>' +
+                  '<span class="cal-day-lbl">Day ' + (d + 1) + '</span>' + right +
+                '</div>' +
                 '<div class="cal-slots">' + rounds.map(r => calCell(r, log[r])).join('') + '</div>' +
               '</div>';
     }
     week.innerHTML = html;
+    // Relocate the Shop / Coffee Break fork so it sits directly below today's row.
+    if(choose){
+      const todayEl = week.querySelector('.cal-day.today');
+      if(todayEl) todayEl.after(choose); else week.after(choose);
+    }
   }
   renderCalChoose();
 }
