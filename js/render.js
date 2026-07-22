@@ -78,6 +78,9 @@ function startRound(){
     H=resetH();
     updateGhost();hideHUD();
   }
+  // Freeze the player's inventory arrangement for this round. goShop() reapplies
+  // exactly this at round end, so the game never reorganizes the bag mid-round.
+  bpCaptureSnapshot();
   show('s-game');renderAll();
 }
 function renderRoundsTrack(){

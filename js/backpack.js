@@ -189,9 +189,60 @@ function bpClaimHome(tdef){
 //    normally still free — nothing auto-fills it — but if occupied (player
 //    rearranged mid-round, standing_ovation clone squatted it, new buy over
 //    the gap) it falls back to rotation-aware auto-fit; if even that fails
-//    it is parked in G.bpPending. Never repacked, never destroyed. ──
+//    it is parked in G.bpPending. Never repacked, never destroyed.
+//    NOTE: this per-treat path is now only the FALLBACK for goShop(); the
+//    normal restore rebuilds the whole bag from the round-start snapshot
+//    (bpCaptureSnapshot / bpRestoreSnapshot below). ──
 function bpRestoreUsedTreats(tdefs){
   tdefs.forEach(td=>{bpReturnTreat(td,bpClaimHome(td));});
+}
+
+// ══════════════════════════════════════════════════════
+//  ROUND-START ARRANGEMENT SNAPSHOT (freeze / reapply)
+//  The bag is player-managed, so its arrangement is FROZEN the moment a round
+//  begins (startRound). The game never reorganizes it mid-round on the way to
+//  round end: instead the round-end restore rebuilds the bag to EXACTLY the
+//  frozen poses. Used treats leaving the bag, REAPPEAR bounces, mid-round
+//  hand-screen rearranges — all of it is wiped and reapplied from the freeze.
+//  Only the roster changes carry over: treats the player no longer owns
+//  (catnado destroyed, self-expired) are simply absent, and treats gained
+//  mid-round (standing_ovation clones) have no frozen pose and auto-fit into
+//  whatever space is left. Never destroys.
+// ══════════════════════════════════════════════════════
+function bpCaptureSnapshot(){
+  G.bpSnapshot={
+    width:getBPC(), // round-start effective width (base + tote column, if owned)
+    poses:(G.bpGroups||[]).map(gr=>({
+      tdef:gr.tdef,or:gr.or,oc:gr.oc,
+      shape:(gr.shape||gr.tdef.bpS).map(row=>row.slice()),rot:gr.rot||0,
+    })),
+  };
+}
+
+// Rebuild the bag to the round-start snapshot. `owned` is the multiset of treat
+// DEFS the player still holds (bag survivors + non-expired used + overflow):
+// each claims a frozen pose of the same id and is dropped there exactly; a
+// treat with no matching frozen pose (a clone, or something parked in overflow
+// at round start) takes the normal safe return path (auto-fit → overflow).
+function bpRestoreSnapshot(owned){
+  const snap=G.bpSnapshot||{width:getBPC(),poses:[]};
+  const poses=snap.poses.slice();
+  // Rebuild at the round-start width so every frozen pose is in-bounds; if the
+  // tote was lost this round the caller's bpReconcileWidth() shrinks the bag
+  // afterwards (relocating any occupant stranded in the doomed column).
+  G._bpGraceC=Math.max(0,snap.width-getBPCBase());
+  G.bp=mk2d(getBPR(),getBPC(),()=>({filled:false,col:null,em:null,gid:null,tdef:null}));
+  G.bpGroups=[];
+  const leftovers=[];
+  owned.forEach(td=>{
+    const i=poses.findIndex(p=>p.tdef.id===td.id);
+    if(i<0){leftovers.push(td);return;}
+    const pose=poses.splice(i,1)[0];
+    if(bpCanAt(pose.shape,pose.or,pose.oc))bpPlaceAt(td,pose.shape,pose.or,pose.oc,pose.rot);
+    else leftovers.push(td); // frozen cell no longer valid (bag shrank) — auto-fit
+  });
+  leftovers.forEach(td=>bpReturnTreat(td,null));
+  G.bpSnapshot=null;
 }
 function bpCanAt(cells,r,c){
   bpEnsureWidth(); // physical G.bp may lag getBPC() right after tote ownership begins

@@ -799,13 +799,32 @@ function goShop(){
   (G.usedTreats||[]).forEach(td=>{
     if(td._expired)(G.treatLossEvents=G.treatLossEvents||[]).push({id:td.id,name:td.nm||td.id,em:td.em||'',reason:'expired'});
   });
-  bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
-  G.usedTreats=[];
-  G.bpHomes=[]; // all remembered homes claimed (or dropped with expired treats)
-  // bottomless_tote: the tote may have just left the player's possession (it
-  // was in usedTreats until the line above; bpRestoreUsedTreats can park it
-  // in G.bpPending when nothing fits — where it still counts as owned) — and
-  // round end is also the natural retry point for a pending grace shrink.
+  if(G.bpSnapshot){
+    // Reapply the round-start freeze (bpCaptureSnapshot in startRound). The
+    // owned set — bag survivors + non-expired used treats + overflow-parked —
+    // reclaims each frozen pose exactly; catnado'd / expired treats are absent
+    // (their pose stays empty) and standing_ovation clones auto-fit. Both
+    // survivors and used treats can share a tdef object across duplicate
+    // copies, but only USED copies are _expired-filtered — a copy sitting in
+    // the bag is kept even if a played sibling set the shared _expired flag.
+    const owned=[
+      ...G.bpGroups.map(gr=>gr.tdef),
+      ...(G.usedTreats||[]).filter(td=>!td._expired),
+      ...(G.bpPending||[]),
+    ];
+    G.usedTreats=[];G.bpHomes=[];G.bpPending=[];
+    bpRestoreSnapshot(owned); // rebuilds G.bp/G.bpGroups; may re-park in G.bpPending
+  }else{
+    // Fallback (goShop somehow reached without a round-start snapshot): the
+    // legacy per-treat home restore.
+    bpRestoreUsedTreats((G.usedTreats||[]).filter(tdef=>!tdef._expired));
+    G.usedTreats=[];
+    G.bpHomes=[]; // all remembered homes claimed (or dropped with expired treats)
+  }
+  // bottomless_tote: the tote may have just left the player's possession this
+  // round — reconcile the bag width (shrinking relocates any occupant stranded
+  // in the doomed column) — and round end is the natural retry point for a
+  // pending grace shrink.
   bpReconcileWidth();
   bpRetryPending(); // overflowed treats get first crack at any space that freed up
   // Loss ceremony flush: expired + no-room events recorded above surface as
