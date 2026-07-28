@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Purrfect Fit</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Titan+One&family=Staatliches&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Fredoka+One&family=Titan+One&family=Staatliches&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -97,28 +97,23 @@
 
 <!-- BRANCHES (World Map HQ picker) -->
 <div id="s-branches" class="scr">
-  <div class="hqm-hud">
-    <button class="hqm-back" onclick="exitToMenu()">← Back</button>
-    <div class="hqm-cash"><span class="hqm-coin">🪙</span><span id="br-cash">0</span></div>
-  </div>
-  <div class="hqm-map" id="hqm-map"></div>
-  <div class="hqm-counter"></div>
-  <div class="hqm-watermark">PURRFECT<br>FIT INC.</div>
-  <div class="hqm-rail">
-    <div class="hqm-title">PF INC.<br>HEADQUARTERS</div>
-    <div class="hqm-inst">Pick a continent, then choose an HQ.</div>
-    <div class="hqm-continue" id="hqm-continue" style="display:none;"></div>
-  </div>
-  <div class="hqm-stage">
-    <div class="hqm-cont-hd">
-      <button class="hqm-cont-arw" onclick="hqContPrev()" aria-label="Previous continent">‹</button>
-      <span class="hqm-cont-name" id="hqm-cont-lbl"></span>
-      <button class="hqm-cont-arw" onclick="hqContNext()" aria-label="Next continent">›</button>
+  <div class="tt-stage hq-stage">
+    <img class="hq-map" src="assets/ui/hq-map.png" alt="Expansion map">
+    <!-- continent labels + the red ring are data-driven, see hqRenderMap() -->
+    <div class="hq-conts" id="hq-conts"></div>
+    <img class="hq-note" src="assets/ui/hq-note.png" alt="Select a branch to start the week">
+
+    <div class="hq-plate">
+      <i class="hq-plate-navy"></i>
+      <div class="hq-plate-card"><img src="assets/ui/hq-title.png" alt="PF Inc. Headquarters"></div>
+      <div class="hq-plate-flav" id="hq-flav">&ldquo;box full of fur &amp; purrs&rdquo;</div>
     </div>
-    <div class="hqm-carousel" id="hqm-carousel"></div>
+    <button class="hq-paw" onclick="exitToMenu()" aria-label="Back to menu"><img src="assets/ui/icon-paw.png" alt=""></button>
+    <div class="hq-purse sp-mon"><img src="assets/ui/icon-box.png" alt=""><span class="hq-purse-pill"><span id="br-cash">0</span></span></div>
+
+    <div class="hq-rail" id="hq-rail"></div>
+    <div class="hq-desk"></div>
   </div>
-  <div class="hqm-dots" id="hqm-dots"></div>
-  <div class="br-scroll" id="br-body" style="display:none;"></div>
 </div>
 
 <!-- THE WORK WEEK (calendar hub between rounds, see js/calendar.js) -->
