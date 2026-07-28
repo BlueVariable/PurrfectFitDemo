@@ -710,25 +710,42 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
    Geometry + colours were measured off the design; see assets/ui/. */
 #s-menu{
   flex-direction:row;align-items:center;justify-content:center;padding:0;
-  background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;
+  background:#53535f;overflow:hidden;
   cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;
+  --px:0px;--py:0px;   /* pointer drift, written by initTitleParallax() */
+}
+/* the floor gets its own layer, bled 3% past every edge, so counter-drifting it
+   against the pointer can never uncover a bare corner */
+#s-menu::before{
+  content:'';position:absolute;inset:-3%;z-index:0;
+  background:url('assets/ui/bg-floor.png') center/cover no-repeat;
+  transform:translate(calc(var(--px) * -.3), calc(var(--py) * -.3));
 }
 .tt-stage{position:relative;width:min(100%,calc(100vh * 16 / 9));aspect-ratio:16/9;container-type:inline-size;}
 
-/* every art layer: centred on (left,top), then rotated in place */
-.tt-l{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));pointer-events:none;user-select:none;}
-.tt-paper  {left:45.82%;top:45.26%;width:24.20%;height:51.14%;--r:-100.1deg;filter:drop-shadow(0.5cqw 0.7cqw 0.5cqw rgba(20,18,28,.32));}
-.tt-cat    {left:51.21%;top:56.17%;width: 4.50%;height: 6.96%;--r: -10.1deg;}
-.tt-fitinc {left:44.96%;top:45.24%;width:14.27%;height: 7.46%;--r: -16.4deg;}
-.tt-purr   {left:43.34%;top:37.96%;width:17.67%;height: 9.67%;--r: -16.3deg;}
-.tt-welc   {left:40.88%;top:30.27%;width:12.47%;height: 5.30%;--r: -11.6deg;}
-.tt-sinc   {left:40.70%;top:56.57%;width: 8.43%;height: 3.12%;--r: -16.4deg;}
-.tt-mgr    {left:43.11%;top:58.87%;width:10.39%;height: 3.36%;--r: -16.4deg;}
+/* Every art layer: parallax-drifted, then centred on (left,top), then posed.
+   --d is depth (how hard it tracks the pointer), --sx is the mirror flag.
+   The paper, all five words and the cat doodle MUST share one --d — give them
+   different depths and the handwriting slides off the page. */
+.tt-l{
+  position:absolute;pointer-events:none;user-select:none;
+  transform:translate(calc(var(--px) * var(--d,1)), calc(var(--py) * var(--d,1)))
+            translate(-50%,-50%) rotate(var(--r,0deg)) scaleX(var(--sx,1));
+}
+.tt-paper  {left:45.82%;top:45.26%;width:24.20%;height:51.14%;--r:-100.1deg;--d:.8;filter:drop-shadow(0.5cqw 0.7cqw 0.5cqw rgba(20,18,28,.32));}
+.tt-cat    {left:51.21%;top:56.17%;width: 4.50%;height: 6.96%;--r: -10.1deg;--d:.8;}
+.tt-fitinc {left:44.96%;top:45.24%;width:14.27%;height: 7.46%;--r: -16.4deg;--d:.8;}
+.tt-purr   {left:43.34%;top:37.96%;width:17.67%;height: 9.67%;--r: -16.3deg;--d:.8;}
+.tt-welc   {left:40.88%;top:30.27%;width:12.47%;height: 5.30%;--r: -11.6deg;--d:.8;}
+.tt-sinc   {left:40.70%;top:56.57%;width: 8.43%;height: 3.12%;--r: -16.4deg;--d:.8;}
+.tt-mgr    {left:43.11%;top:58.87%;width:10.39%;height: 3.36%;--r: -16.4deg;--d:.8;}
 /* feather + bell are MIRRORED in the design, not rotated — a 180° spin puts the
    feathers below the rope and drags both toys up the floor. */
-.tt-feather{left:19.76%;top:64.06%;width:69.04%;height:66.95%;transform:translate(-50%,-50%) scaleX(-1);}
-.tt-mouse  {left:80.19%;top:38.23%;width:63.98%;height:62.04%;}
-.tt-bell   {left:26.50%;top:47.12%;width:69.04%;height:66.95%;transform:translate(-50%,-50%) scaleX(-1);}
+.tt-feather{left:19.76%;top:64.06%;width:69.04%;height:66.95%;--sx:-1;--d:.6;}
+.tt-mouse  {left:80.19%;top:38.23%;width:63.98%;height:62.04%;--d:1.2;}
+.tt-bell   {left:26.50%;top:47.12%;width:69.04%;height:66.95%;--sx:-1;--d:.45;}
+
+@media (prefers-reduced-motion:reduce){#s-menu{--px:0px !important;--py:0px !important;}}
 
 /* ── chunky sticker buttons: black keyline, white ring, hard drop slab ── */
 /* die-cut sticker: white cut-line sits OUTSIDE the black keyline (not inside),
