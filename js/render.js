@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded',loadConfig);
 
 function menuUpdateContinue(){
   const btn=g('btn-menu-continue');
-  if(btn)btn.style.display=gameInProgress?'block':'none';
+  if(btn)btn.style.display=gameInProgress?'flex':'none';
 }
 function menuContinue(){
   if(!gameInProgress)return;

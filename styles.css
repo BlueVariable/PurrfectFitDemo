@@ -29,6 +29,8 @@ body::before{display:none;}
   50%{transform:translateY(-16px) scale(1.1);}
 }
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* same floor as the title screen so boot → menu doesn't flash a different room */
+#s-loading{background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;}
 .loading-card{background:#fff;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;border-radius:16px;padding:32px 40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;}
 
 /* ════════ TITLE (legacy — kept for shared classes) ════════ */
@@ -699,14 +701,75 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .win-inline-card h1{font-family:'Fredoka One',cursive;font-size:34px;color:#1a1a2a;margin-bottom:4px;}
 .win-inline-card .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
 
-/* ════════ MENU SCREEN ════════ */
-#s-menu{flex-direction:row;align-items:center;justify-content:center;padding:40px 24px;}
-.menu-card{background:#fff;border:2.5px solid #1a1a2a;box-shadow:3px 3px 0 #1a1a2a;border-radius:16px;padding:28px 24px;max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;}
-.menu-card::before{content:'';position:absolute;inset:0;border-radius:16px;background:repeating-linear-gradient(transparent,transparent 27px,rgba(90,133,213,.12) 27px,rgba(90,133,213,.12) 28px);pointer-events:none;}
-.menu-tg{font-size:13px;color:#7a8090;font-weight:700;letter-spacing:1px;}
-.menu-btns{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px;z-index:1;}
-.btn-menu-settings{width:100%;padding:11px;border:2.5px solid #1a1a2a;cursor:pointer;background:rgba(122,128,144,.15);color:#7a8090;font-family:'Fredoka One',cursive;font-size:15px;border-radius:14px;box-shadow:0 4px 0 rgba(0,0,0,.1);transition:all .12s;}
-.btn-menu-settings:hover{transform:translateY(-2px);background:rgba(122,128,144,.22);}
+/* ════════ MENU SCREEN (title) ════════
+   The concrete floor, the torn note and the strewn cat toys are the Canva UI
+   deck's page 1, re-cut into layers. Every layer is positioned by its CENTRE
+   (%, rotation-invariant) inside a 16:9 stage, so the whole composition scales
+   as one piece and never reflows. Do not swap these for a flexbox layout — the
+   overlaps (mouse over paper, words over grid) only read right at fixed ratios.
+   Geometry + colours were measured off the design; see assets/ui/. */
+#s-menu{
+  flex-direction:row;align-items:center;justify-content:center;padding:0;
+  background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;
+  cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;
+}
+.tt-stage{position:relative;width:min(100%,calc(100vh * 16 / 9));aspect-ratio:16/9;container-type:inline-size;}
+
+/* every art layer: centred on (left,top), then rotated in place */
+.tt-l{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));pointer-events:none;user-select:none;}
+.tt-paper  {left:45.82%;top:45.26%;width:24.20%;height:51.14%;--r:-100.1deg;filter:drop-shadow(0.5cqw 0.7cqw 0.5cqw rgba(20,18,28,.32));}
+.tt-cat    {left:51.21%;top:56.17%;width: 4.50%;height: 6.96%;--r: -10.1deg;}
+.tt-fitinc {left:44.96%;top:45.24%;width:14.27%;height: 7.46%;--r: -16.4deg;}
+.tt-purr   {left:43.34%;top:37.96%;width:17.67%;height: 9.67%;--r: -16.3deg;}
+.tt-welc   {left:40.88%;top:30.27%;width:12.47%;height: 5.30%;--r: -11.6deg;}
+.tt-sinc   {left:40.70%;top:56.57%;width: 8.43%;height: 3.12%;--r: -16.4deg;}
+.tt-mgr    {left:43.11%;top:58.87%;width:10.39%;height: 3.36%;--r: -16.4deg;}
+/* feather + bell are MIRRORED in the design, not rotated — a 180° spin puts the
+   feathers below the rope and drags both toys up the floor. */
+.tt-feather{left:19.76%;top:64.06%;width:69.04%;height:66.95%;transform:translate(-50%,-50%) scaleX(-1);}
+.tt-mouse  {left:80.19%;top:38.23%;width:63.98%;height:62.04%;}
+.tt-bell   {left:26.50%;top:47.12%;width:69.04%;height:66.95%;transform:translate(-50%,-50%) scaleX(-1);}
+
+/* ── chunky sticker buttons: black keyline, white ring, hard drop slab ── */
+/* die-cut sticker: white cut-line sits OUTSIDE the black keyline (not inside),
+   with a hard slab dropped behind it. Reversing those two reads as a cheap
+   web button instead of a sticker. */
+.ttb{
+  position:absolute;top:77.4%;height:11.3%;
+  border:0.17cqw solid #17151c;border-radius:1.05cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 1.35cqw 0 #262229;
+  background:#829af8;cursor:inherit;padding:0;
+  display:flex;align-items:center;justify-content:center;overflow:visible;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;
+}
+.ttb:hover{transform:translateY(-0.25cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 1.6cqw 0 #262229;}
+.ttb:active{transform:translateY(1.15cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 0.2cqw 0 #262229;}
+.ttb-play{left:39.97%;width:19.78%;}
+.ttb-paw {left:61.95%;width: 5.63%;background:#f6e379;overflow:hidden;}
+/* the paw is taller than its button on purpose — the wrist runs off the bottom edge */
+.ttb-paw img{position:absolute;left:50.7%;top:51.2%;width:49.7%;height:93.6%;transform:translate(-50%,-50%) rotate(-31.8deg);pointer-events:none;}
+.ttb-cont{right:62.55%;background:#f6e379;padding:0 1.5cqw;font-family:'Titan One',cursive;font-size:2.1cqw;letter-spacing:.02em;color:#17151c;}
+
+.ttb-lbl{
+  font-family:'Titan One','Fredoka One',cursive;font-size:5.55cqw;line-height:.86;
+  letter-spacing:-.09em;color:#17151c;
+  -webkit-text-stroke:.124em #fdfcff;paint-order:stroke fill;
+  filter:drop-shadow(.065em .107em 0 rgba(20,18,28,.4));
+  transform:translateY(-1.35cqw);
+}
+/* letters are set by hand in the design — each one leans its own way */
+.ttb-lbl i{display:inline-block;font-style:normal;}
+.ttb-lbl i:nth-child(1){transform:rotate(-7deg);}
+.ttb-lbl i:nth-child(2){transform:rotate(-2deg) translateY(.015em);}
+.ttb-lbl i:nth-child(3){transform:rotate(3deg) translateY(-.01em);}
+.ttb-lbl i:nth-child(4){transform:rotate(-4deg);}
+.ttb-lbl i:nth-child(5){transform:rotate(-9deg) translateY(.02em);}
+
+/* dev tools live in the corner so they stay out of the picture */
+.tt-dev{position:absolute;right:14px;bottom:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:2;width:180px;}
+.tt-dev .btn-reload-cfg{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.6);}
+.tt-dev .btn-reload-cfg:hover{border-color:rgba(255,255,255,.55);color:#fff;}
+.btn-menu-settings{cursor:pointer;}
 
 /* ════════ BRANCHES (WORLD MAP) ════════ */
 #s-branches{flex-direction:column;background:#6a7d95;overflow:hidden;}

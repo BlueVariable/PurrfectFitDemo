@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Purrfect Fit</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Titan+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -37,26 +37,34 @@
     <div id="load-error" style="display:none;background:rgba(220,72,72,.2);border:1px solid var(--re);border-radius:12px;padding:12px 20px;font-size:12px;color:#ffaaaa;text-align:center;max-width:360px;"></div>
   </div>
 </div>
-<!-- MENU -->
+<!-- MENU (title screen — art + geometry lifted from the Canva UI deck, page 1) -->
 <div id="s-menu" class="scr">
-  <div class="menu-card">
-    <div style="text-align:center;margin-bottom:4px;">
-      <div class="t-em">🐱</div>
-      <div class="t-nm"><span>PURRFECT </span><span class="t-nm-fit">FIT</span></div>
-      <div class="menu-tg">plan · place · purr-fect!</div>
-    </div>
-    <div class="menu-btns">
-      <button id="btn-menu-continue" class="btn-play btn-cont" onclick="menuContinue()" style="display:none;margin-bottom:6px;">▶ Continue</button>
-      <button class="btn-play" onclick="menuPlay()">🐾 PLAY</button>
-      <button class="btn-menu-settings" onclick="void 0">⚙ Settings</button>
-      <div style="display:flex;justify-content:center;margin-top:6px;">
-        <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
-      </div>
-      <div class="dev-panel" id="dev-panel">
-        <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
-        <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.5);text-align:center;margin-top:-4px;"></div>
-        <button class="btn-reload-cfg" onclick="openConfigSheet()">📋 Config Sheet</button>
-      </div>
+  <div class="tt-stage">
+    <!-- desk note: paper first, then each hand-lettered word as its own layer -->
+    <img class="tt-l tt-paper"  src="assets/ui/note-paper.png" alt="">
+    <img class="tt-l tt-cat"    src="assets/ui/note-cat.png" alt="">
+    <img class="tt-l tt-fitinc" src="assets/ui/txt-fit-inc.png" alt="Fit Inc.">
+    <img class="tt-l tt-purr"   src="assets/ui/txt-purrfect.png" alt="Purrfect">
+    <img class="tt-l tt-welc"   src="assets/ui/txt-welcome.png" alt="Welcome to">
+    <img class="tt-l tt-sinc"   src="assets/ui/txt-sincerely.png" alt="Sincerely">
+    <img class="tt-l tt-mgr"    src="assets/ui/txt-manager.png" alt="your manager">
+    <!-- cat toys strewn across the floor -->
+    <img class="tt-l tt-feather" src="assets/ui/toy-feather.png" alt="">
+    <img class="tt-l tt-mouse"   src="assets/ui/toy-mouse.png" alt="">
+    <img class="tt-l tt-bell"    src="assets/ui/toy-bell.png" alt="">
+
+    <button id="btn-menu-continue" class="ttb ttb-cont" onclick="menuContinue()" style="display:none;">CONTINUE</button>
+    <button class="ttb ttb-play" onclick="menuPlay()"><span class="ttb-lbl"><i>P</i><i>L</i><i>A</i><i>Y</i><i>!</i></span></button>
+    <button class="ttb ttb-paw btn-menu-settings" onclick="void 0" aria-label="Settings">
+      <img src="assets/ui/icon-paw.png" alt="">
+    </button>
+  </div>
+  <div class="tt-dev">
+    <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>
+    <div class="dev-panel" id="dev-panel">
+      <button class="btn-reload-cfg" id="btn-reload-cfg" onclick="reloadConfig()">↺ Reload Config</button>
+      <div id="reload-status" style="display:none;font-size:11px;color:rgba(255,255,255,.6);text-align:center;margin-top:-4px;"></div>
+      <button class="btn-reload-cfg" onclick="openConfigSheet()">📋 Config Sheet</button>
     </div>
   </div>
 </div>
