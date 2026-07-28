@@ -1297,3 +1297,29 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 
 .gm-tray{left:0;right:0;bottom:0;height:20%;background:#fdfbf9;
   border-top:0.17cqw solid #1b1a24;display:flex;align-items:center;justify-content:center;}
+
+/* ── deck-page-5 corrections, measured off the design capture ───────────── */
+.gm-panel     {left: 2.54%;top:17.09%;width:17.79%;height:40.17%;}
+.gm-card-reach{left: 7.01%;top:22.59%;width:12.91%;height:12.58%;}
+.gm-card-so   {left: 6.87%;top:37.97%;width:12.98%;height:15.02%;}
+.gm-hands     {left:11.33%;top:50.79%;width: 8.86%;height: 3.79%;}
+
+/* board cells read dark against the light frame, not pale */
+.gm-stage .cell{background:#66656b;border:0;border-radius:.5cqw;}
+.gm-stage .cell.ok  {background:#7fae6e!important;}
+.gm-stage .cell.bad {background:#a5595a!important;}
+.gm-stage .cell.occ {background:#55545c;}
+
+/* inventory: a slightly sunken panel holding a light card of cells */
+.gm-inv{background:rgba(26,22,46,.15);border:0.17cqw solid rgba(255,255,255,.20);}
+.gm-stage .bpgw{position:absolute;left:7.7%;top:10.1%;width:88.1%;height:77.6%;
+  background:#d1d0d8;border:0.17cqw solid rgba(255,255,255,.55);border-radius:1cqw;
+  display:flex;align-items:center;justify-content:center;padding:.55cqw;}
+.gm-stage .bpg{width:100%;height:100%;gap:.45cqw;background:transparent;padding:0;border-radius:0;}
+.gm-stage .bpc{background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:.45cqw;}
+.gm-stage .bpc.ft{border-color:rgba(255,255,255,.95);}
+
+/* hand tray: pieces spread across the counter, no card chrome under them */
+.gm-tray .hand{width:86.5%;justify-content:space-between;align-items:center;gap:0;}
+.gm-stage .cslot{background:none;border:0;box-shadow:none;padding:0;min-width:0;}
+.gm-stage .cslot .csn{display:none;}
