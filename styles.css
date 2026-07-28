@@ -1,3 +1,14 @@
+/* ── the deck's own fonts, lifted from the Canva design ─────────────────
+   Lazydog is the fat marker on the buttons, Bobby Jones Soft Condensed the
+   hand-printed city/continent names, Staatliches the body copy and Handelson
+   the slogan — the alias-to-file mapping came out of Canva's @font-face rules.
+   Staatliches is SIL OFL; the other three are commercial faces served by
+   Canva — fine for this prototype, check their licences before shipping. */
+@font-face{font-family:'Bobby Jones Soft';src:url('assets/fonts/BobbyJonesSoft-Condensed.woff2') format('woff2');font-display:swap;}
+@font-face{font-family:'Lazydog';src:url('assets/fonts/Lazydog.woff2') format('woff2');font-display:swap;}
+@font-face{font-family:'Staatliches';src:url('assets/fonts/Staatliches-Regular.woff2') format('woff2');font-display:swap;}
+@font-face{font-family:'Handelson';src:url('assets/fonts/Handelson-One.woff2') format('woff2');font-display:swap;}
+
 :root{
   --bg:#bbc0c9;--panel:#ffffff;--navy:#3a5070;--navy2:#2a3a55;
   --bbg:#6a7d95;--bborder:#5a6d85;
@@ -849,22 +860,17 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .ttb-paw {left:61.95%;width: 5.63%;background:#f6e379;overflow:hidden;}
 /* the paw is taller than its button on purpose — the wrist runs off the bottom edge */
 .ttb-paw img{position:absolute;left:50.7%;top:51.2%;width:49.7%;height:93.6%;transform:translate(-50%,-50%) rotate(-31.8deg);pointer-events:none;}
-.ttb-cont{right:62.55%;background:#f6e379;padding:0 1.5cqw;font-family:'Titan One',cursive;font-size:2.1cqw;letter-spacing:.02em;color:#17151c;}
+.ttb-cont{right:62.55%;background:#f6e379;padding:0 1.5cqw;font-family:'Lazydog',cursive;font-size:2.1cqw;letter-spacing:.02em;color:#17151c;}
 
 .ttb-lbl{
-  font-family:'Titan One','Fredoka One',cursive;font-size:5.55cqw;line-height:.86;
+  font-family:'Lazydog','Fredoka One',cursive;font-size:5.34cqw;line-height:.86;
   letter-spacing:-.09em;color:#17151c;
   -webkit-text-stroke:.124em #fdfcff;paint-order:stroke fill;
   filter:drop-shadow(.065em .107em 0 rgba(20,18,28,.4));
-  transform:translateY(-1.35cqw);
+  transform:translateY(-0.85cqw);
 }
-/* letters are set by hand in the design — each one leans its own way */
+/* Lazydog carries its own hand-drawn wobble, so no per-letter tilt here */
 .ttb-lbl i{display:inline-block;font-style:normal;}
-.ttb-lbl i:nth-child(1){transform:rotate(-7deg);}
-.ttb-lbl i:nth-child(2){transform:rotate(-2deg) translateY(.015em);}
-.ttb-lbl i:nth-child(3){transform:rotate(3deg) translateY(-.01em);}
-.ttb-lbl i:nth-child(4){transform:rotate(-4deg);}
-.ttb-lbl i:nth-child(5){transform:rotate(-9deg) translateY(.02em);}
 
 /* dev tools live in the corner so they stay out of the picture */
 /* column-reverse: the toggle stays pinned in the corner and the panel opens
@@ -909,7 +915,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   box-shadow:0 0 0 0.17cqw #fdfcff;display:flex;align-items:center;justify-content:center;}
 .hq-plate-card img{width:86%;}
 .hq-plate-flav{position:absolute;left:8%;right:8%;bottom:7%;text-align:left;
-  font-family:'Architects Daughter',cursive;font-size:1.15cqw;color:rgba(255,255,255,.62);}
+  font-family:'Handelson',cursive;font-size:1.5cqw;color:rgba(255,255,255,.62);}
 
 .hq-paw{left:1.90%;top:3.70%;width:4.3%;height:7.6%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:1.0cqw;
@@ -923,17 +929,17 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .hq-purse img{height:100%;position:relative;z-index:1;}
 .hq-purse-pill{margin-left:-14%;padding:0.25cqw 1.4cqw 0.25cqw 2.2cqw;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
-  font-family:'Architects Daughter',cursive;font-size:1.75cqw;color:#1b1a24;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.75cqw;color:#1b1a24;}
 
 /* ── continent labels pinned onto the map ── */
 .hq-conts{inset:0;pointer-events:none;--d:.35;
           transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)));}
 .hq-cont{position:absolute;transform:translate(-50%,-50%) rotate(var(--cr,0deg));
-  font-family:'Architects Daughter',cursive;font-size:1.85cqw;letter-spacing:.02em;
+  font-family:'Bobby Jones Soft',cursive;font-size:2.1cqw;letter-spacing:.02em;
   color:#241d16;white-space:nowrap;cursor:inherit;pointer-events:auto;-webkit-text-stroke:.028em #241d16;
   background:none;border:0;padding:.3cqw .5cqw;transition:transform .12s;}
 .hq-cont:hover{transform:translate(-50%,-50%) rotate(var(--cr,0deg)) scale(1.08);}
-.hq-cont.off{opacity:.68;font-size:1.7cqw;}
+.hq-cont.off{opacity:.68;font-size:1.95cqw;}
 .hq-ring{position:absolute;width:11.63%;height:10.03%;transform:translate(-50%,-50%);
   pointer-events:none;transition:left .22s cubic-bezier(.2,.7,.3,1),top .22s cubic-bezier(.2,.7,.3,1);}
 
@@ -947,10 +953,10 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:1.2cqw;
   box-shadow:0 0 0 0.17cqw #fdfcff;padding:0.9cqw 1cqw 7cqw;text-align:center;
   cursor:inherit;transition:transform .14s cubic-bezier(.2,.7,.3,1);}
-.hq-card-nm{font-family:'Architects Daughter',cursive;font-size:2.35cqw;line-height:1.1;color:var(--cty,#5f7fd8);}
-.hq-card-flav{font-family:'Architects Daughter',cursive;font-size:1.05cqw;color:#7a7480;margin-top:.35cqw;}
+.hq-card-nm{font-family:'Bobby Jones Soft',cursive;font-size:2.95cqw;line-height:1.1;color:var(--cty,#5f7fd8);}
+.hq-card-flav{font-family:'Bobby Jones Soft',cursive;font-size:1.3cqw;color:#7a7480;margin-top:1.1cqw;}
 .hq-card.peek{width:13cqw;padding-bottom:5.6cqw;}
-.hq-card.peek .hq-card-nm{font-size:1.95cqw;}
+.hq-card.peek .hq-card-nm{font-size:2.45cqw;}
 .hq-card.peek:hover{transform:translateY(-0.5cqw);}
 .hq-card.hero{margin-left:auto;margin-right:auto;}
 .hq-faces{position:absolute;left:8%;right:8%;top:-3.2cqw;height:3.4cqw;
@@ -967,7 +973,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;text-align:center;
   font-family:'Staatliches',cursive;color:#1b1a24;line-height:1;}
 .hq-day-d{font-size:1.1cqw;display:block;}
-.hq-day-n{font-size:2.2cqw;font-family:'Titan One',cursive;}
+.hq-day-n{font-size:2.2cqw;font-family:'Lazydog',cursive;}
 .hq-day-n small{font-size:1.1cqw;font-family:'Staatliches',cursive;}
 
 .hq-go{width:100%;margin-top:.55cqw;padding:.35cqw 0;cursor:inherit;
@@ -976,7 +982,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   transition:transform .09s ease-out, box-shadow .09s ease-out;}
 .hq-go:hover {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 1.05cqw 0 #262229;}
 .hq-go:active{transform:translateY(0.65cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 0.2cqw 0 #262229;}
-.hq-go span{font-family:'Titan One',cursive;font-size:2.1cqw;line-height:1;color:#17151c;
+.hq-go span{font-family:'Lazydog',cursive;font-size:2.1cqw;line-height:1;color:#17151c;
   -webkit-text-stroke:.11em #fdfcff;paint-order:stroke fill;
   filter:drop-shadow(.05em .09em 0 rgba(20,18,28,.35));display:inline-block;}
 .hq-go-cont{background:#f6e379;}
