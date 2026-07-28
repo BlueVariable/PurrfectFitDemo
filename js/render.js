@@ -136,7 +136,18 @@ function startRound(){
   // Freeze the player's inventory arrangement for this round. goShop() reapplies
   // exactly this at round end, so the game never reorganizes the bag mid-round.
   bpCaptureSnapshot();
+  gmHeader();
   show('s-game');renderAll();
+}
+// Board-screen header: which branch you are working and where in the week.
+function gmHeader(){
+  const per=(typeof CAL_ROUNDS_PER_DAY!=='undefined')?CAL_ROUNDS_PER_DAY:3;
+  const r=G.round||1, day=Math.ceil(r/per);
+  const br=(typeof BRANCHES!=='undefined')&&BRANCHES.find(b=>b.id===G.branchId);
+  const nm=g('gm-branch'); if(nm)nm.textContent=(br&&br.name)||'';
+  const dn=g('gm-day-name'); if(dn)dn.textContent=['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY'][day-1]||'DAY';
+  const of=g('gm-day-of'); if(of)of.textContent='/'+per;
+  const rt=g('g-round-top'); if(rt)rt.textContent=((r-1)%per)+1;
 }
 function renderRoundsTrack(){
   // Pip track

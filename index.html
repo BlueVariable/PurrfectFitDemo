@@ -55,7 +55,6 @@
     <img class="tt-l tt-mouse"   src="assets/ui/toy-mouse.png" alt="">
     <img class="tt-l tt-bell"    src="assets/ui/toy-bell.png" alt="">
 
-    <button id="btn-menu-continue" class="ttb ttb-cont" onclick="menuContinue()" style="display:none;">CONTINUE</button>
     <button class="ttb ttb-play" onclick="menuPlay()"><span class="ttb-lbl"><i>P</i><i>L</i><i>A</i><i>Y</i><i>!</i></span></button>
     <button class="ttb ttb-paw btn-menu-settings" onclick="void 0" aria-label="Settings">
       <img src="assets/ui/icon-paw.png" alt="">
@@ -109,7 +108,6 @@
       <div class="hq-plate-flav" id="hq-flav">&ldquo;box full of fur &amp; purrs&rdquo;</div>
     </div>
     <button class="hq-paw" onclick="exitToMenu()" aria-label="Back to menu"><img src="assets/ui/icon-paw.png" alt=""></button>
-    <div class="hq-purse sp-mon"><img src="assets/ui/icon-box.png" alt=""><span class="hq-purse-pill"><span id="br-cash">0</span></span></div>
 
     <div class="hq-rail" id="hq-rail"></div>
   </div>
@@ -241,83 +239,49 @@
   </div>
 </div>
 
-<!-- GAME -->
+<!-- GAME (board screen — deck page 5) -->
 <div id="s-game" class="scr">
-  <div id="g-topbar">
-    <div class="gtb-left">
-      <div class="gtb-round-pill" id="g-topbar-round">Round 1</div>
-      <div class="gtb-score-pill" id="g-topbar-score">⭐ <span>0</span></div>
-      <div class="gtb-mod-pill" id="g-topbar-mod" style="display:none;" title=""><span id="g-topbar-mod-em">⚠️</span><span id="g-topbar-mod-name"></span></div>
+  <div class="tt-stage gm-stage">
+    <div class="gm-branch" id="gm-branch">&nbsp;</div>
+    <div class="gm-day"><span class="gm-day-d" id="gm-day-name">MONDAY</span><span class="gm-day-n">#<span id="g-round-top">1</span><small id="gm-day-of">/3</small></span></div>
+
+    <button class="gm-paw" onclick="exitToMenu()" aria-label="Back to menu"><img src="assets/ui/icon-paw.png" alt=""></button>
+    <div class="gm-cash" id="g-topbar-cash"><span>0</span></div>
+
+    <i class="gm-panel"></i>
+    <div class="gm-card gm-card-reach"><div class="gm-card-lbl">REACH SCORE</div><div class="gm-card-val gm-red" id="g-tgt">180</div></div>
+    <div class="gm-card gm-card-so"><div class="gm-card-lbl">SCORED SO FAR</div><div class="gm-card-val" id="g-score">0</div></div>
+    <div class="gm-hands"><b id="g-hands">4</b><span>HANDS LEFT</span></div>
+
+    <div class="gm-boardwrap"><div class="board" id="board"></div></div>
+    <button class="gm-clear" onclick="clearBoard()">CLEAR</button>
+    <button class="gm-ship" id="btn-fit" onclick="doFit()" disabled><span>SHIP!</span></button>
+    <div class="fit-proj" id="fit-proj" title="Projected score if you SHIP now">~0</div>
+
+    <div class="gm-invtab">INVENTORY</div>
+    <div class="gm-inv"><div class="bpgw"><div class="bpg" id="bpg"></div></div></div>
+    <div class="gm-inv-cap">&ldquo;full of purr-fection&rdquo;</div>
+
+    <div class="gm-disc"><span class="gm-pill-lbl">DISCARDS</span>
+      <div class="trash-zone no-disc" id="trash-drop"><span class="trash-badge" id="trash-badge">3</span></div></div>
+    <div class="gm-deck" id="deck-pill" onclick="openDeckPopup()" title="View remaining deck">
+      <span class="gm-pill-lbl">DECK</span><span class="gm-deck-n" id="g-deck">30</span></div>
+
+    <div class="gm-tray"><div class="hand" id="hand"></div></div>
+
+    <div class="ttp" id="ttp">
+      <div class="ttn" id="ttn"></div><div class="tte" id="tte"></div><div class="ttae" id="ttae"></div>
+      <div class="ttr" id="ttr"></div><div class="ttf" id="ttf"></div>
+      <div class="ttsell"><button class="btn-place" id="btn-place" onclick="pickupTreat()">Place on board</button></div>
     </div>
-    <div class="gtb-center">
-      <div class="gtb-title">PURRFECT FIT</div>
-    </div>
-    <div class="gtb-right">
-      <div class="gtb-cash" id="g-topbar-cash"><span class="gtb-coin">🪙</span><span>0</span></div>
+    <!-- kept for JS that still writes to them; not part of the deck-page-5 layout -->
+    <div class="gm-hidden">
+      <span id="g-earn">3</span><span id="g-last">0</span><span id="g-bsize">4×4</span>
+      <span id="g-purrfect-rate"></span><span id="g-topbar-round"></span><span id="g-topbar-score"><span></span></span>
+      <span id="g-topbar-mod"><span id="g-topbar-mod-em"></span><span id="g-topbar-mod-name"></span></span>
     </div>
   </div>
-  <div id="g-main">
-    <div class="lc">
-      <div class="tline">"plan. place. purr-fect your score!"</div>
-      <div class="card"><div style="font-family:'Fredoka One',cursive;font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Round <span id="g-round-top">1</span></div><div class="lb">Target Score</div><div class="bv" id="g-tgt">180</div><div class="pf-rate" id="g-purrfect-rate" title="Bonus per playable cell when you fill the whole board (purrfect fit). Steps up each work-week day (MON → FRI).">✨ +5/cell purrfect</div></div>
-      <div class="card" style="padding:6px 13px;"><div class="lb">Earn</div><div class="earn-b">🪙 <span id="g-earn">3</span></div></div>
-      <div class="card">
-        <div class="lb">Scored So Far</div>
-        <div class="bv or" id="g-score">0</div>
-        <div class="pr">
-          <div class="pl pl-or"><div class="pt">HANDS</div><div class="pv" id="g-hands">4</div></div>
-          <div class="pl pl-gr"><div class="pt">LAST</div><div class="pv" id="g-last">0</div></div>
-        </div>
-      </div>
-
-      <div class="pfbox">📦</div>
-      <button class="btn-menu-exit" onclick="exitToMenu()">← Menu</button>
-    </div>
-
-    <div class="cc">
-      <div class="bwrap"><div class="board" id="board"></div></div>
-      <div class="bbtns">
-        <button class="btn-clr" onclick="clearBoard()">CLEAR</button>
-        <button class="btn-fit" id="btn-fit" onclick="doFit()" disabled>FIT!</button>
-        <div class="fit-proj" id="fit-proj" title="Projected score if you FIT now">~0</div>
-      </div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div class="hand" id="hand"></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div></div>
-      <div class="deck-row">
-        <div class="dinfo-s" id="deck-pill" onclick="openDeckPopup()" style="cursor:pointer;" title="View remaining deck"><span class="dlb2">DECK</span><span class="bv2" id="g-deck" style="font-size:26px;">30</span><span class="dlb2" style="margin-left:2px;opacity:.6;">👁</span></div>
-        <div class="dinfo-s"><span class="dlb2" id="g-bsize">4×4</span></div>
-        <div class="trash-zone no-disc" id="trash-drop">
-          <div class="trash-badge" id="trash-badge">3</div>
-          🗑️
-        </div>
-      </div>
-    </div>
-
-    <div class="rc">
-      <div class="bpcard">
-        <div class="bphdr">BACKPACK</div>
-        <div class="bpgw"><div class="bpg" id="bpg"></div></div>
-        <div class="bpcap">"bag full of purr-fection"</div>
-      </div>
-      <div class="ttp" id="ttp">
-        <div class="ttn" id="ttn"></div>
-        <div class="tte" id="tte"></div>
-        <div class="ttae" id="ttae"></div>
-        <div class="ttr" id="ttr"></div>
-        <div class="ttf" id="ttf"></div>
-        <div class="ttsell">
-          <button class="btn-place" id="btn-place" onclick="pickupTreat()">Place on board</button>
-        </div>
-      </div>
-    </div>
-    <div class="win-inline" id="win-inline" style="display:none;">
+  <div class="win-inline" id="win-inline" style="display:none;">
       <div class="win-inline-card">
         <h1>PURRFECT! 😸</h1>
         <div class="sub">Round cleared!</div>
