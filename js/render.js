@@ -77,37 +77,40 @@ function introShow(){
 function introNext(){introStep++;introShow();}
 function menuPlay(){introStep=0;introShow();}
 
-// ── title-screen parallax ────────────────────────────────────────────────
-// The pointer drifts the scene apart by depth: the floor counter-moves, the
-// mouse toy lying on top of everything tracks hardest. Buttons never move —
-// they are not .tt-l, so nothing here touches them. Depths live in styles.css
-// (--d); this only publishes the pointer offset as --px/--py and eases it.
-function initTitleParallax(){
-  const scr=g('s-menu'),stage=document.querySelector('.tt-stage');
-  if(!scr||!stage)return;
+// ── scene parallax (title + intro) ───────────────────────────────────────
+// The pointer drifts a scene apart by depth: the floor counter-moves, the art
+// lying nearest the camera tracks hardest. Only elements that declare --d in
+// styles.css move, so buttons, the title pill and the letter card stay put.
+// This publishes the eased pointer offset as --px/--py on whichever parallax
+// screen is currently visible; depths live entirely in CSS.
+const PARALLAX_SCREENS=['s-menu','s-intro'];
+function initParallax(){
+  const scrs=PARALLAX_SCREENS.map(g).filter(Boolean);
+  if(!scrs.length)return;
   if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   let tx=0,ty=0,cx=0,cy=0,raf=0;
+  const live=()=>scrs.find(s=>s.classList.contains('on'));
   const step=()=>{
     cx+=(tx-cx)*.09;cy+=(ty-cy)*.09;
-    scr.style.setProperty('--px',cx.toFixed(2)+'px');
-    scr.style.setProperty('--py',cy.toFixed(2)+'px');
+    const scr=live();
+    if(scr){scr.style.setProperty('--px',cx.toFixed(2)+'px');scr.style.setProperty('--py',cy.toFixed(2)+'px');}
     // park the loop once it has settled; a mousemove restarts it
     raf=(Math.abs(tx-cx)>.05||Math.abs(ty-cy)>.05)?requestAnimationFrame(step):0;
   };
   const wake=()=>{if(!raf)raf=requestAnimationFrame(step);};
   window.addEventListener('mousemove',e=>{
-    if(!scr.classList.contains('on'))return;
-    const r=stage.getBoundingClientRect();
-    if(!r.width)return;
+    const scr=live();if(!scr)return;
+    const r=scr.querySelector('.tt-stage')?.getBoundingClientRect();
+    if(!r||!r.width)return;
     const amp=r.width*.014;                    // drift scales with the stage
     tx=((e.clientX-r.left)/r.width-.5)*2*amp;
     ty=((e.clientY-r.top)/r.height-.5)*2*amp;
     wake();
   },{passive:true});
-  // recentre when the pointer leaves the window or the screen changes
+  // recentre when the pointer leaves the window
   document.addEventListener('mouseleave',()=>{tx=ty=0;wake();});
 }
-document.addEventListener('DOMContentLoaded',initTitleParallax);
+document.addEventListener('DOMContentLoaded',initParallax);
 function exitToMenu(){
   H=resetH();
   updateGhost();hideHUD();

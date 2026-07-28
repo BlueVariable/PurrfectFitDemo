@@ -761,19 +761,32 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 /* ════════ INTRO (new-run onboarding — deck pages 2-3) ════════ */
 #s-intro{
   flex-direction:row;align-items:center;justify-content:center;padding:0;
-  background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;
+  background:#53535f;
   cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;overflow:hidden;
+  --px:0px;--py:0px;   /* pointer drift, written by initParallax() */
 }
-/* each panel swaps the art on the slab — data-art is set by introShow() */
-.io-toy{position:absolute;pointer-events:none;user-select:none;transform:translate(-50%,-50%) scaleX(-1);}
-.io-bell   {left:15.54%;top:67.32%;width:62.14%;height:60.26%;}
-.io-feather{left:16.40%;top:66.13%;width:62.14%;height:60.26%;}
+/* floor bled 3% past every edge so the counter-drift can't uncover a corner */
+#s-intro::before{
+  content:'';position:absolute;inset:-3%;z-index:0;
+  background:url('assets/ui/bg-floor.png') center/cover no-repeat;
+  transform:translate(calc(var(--px) * -.3), calc(var(--py) * -.3));
+}
+/* each panel swaps the art on the slab — data-art is set by introShow().
+   --d is parallax depth; the slab, pill and letter deliberately have none, so
+   only the scene art drifts and the panel you are reading stays still. */
+.io-toy{position:absolute;pointer-events:none;user-select:none;
+        transform:translate(calc(var(--px) * var(--d,1)), calc(var(--py) * var(--d,1)))
+                  translate(-50%,-50%) scaleX(-1);}
+.io-bell   {left:15.54%;top:67.32%;width:62.14%;height:60.26%;--d:.45;}
+.io-feather{left:16.40%;top:66.13%;width:62.14%;height:60.26%;--d:.6;}
 /* the three job-step notepads, pre-composited from their 27 source layers into
    one flat overlay (assets/ui/intro-steps.png) — see the intro commit */
-.io-steps{position:absolute;left:17.08%;top:23.61%;width:39.27%;height:61.94%;pointer-events:none;}
+.io-steps{position:absolute;left:17.08%;top:23.61%;width:39.27%;height:61.94%;pointer-events:none;--d:.8;
+          transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)));}
 /* the order box leans in from off-page, top-right, behind the letter */
-.io-box{position:absolute;left:75.25%;top:-15.42%;width:87.38%;height:84.73%;
-        transform:translate(-50%,-50%) rotate(26.4deg);pointer-events:none;}
+.io-box{position:absolute;left:75.25%;top:-15.42%;width:87.38%;height:84.73%;pointer-events:none;--d:1.15;
+        transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)))
+                  translate(-50%,-50%) rotate(26.4deg);}
 .io-toy,.io-note,.io-steps,.io-box{display:none;}
 #s-intro[data-art="note"]  .io-toy,
 #s-intro[data-art="note"]  .io-note {display:block;}
@@ -786,7 +799,8 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .io-card-back {transform:translateX(5.9%);background:#404461;}
 .io-card-front{background:radial-gradient(120% 130% at 42% 46%,#565d88 0%,#4b5177 45%,#414664 100%);}
 
-.io-note{left:21.22%;top:25.64%;width:30.08%;height:47.37%;}
+.io-note{left:21.22%;top:25.64%;width:30.08%;height:47.37%;--d:.8;
+         transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)));}
 
 .io-pill{
   position:absolute;left:21.90%;top:16.00%;height:5.90%;
