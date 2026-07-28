@@ -732,13 +732,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   transform:translate(calc(var(--px) * var(--d,1)), calc(var(--py) * var(--d,1)))
             translate(-50%,-50%) rotate(var(--r,0deg)) scaleX(var(--sx,1));
 }
-.tt-paper  {left:45.82%;top:45.26%;width:24.20%;height:51.14%;--r:-100.1deg;--d:.8;filter:drop-shadow(0.5cqw 0.7cqw 0.5cqw rgba(20,18,28,.32));}
-.tt-cat    {left:51.21%;top:56.17%;width: 4.50%;height: 6.96%;--r: -10.1deg;--d:.8;}
-.tt-fitinc {left:44.96%;top:45.24%;width:14.27%;height: 7.46%;--r: -16.4deg;--d:.8;}
-.tt-purr   {left:43.34%;top:37.96%;width:17.67%;height: 9.67%;--r: -16.3deg;--d:.8;}
-.tt-welc   {left:40.88%;top:30.27%;width:12.47%;height: 5.30%;--r: -11.6deg;--d:.8;}
-.tt-sinc   {left:40.70%;top:56.57%;width: 8.43%;height: 3.12%;--r: -16.4deg;--d:.8;}
-.tt-mgr    {left:43.11%;top:58.87%;width:10.39%;height: 3.36%;--r: -16.4deg;--d:.8;}
+.tt-note   {left:45.82%;top:45.26%;width:32.56%;height:51.32%;--d:.8;}
 /* feather + bell are MIRRORED in the design, not rotated — a 180° spin puts the
    feathers below the rope and drags both toys up the floor. */
 .tt-feather{left:19.76%;top:64.06%;width:69.04%;height:66.95%;--sx:-1;--d:.6;}
@@ -746,6 +740,72 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .tt-bell   {left:26.50%;top:47.12%;width:69.04%;height:66.95%;--sx:-1;--d:.45;}
 
 @media (prefers-reduced-motion:reduce){#s-menu{--px:0px !important;--py:0px !important;}}
+
+/* ── the manager's note, as one reusable block ─────────────────────────────
+   Children are placed in % of THIS box, not of the screen, so the whole note
+   can be dropped anywhere at any size and the handwriting stays on the paper.
+   The box is the paper's axis-aligned bounding box (the paper itself sits
+   rotated inside it). Used by the title screen and the intro.
+   NOTE: .tt-note is CENTRED on its left/top (the .tt-l transform does that);
+   .io-note has no such transform, so its left/top is the corner. */
+.pf-note{position:absolute;}
+.pf-note img{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg));pointer-events:none;user-select:none;}
+.pfn-paper {left:50.00%;top:50.00%;width:74.32%;height:99.65%;--r:-100.1deg;filter:drop-shadow(0.5cqw 0.7cqw 0.5cqw rgba(20,18,28,.32));}
+.pfn-cat   {left:66.55%;top:71.26%;width:13.82%;height:13.56%;--r: -10.1deg;}
+.pfn-fitinc{left:47.30%;top:49.96%;width:43.83%;height:14.54%;--r: -16.4deg;}
+.pfn-purr  {left:42.32%;top:35.77%;width:54.27%;height:18.84%;--r: -16.3deg;}
+.pfn-welc  {left:34.77%;top:20.79%;width:38.30%;height:10.33%;--r: -11.6deg;}
+.pfn-sinc  {left:34.22%;top:71.98%;width:25.89%;height: 6.08%;--r: -16.4deg;}
+.pfn-mgr   {left:41.62%;top:76.46%;width:31.91%;height: 6.55%;--r: -16.4deg;}
+
+/* ════════ INTRO (new-run onboarding — deck pages 2-3) ════════ */
+#s-intro{
+  flex-direction:row;align-items:center;justify-content:center;padding:0;
+  background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;
+  cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;overflow:hidden;
+}
+/* toys only survive onto the first panel, carried over from the title screen */
+.io-toy{position:absolute;pointer-events:none;user-select:none;transform:translate(-50%,-50%) scaleX(-1);}
+.io-bell   {left:15.54%;top:67.32%;width:62.14%;height:60.26%;}
+.io-feather{left:16.40%;top:66.13%;width:62.14%;height:60.26%;}
+#s-intro.io-plain .io-toy,#s-intro.io-plain .io-note{display:none;}
+
+/* the presentation slab the note is pinned to — two cards, back one offset right */
+.io-cards{position:absolute;left:22.11%;top:31.50%;width:54.81%;height:33.46%;}
+.io-cards i{position:absolute;inset:0;border:0.17cqw solid #1b1a24;border-radius:1.4cqw;}
+.io-card-back {transform:translateX(5.9%);background:#404461;}
+.io-card-front{background:radial-gradient(120% 130% at 42% 46%,#565d88 0%,#4b5177 45%,#414664 100%);}
+
+.io-note{left:21.22%;top:25.64%;width:30.08%;height:47.37%;}
+
+.io-pill{
+  position:absolute;left:21.90%;top:16.00%;height:5.90%;
+  display:flex;align-items:center;padding:0 1.5cqw;
+  background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
+  box-shadow:-0.3cqw 0.4cqw 0 rgba(20,18,28,.55);
+  font-family:'Staatliches',cursive;font-size:2.1cqw;letter-spacing:.03em;color:#1b1a24;
+  white-space:nowrap;
+}
+
+/* letter: white sheet, lavender backing peeking out below, OKAY straddling the edge */
+.io-letter{position:absolute;right:25.0%;top:25.6%;width:18.6%;display:flex;flex-direction:column;align-items:center;}
+.io-letter::before{
+  content:'';position:absolute;left:-1.2cqw;right:-1.2cqw;top:1.0cqw;bottom:-1.0cqw;
+  background:#bdbdd2;border:0.17cqw solid #1b1a24;border-radius:1.2cqw;
+}
+.io-sheet{
+  position:relative;width:100%;background:#fcfafa;
+  border:0.17cqw solid #1b1a24;border-radius:1.1cqw;padding:1.4cqw 1.3cqw 3.4cqw;
+  font-family:'Staatliches',cursive;font-size:1.55cqw;line-height:1.22;letter-spacing:.012em;
+  color:#1b1a24;text-transform:uppercase;
+}
+.io-sheet p+p{margin-top:.7em;}
+.io-r{color:#e07270;}
+.io-b{color:#8294f6;}
+/* OKAY sits on the lavender lip, overlapping the sheet's bottom edge */
+/* .ttb is declared further down, so this needs the extra class to win */
+.ttb.io-okay{position:relative;top:-1.3cqw;left:auto;width:12.2cqw;height:4cqw;background:#d2f886;}
+.io-okay .ttb-lbl{font-size:3.1cqw;-webkit-text-stroke:.1em #fdfcff;transform:translateY(-0.55cqw);}
 
 /* ── chunky sticker buttons: black keyline, white ring, hard drop slab ── */
 /* die-cut sticker: white cut-line sits OUTSIDE the black keyline (not inside),

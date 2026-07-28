@@ -55,7 +55,27 @@ function menuContinue(){
   if(!gameInProgress)return;
   openCalendar();
 }
-function menuPlay(){goToBranches();}
+// ── new-run intro (deck pages 2-3) ───────────────────────────────────────
+// Copy lives here, not in the sheet — it is narrative framing, not balance.
+// .io-r is the coral accent, .io-b the periwinkle one. `plain` drops the note
+// and the toys so the slab reads as an empty stage for the next panel.
+const INTRO_STEPS=[
+  {title:'FIRST DAY OF WORK',
+   body:'<p><span class="io-r">Dear employee,</span> we are delighted to have you work at <span class="io-b">PF Inc.</span> While we know new beginnings can be tricky, we will ensure your transition to this awesome workplace is smooth and purrfect.</p>'},
+  {title:'HOW THINGS WORK',plain:true,
+   body:'<p>In <span class="io-b">PF Inc.</span> we make our customer happy and our <span class="io-r">deliverables</span> even happier!</p>'+
+        '<p>Your job is to <span class="io-b">fill boxes</span> of orders with our <span class="io-r">furry friends</span> and we will send these boxes everywhere on Earth!</p>'},
+];
+let introStep=0;
+function introShow(){
+  const st=INTRO_STEPS[introStep];if(!st)return goToBranches();
+  g('io-title').textContent=st.title;
+  g('io-body').innerHTML=st.body;
+  g('s-intro').classList.toggle('io-plain',!!st.plain);
+  show('s-intro');
+}
+function introNext(){introStep++;introShow();}
+function menuPlay(){introStep=0;introShow();}
 
 // ── title-screen parallax ────────────────────────────────────────────────
 // The pointer drifts the scene apart by depth: the floor counter-moves, the

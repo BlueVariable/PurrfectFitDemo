@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Purrfect Fit</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Titan+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Titan+One&family=Staatliches&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -40,14 +40,16 @@
 <!-- MENU (title screen — art + geometry lifted from the Canva UI deck, page 1) -->
 <div id="s-menu" class="scr">
   <div class="tt-stage">
-    <!-- desk note: paper first, then each hand-lettered word as its own layer -->
-    <img class="tt-l tt-paper"  src="assets/ui/note-paper.png" alt="">
-    <img class="tt-l tt-cat"    src="assets/ui/note-cat.png" alt="">
-    <img class="tt-l tt-fitinc" src="assets/ui/txt-fit-inc.png" alt="Fit Inc.">
-    <img class="tt-l tt-purr"   src="assets/ui/txt-purrfect.png" alt="Purrfect">
-    <img class="tt-l tt-welc"   src="assets/ui/txt-welcome.png" alt="Welcome to">
-    <img class="tt-l tt-sinc"   src="assets/ui/txt-sincerely.png" alt="Sincerely">
-    <img class="tt-l tt-mgr"    src="assets/ui/txt-manager.png" alt="your manager">
+    <!-- the manager's note — one self-contained block, see .pf-note in styles.css -->
+    <div class="pf-note tt-l tt-note" aria-label="Welcome to Purrfect Fit Inc. Sincerely, your manager">
+      <img class="pfn-paper"  src="assets/ui/note-paper.png" alt="">
+      <img class="pfn-cat"    src="assets/ui/note-cat.png" alt="">
+      <img class="pfn-fitinc" src="assets/ui/txt-fit-inc.png" alt="">
+      <img class="pfn-purr"   src="assets/ui/txt-purrfect.png" alt="">
+      <img class="pfn-welc"   src="assets/ui/txt-welcome.png" alt="">
+      <img class="pfn-sinc"   src="assets/ui/txt-sincerely.png" alt="">
+      <img class="pfn-mgr"    src="assets/ui/txt-manager.png" alt="">
+    </div>
     <!-- cat toys strewn across the floor -->
     <img class="tt-l tt-feather" src="assets/ui/toy-feather.png" alt="">
     <img class="tt-l tt-mouse"   src="assets/ui/toy-mouse.png" alt="">
@@ -68,6 +70,29 @@
     </div>
   </div>
 </div>
+<!-- INTRO (new-run onboarding, Canva UI deck pages 2-3 — copy lives in INTRO_STEPS) -->
+<div id="s-intro" class="scr">
+  <div class="tt-stage io-stage">
+    <img class="io-toy io-bell"    src="assets/ui/toy-bell.png" alt="">
+    <img class="io-toy io-feather" src="assets/ui/toy-feather.png" alt="">
+    <div class="io-cards"><i class="io-card-back"></i><i class="io-card-front"></i></div>
+    <div class="pf-note io-note" id="io-note">
+      <img class="pfn-paper"  src="assets/ui/note-paper.png" alt="">
+      <img class="pfn-cat"    src="assets/ui/note-cat.png" alt="">
+      <img class="pfn-fitinc" src="assets/ui/txt-fit-inc.png" alt="">
+      <img class="pfn-purr"   src="assets/ui/txt-purrfect.png" alt="">
+      <img class="pfn-welc"   src="assets/ui/txt-welcome.png" alt="">
+      <img class="pfn-sinc"   src="assets/ui/txt-sincerely.png" alt="">
+      <img class="pfn-mgr"    src="assets/ui/txt-manager.png" alt="">
+    </div>
+    <div class="io-pill"><span id="io-title">FIRST DAY OF WORK</span></div>
+    <div class="io-letter">
+      <div class="io-sheet"><div id="io-body"></div></div>
+      <button class="ttb io-okay" onclick="introNext()"><span class="ttb-lbl">OKAY..</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- BRANCHES (World Map HQ picker) -->
 <div id="s-branches" class="scr">
   <div class="hqm-hud">
