@@ -766,9 +766,15 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .ttb-lbl i:nth-child(5){transform:rotate(-9deg) translateY(.02em);}
 
 /* dev tools live in the corner so they stay out of the picture */
-.tt-dev{position:absolute;right:14px;bottom:12px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:2;width:180px;}
+/* column-reverse: the toggle stays pinned in the corner and the panel opens
+   upward, so turning dev mode on never pushes the toggle off-screen. */
+.tt-dev{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column-reverse;align-items:flex-end;gap:6px;z-index:2;width:180px;}
+.tt-dev .dev-panel{border-top:0;border-bottom:1px solid rgba(255,255,255,.15);margin-top:0;margin-bottom:4px;padding:0 0 8px;}
 .tt-dev .btn-reload-cfg{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.6);}
 .tt-dev .btn-reload-cfg:hover{border-color:rgba(255,255,255,.55);color:#fff;}
+/* the global floating dev pill lands in this exact corner — the title screen
+   has its own labelled toggle, so suppress the duplicate here. */
+body:has(#s-menu.on) #btn-dev-float{display:none;}
 .btn-menu-settings{cursor:pointer;}
 
 /* ════════ BRANCHES (WORLD MAP) ════════ */
