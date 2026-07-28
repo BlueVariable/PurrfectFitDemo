@@ -57,12 +57,12 @@ function menuContinue(){
 }
 // ── new-run intro (deck pages 2-3) ───────────────────────────────────────
 // Copy lives here, not in the sheet — it is narrative framing, not balance.
-// .io-r is the coral accent, .io-b the periwinkle one. `plain` drops the note
-// and the toys so the slab reads as an empty stage for the next panel.
+// .io-r is the coral accent, .io-b the periwinkle one. `art` swaps what sits on
+// the slab: the manager's note, or the three job-step notepads + order box.
 const INTRO_STEPS=[
-  {title:'FIRST DAY OF WORK',
+  {title:'FIRST DAY OF WORK',art:'note',
    body:'<p><span class="io-r">Dear employee,</span> we are delighted to have you work at <span class="io-b">PF Inc.</span> While we know new beginnings can be tricky, we will ensure your transition to this awesome workplace is smooth and purrfect.</p>'},
-  {title:'HOW THINGS WORK',plain:true,
+  {title:'HOW THINGS WORK',art:'steps',
    body:'<p>In <span class="io-b">PF Inc.</span> we make our customer happy and our <span class="io-r">deliverables</span> even happier!</p>'+
         '<p>Your job is to <span class="io-b">fill boxes</span> of orders with our <span class="io-r">furry friends</span> and we will send these boxes everywhere on Earth!</p>'},
 ];
@@ -71,7 +71,7 @@ function introShow(){
   const st=INTRO_STEPS[introStep];if(!st)return goToBranches();
   g('io-title').textContent=st.title;
   g('io-body').innerHTML=st.body;
-  g('s-intro').classList.toggle('io-plain',!!st.plain);
+  g('s-intro').dataset.art=st.art||'note';
   show('s-intro');
 }
 function introNext(){introStep++;introShow();}

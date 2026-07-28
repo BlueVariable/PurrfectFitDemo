@@ -764,11 +764,21 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   background:#53535f url('assets/ui/bg-floor.png') center/cover no-repeat;
   cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;overflow:hidden;
 }
-/* toys only survive onto the first panel, carried over from the title screen */
+/* each panel swaps the art on the slab — data-art is set by introShow() */
 .io-toy{position:absolute;pointer-events:none;user-select:none;transform:translate(-50%,-50%) scaleX(-1);}
 .io-bell   {left:15.54%;top:67.32%;width:62.14%;height:60.26%;}
 .io-feather{left:16.40%;top:66.13%;width:62.14%;height:60.26%;}
-#s-intro.io-plain .io-toy,#s-intro.io-plain .io-note{display:none;}
+/* the three job-step notepads, pre-composited from their 27 source layers into
+   one flat overlay (assets/ui/intro-steps.png) — see the intro commit */
+.io-steps{position:absolute;left:17.08%;top:23.61%;width:39.27%;height:61.94%;pointer-events:none;}
+/* the order box leans in from off-page, top-right, behind the letter */
+.io-box{position:absolute;left:75.25%;top:-15.42%;width:87.38%;height:84.73%;
+        transform:translate(-50%,-50%) rotate(26.4deg);pointer-events:none;}
+.io-toy,.io-note,.io-steps,.io-box{display:none;}
+#s-intro[data-art="note"]  .io-toy,
+#s-intro[data-art="note"]  .io-note {display:block;}
+#s-intro[data-art="steps"] .io-steps,
+#s-intro[data-art="steps"] .io-box  {display:block;}
 
 /* the presentation slab the note is pinned to — two cards, back one offset right */
 .io-cards{position:absolute;left:22.11%;top:31.50%;width:54.81%;height:33.46%;}
