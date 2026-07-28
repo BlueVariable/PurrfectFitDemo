@@ -782,6 +782,9 @@ function advanceRoundSetup(){
   G.tgt=applyTargetMult(c.tgt,G.roundModifier);G.bsr=layout.rows;G.bsc=layout.cols;G.boardShape=layout.shape;G.blockedMask=layout.mask;G.earn=applyEarnMult(c.earn,G.roundModifier);G.hands=c.h||CFG.hand_count||3;G.disc=CFG.discard_count||3;G.score=0;G.discUsedRound=0;G.purrfectsThisRound=0;
   G.cats=[];G.treats=[];G.hand=[];mkDeck();dealHand();
   applyModifiers();
+  // A SKIP taken last round pays out AFTER applyModifiers(), which recomputes
+  // hands/discards from scratch and would otherwise wipe the bonus.
+  if(typeof breakConsumePending==='function')breakConsumePending();
 }
 function goShop(){
   const cc=document.querySelector('.cc');

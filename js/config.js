@@ -21,6 +21,7 @@ const SHEET_URLS = {
   'Rarity':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1377980715&single=true&output=csv',
   'Branches':'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=1831058342&single=true&output=csv',
   'Modifiers':'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2116361504&single=true&output=csv',
+  'Breaks':  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=2020914453&single=true&output=csv',
 };
 const SHEET_NAMES = Object.keys(SHEET_URLS);
 function _cfgHash(raw){let s='',h=5381;const keys=Object.keys(raw).sort();for(const k of keys)s+=k+':'+raw[k]+'|';for(let i=0;i<s.length;i++)h=((h<<5)+h)^s.charCodeAt(i);return(h>>>0).toString(36);}
@@ -29,6 +30,7 @@ function loadConfigCache(){try{const d=localStorage.getItem(CONFIG_CACHE_KEY);re
 
 // These will be populated by loadConfig()
 let TDEFS = [];
+let BREAKS = [];   // SKIP bonus pool, see the Breaks sheet tab
 let COLS = {};
 let EMS  = {};
 let DECKS = {};
@@ -209,6 +211,22 @@ function applyConfigFromRaw(raw){
     };
   }).sort((a,b)=>a.order-b.order);
   console.log('[Config] BRANCHES loaded:', BRANCHES.length, BRANCHES.map(b=>b.id));
+
+  // ── Breaks (the SKIP bonus pool) — failure-tolerant: bad/missing tab → no breaks,
+  //    which just means SKIP is never offered rather than the run dying. ──
+  try{
+    BREAKS=parseCSV(raw['Breaks']||'').filter(r=>{
+      const en=String(r['Enabled']??'TRUE').trim().toUpperCase();
+      return r['Break ID']&&String(r['Break ID']).trim()&&en!=='FALSE'&&en!=='0'&&en!=='NO';
+    }).map(r=>({
+      id:String(r['Break ID']).trim(),
+      label:String(r['Label']||'').trim(),
+      effect:String(r['Effect']||'').trim(),
+      weight:Math.max(0,Number(r['Weight'])||0),
+      desc:String(r['Description']||'').trim(),
+    })).filter(b=>b.weight>0);
+    console.log('[Config] BREAKS loaded:',BREAKS.length,BREAKS.map(b=>b.id));
+  }catch(e){ BREAKS=[]; console.warn('[Config] Breaks tab failed to load — SKIP disabled',e); }
 
   // ── Modifiers (per-round "boss round" effects) — failure-tolerant: bad/missing tab → no modifiers ──
   try{

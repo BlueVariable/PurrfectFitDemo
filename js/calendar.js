@@ -32,7 +32,7 @@ function calIsBoss(round){ return (typeof isModifierRound === 'function') && isM
 
 // ── Entry: run the existing round/shop setup, then show the calendar ──
 function openCalendar(){
-  _calCbDisarm();
+  if(typeof breakDisarm==='function')breakDisarm();
   openRounds();        // shop pool + shop render + rounds track + show('s-rounds')
   renderCalendar();
   show('s-calendar');  // reveal the week on top (synchronous — s-rounds never paints)
@@ -40,176 +40,99 @@ function openCalendar(){
 
 // ── Fork actions ──
 function goToShopFromCalendar(){
-  _calCbDisarm();
+  if(typeof breakDisarm==='function')breakDisarm();
   // The shop was fully set up by the openRounds() inside openCalendar — just
   // reveal it. NOT a fresh openRounds(), so the treat pool never re-rolls when
   // bouncing calendar⇄shop (no free reroll-fishing).
   show('s-rounds');
 }
 function backToCalendar(){
-  _calCbDisarm();
+  if(typeof breakDisarm==='function')breakDisarm();
   renderCalendar();
   show('s-calendar');
 }
 
-// ── Coffee Break, driven from the calendar card (lightweight two-click confirm) ──
-let _calCbArmed = false, _calCbTimer = null;
-function _calCbDisarm(){
-  _calCbArmed = false;
-  if(_calCbTimer){ clearTimeout(_calCbTimer); _calCbTimer = null; }
-}
-function calCoffeeBreak(){
-  if(typeof coffeeBreakAvailable !== 'function' || !coffeeBreakAvailable()) return;
-  if(!_calCbArmed){
-    _calCbArmed = true;
-    const card = g('cal-cb-card'); if(card) card.classList.add('armed');
-    const t = g('cal-cb-title'); if(t) t.textContent = 'Skip today? ☕';
-    if(_calCbTimer) clearTimeout(_calCbTimer);
-    _calCbTimer = setTimeout(() => { _calCbDisarm(); renderCalChoose(); }, 4000);
-    return;
-  }
-  _calCbDisarm();
-  openCafe();  // commits the skip immediately (js/cafe.js)
-}
 
-// ── Render ──
-function calHandBoxes(used, max){
-  const m = Math.max(1, max || 1);
-  const u = Math.max(0, Math.min(m, used || 0));
-  let h = '<div class="cal-boxes">';
-  for(let i = 0; i < m; i++) h += '<span class="cal-box' + (i < u ? ' fill' : '') + '"></span>';
-  return h + '</div>';
+// ── Render (deck page 7) ───────────────────────────────────────────────────
+// One card per round of the CURRENT day: rounds already played show their
+// result, the active round shows its order and the WORK / SKIP fork, and later
+// rounds show a preview with their modifier if they carry one.
+function calStatPill(v, lbl, coin){
+  return '<div class="sc-pill"><b>' + v + (coin ? '<img src="assets/ui/coin.png" alt="">' : '') +
+         '</b><span>' + lbl + '</span></div>';
 }
-
-function calCell(r, lg){
-  const boss = calIsBoss(r);
-  const st = r < G.round ? 'done' : (r === G.round ? 'today' : 'future');
+function calDoneCard(r){
+  const log = (G.roundLog && G.roundLog[r]) || {};
   const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
-  const tgt = (r === G.round ? G.tgt : (cfg ? cfg.tgt : 0)) || 0;
-
-  let top = '<div class="cal-cell-top"><span class="cal-rnum">Round ' + r + '</span>' +
-            (boss ? '<span class="cal-boss-tag">😾 boss</span>' : '') + '</div>';
-
-  let mid = '<div class="cal-cell-mid">';
-  if(st === 'done'){
-    if(lg && lg.skipped)      mid += '<span class="cal-tok skip-tok">☕</span>';
-    else if(lg)               mid += calHandBoxes(lg.hands, lg.max) +
-                                     '<span class="cal-hands-lbl">' + lg.hands +
-                                     ' hand' + (lg.hands === 1 ? '' : 's') + '</span>';
-    else                      mid += '<span class="cal-tok">✓</span>';
-  } else if(st === 'today'){
-    mid += '<span class="cal-tok today-tok">' + (boss ? '😾' : '🐈') + '</span>';
-  } else {
-    mid += '<span class="cal-tok future-tok">' + (boss ? '😾' : '🔒') + '</span>';
+  const tgt = (cfg ? cfg.tgt : 0) || 0;
+  if(log.skipped){
+    return '<div class="sc-card sc-past"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+      '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
+      '<div class="sc-verdict">BREAK</div><div class="sc-sub">day off</div></div></div>';
   }
-  mid += '</div>';
-
-  const foot = '<div class="cal-cell-foot">🎯 ' + tgt.toLocaleString() + '</div>';
-  return '<div class="cal-cell ' + st + (boss ? ' boss' : '') +
-         (lg && lg.skipped ? ' skipped' : '') + '">' + top + mid + foot + '</div>';
+  const scored = log.score;
+  const hands  = log.hands, hmax = log.handsMax || CAL_ROUNDS_PER_DAY;
+  const pf = log.purrfects, pfmax = log.purrfectsMax;
+  return '<div class="sc-card sc-past"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+    '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
+    '<div class="sc-verdict">PURRFECT!</div>' +
+    '<div class="sc-sub">SCORED</div><div class="sc-score">' + (scored!==undefined?scored:'—') +
+      '<small>/' + tgt + '</small></div>' +
+    '<div class="sc-mini"><div><span>HANDS</span><b>' + (hands!==undefined?hands:'—') + '/' + hmax + '</b></div>' +
+      '<div><span>PURRFECT FITS</span><b>' + (pf!==undefined?pf:'—') + '/' + (pfmax||hmax) + '</b></div></div>' +
+    '</div></div>';
 }
-
-// Compact status summary shown in a collapsed *completed* day's header row.
-function calDayMini(rounds, log){
-  let h = '<div class="cal-day-mini">';
-  rounds.forEach(r => {
-    const lg = log[r];
-    let cls = 'cal-mini-badge' + (calIsBoss(r) ? ' boss' : ''), txt;
-    if(lg && lg.skipped){ cls += ' skip'; txt = '☕'; }
-    else if(lg)         { txt = lg.hands + 'h'; }
-    else                { txt = '✓'; }
-    h += '<span class="' + cls + '">' + txt + '</span>';
-  });
-  return h + '</div>';
+function calNextCard(r){
+  const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
+  // Never roll a future round's modifier here — pickRoundModifier() draws from
+  // the shared RNG and the headless sim depends on exactly one draw per round.
+  // A future deadline round only advertises that it IS one.
+  const tag = calIsBoss(r) ? '<div class="sc-modtag">DEADLINE ROUND</div>' : '';
+  return '<div class="sc-card sc-future"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+    '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
+    '<div class="sc-sub">REACH SCORE</div><div class="sc-target">' + (cfg ? cfg.tgt : '—') + '</div>' +
+    '<div class="sc-pills">' + calStatPill(cfg ? (cfg.h || CFG.hand_count || 3) : '—', 'HANDS') +
+      calStatPill(CFG.discard_count || 3, 'DISCARDS') + '</div>' +
+    '</div>' + tag + '</div>';
 }
-
-// Expand/collapse a completed day (today is fixed-open, future stays locked).
-function calToggleDay(d){
-  const week = g('cal-week'); if(!week) return;
-  const el = week.querySelector('.cal-day[data-day="' + d + '"]');
-  if(!el || !el.classList.contains('past')) return;
-  el.classList.toggle('open');
-  el.classList.toggle('collapsed');
+function calActiveCard(r){
+  const offer = (typeof breakOffer === 'function') ? breakOffer(r) : null;
+  const armed = (typeof _breakArmed !== 'undefined') && _breakArmed;
+  const skip = offer
+    ? '<div class="sc-fork-col"><span class="sc-fork-lbl">TAKE A BREAK</span>' +
+      '<button class="sc-skip' + (armed ? ' armed' : '') + '" id="cal-skip-btn" onclick="takeBreak()">' +
+        (armed ? 'SURE?' : 'SKIP') + '</button>' +
+      '<div class="sc-bonus">' + offer.label + '</div></div>'
+    : '';
+  return '<div class="sc-card sc-now"><div class="sc-tab sc-tab-now">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+    '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
+    '<div class="sc-sub">TARGET SCORE</div><div class="sc-target sc-red">' + (G.tgt || 0) + '</div>' +
+    '<div class="sc-pills">' + calStatPill(G.hands || 0, 'HANDS') +
+      calStatPill(G.disc || 0, 'DISCARDS') + calStatPill(G.earn || 0, 'EARN', true) + '</div>' +
+    (G.roundModifier ? '<div class="sc-modtag sc-modtag-now">' + String(G.roundModifier.name || G.roundModifier.id || '').toUpperCase() + '</div>' : '') +
+    '<div class="sc-fork">' +
+      '<div class="sc-fork-col"><span class="sc-fork-lbl">CONTINUE TO SHOP</span>' +
+        '<button class="sc-work" onclick="goToShopFromCalendar()">WORK</button></div>' +
+      skip +
+    '</div></div></div>';
 }
-
 function renderCalendar(){
-  const cashEl = g('cal-cash'); if(cashEl) cashEl.textContent = G.cash;
-  const log = G.roundLog || {};
-  const nDays = calDayCount();
-  const week = g('cal-week');
-  const choose = g('cal-choose');   // captured before innerHTML wipe so we can relocate it
-  if(week){
-    let html = '';
-    for(let d = 0; d < nDays; d++){
-      const rounds = [];
-      for(let s = 0; s < CAL_ROUNDS_PER_DAY; s++){
-        const r = d * CAL_ROUNDS_PER_DAY + s + 1;
-        if(r <= RCFG.length) rounds.push(r);
-      }
-      const isToday = rounds.includes(G.round);
-      const isPast = rounds.length > 0 && rounds.every(r => r < G.round);
-      const state = isToday ? 'today' : isPast ? 'past' : 'future';
-      // Today is always open; completed days start collapsed but can be opened;
-      // future days stay collapsed and locked.
-      const open = isToday;
-      const aff = isToday ? '<span class="cal-day-aff today-aff">● TODAY</span>'
-                : isPast  ? '<span class="cal-day-aff toggle-aff">▾</span>'
-                          : '<span class="cal-day-aff lock-aff">🔒</span>';
-      const right = '<div class="cal-day-right">' + (isPast ? calDayMini(rounds, log) : '') + aff + '</div>';
-      html += '<div class="cal-day ' + state + (open ? ' open' : ' collapsed') + '" data-day="' + d + '">' +
-                '<div class="cal-day-hdr"' + (isPast ? ' onclick="calToggleDay(' + d + ')"' : '') + '>' +
-                  '<span class="cal-day-nm">' + calDayName(d) + '</span>' +
-                  '<span class="cal-day-lbl">Day ' + (d + 1) + '</span>' + right +
-                '</div>' +
-                '<div class="cal-slots">' + rounds.map(r => calCell(r, log[r])).join('') + '</div>' +
-              '</div>';
-    }
-    week.innerHTML = html;
-    // Relocate the Shop / Coffee Break fork so it sits directly below today's row.
-    if(choose){
-      const todayEl = week.querySelector('.cal-day.today');
-      if(todayEl) todayEl.after(choose); else week.after(choose);
-    }
+  const day = calDayIndexOf(G.round);
+  const first = day * CAL_ROUNDS_PER_DAY + 1;
+  const wrap = g('cal-week'); if(!wrap) return;
+  let html = '';
+  for(let i = 0; i < CAL_ROUNDS_PER_DAY; i++){
+    const r = first + i;
+    if(r > RCFG.length) continue;
+    html += r < G.round ? calDoneCard(r) : (r === G.round ? calActiveCard(r) : calNextCard(r));
   }
-  renderCalChoose();
+  wrap.innerHTML = html;
+
+  const br = (typeof BRANCHES !== 'undefined') && BRANCHES.find(b => b.id === G.branchId);
+  const nm = g('cal-branch'); if(nm) nm.textContent = (br && br.name) || '';
+  const dt = g('cal-daytab');
+  if(dt) dt.textContent = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY'][day] || ('DAY ' + (day+1));
+  const cash = g('cal-cash'); if(cash) cash.textContent = G.cash;
 }
-
-// ── The fork panel for the current round ──
-function renderCalChoose(){
-  const r = G.round;
-  const boss = calIsBoss(r);
-  const cbAvail = (typeof coffeeBreakAvailable === 'function') && coffeeBreakAvailable();
-  const dayIdx = calDayIndexOf(r);
-
-  const line = g('cal-round-line');
-  if(line) line.innerHTML = '<b>' + calDayName(dayIdx) + '</b> · Round ' + r +
-                            ' · 🎯 ' + (G.tgt || 0).toLocaleString() + ' · +$' + (G.earn || 0);
-
-  const mod = g('cal-mod');
-  if(mod){
-    if(G.roundModifier){
-      mod.style.display = '';
-      mod.innerHTML = '<span class="cal-mod-em">' + (G.roundModifier.em || '⚠️') + '</span>' +
-                      '<span class="cal-mod-tx"><b>' + G.roundModifier.name + '</b> — ' +
-                      G.roundModifier.desc + '</span>';
-    } else {
-      mod.style.display = 'none';
-    }
-  }
-
-  const shopDesc = g('cal-shop-desc');
-  if(shopDesc) shopDesc.textContent = G.shopClosed
-    ? "shop's boarded up — sell only, then play"
-    : 'buy treats, then play the round';
-
-  // Coffee Break card: onclick is static (calCoffeeBreak guards availability);
-  // here we only reset the confirm state and toggle the disabled look/copy.
-  _calCbDisarm();
-  const cbCard = g('cal-cb-card');
-  if(cbCard) cbCard.classList.toggle('disabled', !cbAvail), cbCard.classList.remove('armed');
-  const cbTitle = g('cal-cb-title'); if(cbTitle) cbTitle.textContent = 'COFFEE BREAK ☕';
-  const cbDesc = g('cal-cb-desc');
-  if(cbDesc) cbDesc.textContent = cbAvail
-    ? 'skip today — draft one free treat (rare+)'
-    : (boss ? 'no skipping a deadline 😾' : "can't skip the final push");
-}
+// kept as a no-op seam: breaks.js re-renders through it after arming SKIP
+function renderCalChoose(){ renderCalendar(); }

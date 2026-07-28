@@ -1,13 +1,11 @@
 /* ── the deck's own fonts, lifted from the Canva design ─────────────────
    Lazydog is the fat marker on the buttons, Bobby Jones Soft Condensed the
-   hand-printed city/continent names, Staatliches the body copy and Handelson
-   the slogan — the alias-to-file mapping came out of Canva's @font-face rules.
-   Staatliches is SIL OFL; the other three are commercial faces served by
+   hand-printed city/continent names and Providence Sans everything else —
+   body copy, labels and the slogan. The alias-to-file mapping came out of
+   Canva's own @font-face rules. All three are commercial faces served by
    Canva — fine for this prototype, check their licences before shipping. */
 @font-face{font-family:'Bobby Jones Soft';src:url('assets/fonts/BobbyJonesSoft-Condensed.woff2') format('woff2');font-display:swap;}
 @font-face{font-family:'Lazydog';src:url('assets/fonts/Lazydog.woff2') format('woff2');font-display:swap;}
-@font-face{font-family:'Staatliches';src:url('assets/fonts/Staatliches-Regular.woff2') format('woff2');font-display:swap;}
-@font-face{font-family:'Handelson';src:url('assets/fonts/Handelson-One.woff2') format('woff2');font-display:swap;}
 @font-face{font-family:'Providence Sans';src:url('assets/fonts/ProvidenceSansPro.woff2') format('woff2');font-display:swap;}
 
 :root{
@@ -819,7 +817,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   display:flex;align-items:center;padding:0 1.5cqw;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
   box-shadow:-0.3cqw 0.4cqw 0 rgba(20,18,28,.55);
-  font-family:'Staatliches',cursive;font-size:2.1cqw;letter-spacing:.03em;color:#1b1a24;
+  font-family:'Providence Sans',cursive;font-size:2.1cqw;letter-spacing:.03em;color:#1b1a24;
   white-space:nowrap;
 }
 
@@ -832,7 +830,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .io-sheet{
   position:relative;width:100%;background:#fcfafa;
   border:0.17cqw solid #1b1a24;border-radius:1.1cqw;padding:1.4cqw 1.3cqw 3.4cqw;
-  font-family:'Staatliches',cursive;font-size:1.55cqw;line-height:1.22;letter-spacing:.012em;
+  font-family:'Providence Sans',cursive;font-size:1.55cqw;line-height:1.22;letter-spacing:.012em;
   color:#1b1a24;text-transform:uppercase;
 }
 .io-sheet p+p{margin-top:.7em;}
@@ -962,16 +960,16 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .hq-faces img{height:100%;width:auto;border-radius:.3cqw;}
 .hq-mod{position:absolute;right:-7cqw;top:1.4cqw;background:#eeb84b;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;box-shadow:0 0.45cqw 0 #262229;
-  font-family:'Staatliches',cursive;font-size:1.25cqw;color:#1b1a24;padding:.35cqw .8cqw;white-space:nowrap;}
-.hq-tag{position:absolute;font-family:'Staatliches',cursive;font-size:1.15cqw;color:#1b1a24;
+  font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#1b1a24;padding:.35cqw .8cqw;white-space:nowrap;}
+.hq-tag{position:absolute;font-family:'Providence Sans',cursive;font-size:1.15cqw;color:#1b1a24;
   background:#c9cde8;border:0.17cqw solid #1b1a24;border-radius:.55cqw;padding:.15cqw .6cqw;white-space:nowrap;}
 .hq-tag-prev{left:8%;top:-1.9cqw;}
 .hq-day{position:absolute;left:-5.4cqw;top:1.2cqw;background:#e8676a;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;text-align:center;
-  font-family:'Staatliches',cursive;color:#1b1a24;line-height:1;}
+  font-family:'Providence Sans',cursive;color:#1b1a24;line-height:1;}
 .hq-day-d{font-size:1.1cqw;display:block;}
 .hq-day-n{font-size:2.2cqw;font-family:'Lazydog',cursive;}
-.hq-day-n small{font-size:1.1cqw;font-family:'Staatliches',cursive;}
+.hq-day-n small{font-size:1.1cqw;font-family:'Providence Sans',cursive;}
 
 .hq-go{width:100%;margin-top:.55cqw;padding:.35cqw 0;cursor:inherit;
   border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1073,133 +1071,104 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 #s-branches.theme-map .br-card{box-shadow:0 4px 16px rgba(0,0,0,.2),3px 3px 0 #1a1a2a;}
 #s-branches.theme-map .br-cont-em{font-size:36px;opacity:.6;}
 
-/* ════════ THE WORK WEEK — calendar hub (js/calendar.js) ════════ */
+
+/* ════════ SCHEDULE (between-rounds hub — deck page 7) ════════
+   One card per round of the current day. WORK continues to the pet shop; SKIP
+   forfeits the round for a bonus drawn from the Breaks sheet (js/breaks.js) and
+   is not offered on deadline rounds. */
 #s-calendar{
-  flex-direction:column;align-items:stretch;overflow:hidden;position:relative;
-  background:#6a7d95;
-  /* faint graph-paper grid — "calendar" texture */
-  background-image:
-    linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
-  background-size:34px 34px;
+  flex-direction:row;align-items:center;justify-content:center;padding:0;
+  background:#53535f;overflow:hidden;
+  cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;
 }
-#s-calendar .sp-topbar{background:#59697d;}
-#s-calendar .rds-title{font-size:clamp(20px,1.7vw,30px);letter-spacing:3px;}
-.cal-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:clamp(16px,2.4vh,36px);padding:clamp(18px,3vh,44px) clamp(20px,3vw,48px);}
-.cal-tagline{font-size:clamp(14px,1.15vw,19px);color:rgba(255,255,255,.72);font-style:italic;letter-spacing:.3px;text-align:center;}
+#s-calendar::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:url('assets/ui/bg-floor.png') center/cover no-repeat;
+}
+.sc-stage>*{position:absolute;}
+.sc-decor{pointer-events:none;user-select:none;}
+.sc-parcels{left:0;top:54.1%;width:27.6%;}
+.sc-tools  {left:70.5%;top:52.5%;width:27.5%;}
 
-/* week as a vertical accordion — one collapsible row per day */
-.cal-week{display:flex;flex-direction:column;gap:clamp(9px,.9vw,16px);width:min(800px,94vw);}
-.cal-day{
-  display:flex;flex-direction:column;gap:clamp(7px,.6vw,11px);
-  background:rgba(255,255,255,.08);
-  border:3px solid rgba(26,26,42,.45);border-radius:18px;padding:clamp(8px,.6vw,13px);
-  transition:background .15s,border-color .15s,opacity .15s;
-}
-.cal-day.future{opacity:.55;}
-.cal-day.past:hover{background:rgba(255,255,255,.14);}
-.cal-day.today{
-  border-color:#f5c200;background:rgba(245,194,0,.14);
-  box-shadow:0 0 0 clamp(3px,.35vw,5px) rgba(245,194,0,.28);
-}
-.cal-day-hdr{display:flex;align-items:center;gap:clamp(6px,.6vw,12px);padding:clamp(3px,.3vw,6px) clamp(4px,.4vw,8px);}
-.cal-day.past .cal-day-hdr,.cal-day.past .cal-day-nm{cursor:pointer;}
-.cal-day.open .cal-day-hdr{padding-bottom:clamp(6px,.5vw,9px);margin-bottom:clamp(2px,.3vw,5px);border-bottom:2px solid rgba(255,255,255,.14);}
-.cal-day-nm{font-family:'Fredoka One',cursive;font-size:clamp(17px,1.5vw,26px);color:#fff;letter-spacing:1.5px;}
-.cal-day.today .cal-day-nm{color:#ffe680;text-shadow:0 1px 3px rgba(0,0,0,.35);}
-.cal-day-lbl{font-size:clamp(9px,.75vw,13px);color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;font-weight:800;}
-/* right side of the day header — status summary + open/lock affordance */
-.cal-day-right{margin-left:auto;display:flex;align-items:center;gap:clamp(5px,.5vw,10px);}
-.cal-day-mini{display:flex;gap:clamp(3px,.3vw,5px);}
-.cal-day.open .cal-day-mini{display:none;}
-.cal-mini-badge{font-size:clamp(9px,.72vw,12px);font-weight:900;letter-spacing:.2px;padding:2px 7px;border-radius:8px;line-height:1.3;background:#e7f4e6;color:#3a8030;border:2px solid #3a8030;}
-.cal-mini-badge.skip{background:#efe4d5;color:#8a6d4a;border-color:#8a6d4a;}
-.cal-mini-badge.boss{background:#2d1b69;color:#f5c200;border-color:#f5c200;}
-.cal-day-aff{font-size:clamp(13px,1.05vw,18px);line-height:1;}
-.cal-day-aff.toggle-aff{color:rgba(255,255,255,.6);transition:transform .18s;}
-.cal-day.open .cal-day-aff.toggle-aff{transform:rotate(180deg);}
-.cal-day-aff.lock-aff{opacity:.55;}
-.cal-day-aff.today-aff{font-family:'Fredoka One',cursive;font-size:clamp(10px,.82vw,14px);letter-spacing:.6px;color:#1a1a2a;background:#f5c200;padding:2px 11px;border-radius:20px;}
-/* today's rounds laid out across the row; hidden while a day is collapsed */
-.cal-slots{display:flex;flex-direction:row;flex-wrap:wrap;gap:clamp(8px,.8vw,14px);}
-.cal-slots .cal-cell{flex:1 1 clamp(140px,20vw,240px);}
-.cal-day.collapsed .cal-slots{display:none;}
+.sc-paw{left:2.4%;top:11.4%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
+  background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .6cqw 0 #262229;overflow:hidden;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;}
+.sc-paw:hover {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .8cqw 0 #262229;}
+.sc-paw:active{transform:translateY(0.4cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
+.sc-paw img{position:absolute;left:50%;top:48%;width:52%;transform:translate(-50%,-50%) rotate(-31.8deg);}
+.sc-cash{left:7.4%;top:12.1%;height:5.2%;display:flex;align-items:center;gap:.4cqw;padding:0 1.4cqw 0 .35cqw;
+  background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
+  font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;}
+.sc-cash img{height:150%;margin-left:-1.1cqw;}
 
-/* individual round cells */
-.cal-cell{
-  background:#fff;border:3px solid #1a1a2a;border-radius:12px;
-  box-shadow:3px 3px 0 #1a1a2a;padding:clamp(8px,.7vw,13px);
-  display:flex;flex-direction:column;gap:clamp(3px,.35vw,6px);
-  min-height:clamp(84px,9.5vh,128px);text-align:center;
-}
-.cal-cell.done{background:#e7f4e6;}
-.cal-cell.done.skipped{background:#efe4d5;}
-.cal-cell.future{background:rgba(255,255,255,.6);box-shadow:2px 2px 0 rgba(26,26,42,.5);}
-.cal-cell.today{background:#fff7d6;border-color:#c79a00;box-shadow:3px 3px 0 #c79a00;}
-.cal-cell.boss{background:#2d1b69;color:#fff;}
-.cal-cell.boss.today{border-color:#f5c200;box-shadow:3px 3px 0 #c79a00;}
-.cal-cell.boss.future{background:rgba(45,27,105,.6);}
-.cal-cell-top{display:flex;align-items:center;justify-content:center;gap:clamp(4px,.4vw,7px);flex-wrap:wrap;}
-.cal-rnum{font-family:'Fredoka One',cursive;font-size:clamp(15px,1.15vw,21px);color:#1a1a2a;letter-spacing:.5px;}
-.cal-cell.boss .cal-rnum{color:#fff;}
-.cal-boss-tag{font-size:clamp(8px,.6vw,11px);font-weight:900;letter-spacing:1px;color:#f5c200;text-transform:uppercase;}
-.cal-cell-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(2px,.3vw,5px);min-height:clamp(30px,4vh,50px);}
-.cal-boxes{display:flex;gap:clamp(2px,.25vw,4px);flex-wrap:wrap;justify-content:center;max-width:clamp(66px,7vw,104px);}
-.cal-box{width:clamp(10px,.9vw,15px);height:clamp(10px,.9vw,15px);border-radius:3px;border:2px solid #3a8030;background:transparent;}
-.cal-box.fill{background:#5ab855;}
-.cal-cell.boss .cal-box{border-color:rgba(255,255,255,.55);}
-.cal-cell.boss .cal-box.fill{background:#f5c200;border-color:#f5c200;}
-.cal-hands-lbl{font-size:clamp(10px,.8vw,14px);font-weight:900;letter-spacing:.3px;color:#3a8030;text-transform:uppercase;}
-.cal-cell.boss .cal-hands-lbl{color:#f5c200;}
-.cal-tok{font-size:clamp(30px,3.2vw,48px);line-height:1;}
-.cal-tok.today-tok{animation:bounce 1.5s ease-in-out infinite;}
-.cal-tok.future-tok{font-size:clamp(20px,2vw,30px);opacity:.5;}
-.cal-tok.skip-tok{font-size:clamp(26px,2.6vw,40px);}
-.cal-cell-foot{font-size:clamp(11px,.9vw,15px);font-weight:800;color:#7a8090;letter-spacing:.2px;}
-.cal-cell.boss .cal-cell-foot{color:rgba(255,255,255,.7);}
-.cal-cell.today .cal-cell-foot{color:#8a6a00;}
+.sc-plate{left:4.4%;top:18.5%;width:18.5%;height:24.5%;background:#404461;
+  border:0.17cqw solid #1b1a24;border-radius:1.4cqw;}
+.sc-plate-card{left:7.3%;top:21.5%;width:21.8%;height:15%;background:#fcfafa;
+  border:0.17cqw solid #1b1a24;border-radius:1.2cqw;box-shadow:0 0 0 0.17cqw #fdfcff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Bobby Jones Soft',cursive;font-size:4.2cqw;color:#1b1a24;letter-spacing:.01em;}
+.sc-plate-flav{left:6.2%;top:38.5%;width:16%;
+  font-family:'Providence Sans',cursive;font-size:1.3cqw;color:rgba(255,255,255,.62);}
 
-/* the fork — Go to Shop vs Coffee Break */
-.cal-choose{
-  display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.1vw,16px);
-  background:rgba(0,0,0,.15);border:2.5px solid rgba(0,0,0,.22);border-radius:22px;
-  padding:clamp(16px,1.7vw,26px) clamp(20px,2vw,34px) clamp(18px,1.9vw,30px);
-  max-width:min(1000px,92vw);width:100%;
-}
-.cal-round-line{font-family:'Fredoka One',cursive;font-size:clamp(18px,1.5vw,26px);color:#fff;letter-spacing:.4px;text-align:center;}
-.cal-round-line b{color:#ffe680;}
-.cal-mod{
-  display:flex;align-items:center;gap:clamp(9px,.9vw,14px);background:#2d1b69;
-  border:2.5px solid #1a1a2a;border-radius:14px;padding:clamp(7px,.7vw,11px) clamp(12px,1.2vw,18px);
-  box-shadow:3px 3px 0 #1a1a2a;max-width:min(620px,90vw);
-}
-.cal-mod-em{font-size:clamp(22px,2vw,30px);line-height:1;flex-shrink:0;}
-.cal-mod-tx{font-size:clamp(12px,1vw,15px);color:rgba(255,255,255,.82);text-align:left;line-height:1.35;}
-.cal-mod-tx b{color:#fff;font-family:'Fredoka One',cursive;font-weight:400;letter-spacing:.3px;}
-.cal-cards{display:flex;gap:clamp(14px,1.6vw,26px);flex-wrap:wrap;justify-content:center;width:100%;}
-.cal-card{
-  flex:1 1 clamp(240px,23vw,380px);max-width:400px;
-  border:3px solid #1a1a2a;border-radius:18px;cursor:pointer;
-  padding:clamp(16px,1.5vw,24px) clamp(18px,1.6vw,28px);
-  display:flex;flex-direction:column;align-items:center;gap:clamp(4px,.5vw,8px);
-  text-align:center;transition:all .12s;
-}
-.cal-card:hover{transform:translateY(-3px);}
-.cal-card:active{transform:translateY(3px);}
-.cal-shop-card{background:#5ab855;color:#fff;box-shadow:0 6px 0 #3a8030;}
-.cal-shop-card:hover{box-shadow:0 9px 0 #3a8030;}
-.cal-shop-card:active{box-shadow:0 2px 0 #3a8030;}
-.cal-cb-card{background:#8a6d4a;color:#fff;box-shadow:0 6px 0 #5a4030;}
-.cal-cb-card:hover{box-shadow:0 9px 0 #5a4030;}
-.cal-cb-card:active{box-shadow:0 2px 0 #5a4030;}
-.cal-cb-card.armed{background:#d04545;box-shadow:0 6px 0 #902020;animation:cafe-arm-wiggle .3s ease;}
-.cal-cb-card.disabled{background:#67676f;color:rgba(255,255,255,.62);box-shadow:0 6px 0 #47474f;cursor:not-allowed;}
-.cal-cb-card.disabled:hover{transform:none;box-shadow:0 6px 0 #47474f;}
-.cal-cb-card.disabled:active{transform:none;}
-.cal-card-em{font-size:clamp(38px,3.4vw,52px);line-height:1;}
-.cal-card-nm{font-family:'Fredoka One',cursive;font-size:clamp(19px,1.6vw,26px);letter-spacing:.5px;}
-.cal-card-desc{font-size:clamp(12px,1vw,15px);opacity:.92;line-height:1.3;}
+.sc-paper{left:55.8%;top:19.3%;width:13.5%;transform:rotate(6deg);pointer-events:none;}
+.sc-branch{left:34.7%;top:15.0%;height:5.6%;padding:0 1.4cqw;display:flex;align-items:center;
+  background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:1cqw 1cqw 0 0;
+  font-family:'Bobby Jones Soft',cursive;font-size:2.4cqw;color:#8f6d59;}
+.sc-daytab{left:47.0%;top:16.0%;height:4.6%;padding:0 1.2cqw;display:flex;align-items:center;
+  background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:.9cqw .9cqw 0 0;
+  font-family:'Providence Sans',cursive;font-size:1.6cqw;color:#1b1a24;}
 
+.sc-cards{left:33.7%;top:22.0%;width:61.3%;height:47%;display:flex;align-items:flex-start;
+  justify-content:center;gap:0;}
+.sc-card{position:relative;flex:0 0 auto;width:18.4cqw;margin:0 -0.3cqw;border-radius:1.2cqw;
+  border:0.17cqw solid #1b1a24;padding:2.4cqw 1cqw 1.1cqw;text-align:center;}
+.sc-past  {background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;}
+.sc-future{background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;}
+.sc-now   {background:#e9e8f2;color:#1b1a24;box-shadow:0 0 0 0.17cqw #fdfcff;z-index:2;}
+.sc-tab{position:absolute;left:-.3cqw;top:-.9cqw;display:flex;align-items:center;gap:.5cqw;
+  background:#5b608c;border:0.17cqw solid #1b1a24;border-radius:.8cqw;padding:.2cqw .8cqw;
+  font-family:'Lazydog',cursive;font-size:2cqw;color:#fdfcff;white-space:nowrap;}
+.sc-tab span{font-family:'Providence Sans',cursive;font-size:1.1cqw;}
+.sc-tab-now{background:#fcfafa;color:#1b1a24;box-shadow:0 0 0 0.17cqw #fdfcff;}
+.sc-body{display:flex;flex-direction:column;align-items:center;gap:.25cqw;}
+.sc-sub{font-family:'Providence Sans',cursive;font-size:1.25cqw;letter-spacing:.02em;}
+.sc-target{font-family:'Lazydog',cursive;font-size:3.6cqw;line-height:1;}
+.sc-red{color:#e3695e;}
+.sc-verdict{font-family:'Bobby Jones Soft',cursive;font-size:2.6cqw;line-height:1.1;}
+.sc-score{font-family:'Lazydog',cursive;font-size:2.8cqw;line-height:1;}
+.sc-score small{font-size:1.6cqw;opacity:.7;}
+.sc-mini{display:flex;gap:1cqw;margin-top:.4cqw;}
+.sc-mini div{display:flex;flex-direction:column;align-items:center;}
+.sc-mini span{font-family:'Providence Sans',cursive;font-size:.95cqw;}
+.sc-mini b{font-family:'Lazydog',cursive;font-size:1.6cqw;font-weight:400;}
+.sc-pills{display:flex;gap:.5cqw;margin-top:.5cqw;}
+.sc-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-width:3.9cqw;padding:0 .3cqw;height:3.4cqw;background:#5b608c;border:0.17cqw solid #1b1a24;border-radius:.7cqw;color:#fdfcff;}
+.sc-now .sc-pill{background:#e2e1ee;color:#1b1a24;}
+.sc-pill b{font-family:'Lazydog',cursive;font-size:1.7cqw;font-weight:400;line-height:1;display:flex;align-items:center;}
+.sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
+.sc-pill span{font-family:'Providence Sans',cursive;font-size:.8cqw;}
+.sc-modtag{position:absolute;right:-0.6cqw;bottom:1cqw;z-index:3;background:#eeb84b;
+  border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;max-width:9cqw;
+  font-family:'Providence Sans',cursive;font-size:1.05cqw;color:#1b1a24;line-height:1.15;}
+.sc-modtag-now{position:static;margin-top:.5cqw;max-width:none;}
+
+.sc-fork{display:flex;gap:.9cqw;margin-top:.9cqw;align-items:flex-start;}
+.sc-fork-col{display:flex;flex-direction:column;align-items:center;gap:.25cqw;}
+.sc-fork-lbl{font-family:'Providence Sans',cursive;font-size:.95cqw;color:#4b4757;}
+.sc-work,.sc-skip{cursor:inherit;padding:.25cqw 1.1cqw;border:0.17cqw solid #17151c;border-radius:.85cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .75cqw 0 #262229;
+  font-family:'Lazydog',cursive;font-size:2.1cqw;color:#17151c;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;}
+.sc-work{background:#d2f886;}
+.sc-skip{background:#f6e379;}
+.sc-work:hover,.sc-skip:hover  {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .95cqw 0 #262229;}
+.sc-work:active,.sc-skip:active{transform:translateY(0.55cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
+.sc-skip.armed{background:#e3695e;color:#fdfcff;}
+.sc-bonus{margin-top:.35cqw;background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.6cqw;
+  padding:.25cqw .55cqw;max-width:8.5cqw;line-height:1.15;
+  font-family:'Providence Sans',cursive;font-size:.95cqw;color:#1b1a24;}
 /* ════════ GAME BOARD (deck page 5) ════════
    Chrome only — the board, hand and inventory grids are still rendered by
    board.js / backpack.js into #board, #hand and #bpg, so every id the game
@@ -1223,10 +1192,10 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-day{left:14.9%;top:-2.2%;width:6.4%;height:9.6%;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-end;padding-bottom:.5cqw;gap:.1cqw;
   background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:0 0 1cqw 1cqw;
-  font-family:'Staatliches',cursive;color:#1b1a24;line-height:1;}
+  font-family:'Providence Sans',cursive;color:#1b1a24;line-height:1;}
 .gm-day-d{font-size:1.05cqw;}
 .gm-day-n{font-family:'Lazydog',cursive;font-size:2.2cqw;}
-.gm-day-n small{font-family:'Staatliches',cursive;font-size:1.05cqw;}
+.gm-day-n small{font-family:'Providence Sans',cursive;font-size:1.05cqw;}
 
 .gm-paw{left:2.4%;top:12.8%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1245,12 +1214,12 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1cqw;}
 .gm-card-reach{top:22.6%;height:13.1%;}
 .gm-card-so   {top:37.9%;height:14.4%;}
-.gm-card-lbl{font-family:'Staatliches',cursive;font-size:1.25cqw;color:#1b1a24;letter-spacing:.02em;}
+.gm-card-lbl{font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#1b1a24;letter-spacing:.02em;}
 .gm-card-val{font-family:'Lazydog',cursive;font-size:3.4cqw;line-height:1;color:#1b1a24;}
 .gm-red{color:#e3695e;}
 .gm-hands{left:11.7%;top:50.3%;width:8.4%;height:4.9%;display:flex;align-items:center;gap:.4cqw;
   padding:0 .8cqw;background:#829af8;border:0.17cqw solid #1b1a24;border-radius:99px;
-  font-family:'Staatliches',cursive;font-size:1.15cqw;color:#1b1a24;}
+  font-family:'Providence Sans',cursive;font-size:1.15cqw;color:#1b1a24;}
 .gm-hands b{font-family:'Lazydog',cursive;font-size:1.9cqw;font-weight:400;}
 
 /* board frame — .board itself keeps its grid rules from the game CSS */
@@ -1259,7 +1228,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-stage .board{background:transparent;border:0;box-shadow:none;padding:0;gap:.55cqw;}
 .gm-clear{left:37.3%;top:65.1%;width:4.7%;height:4.8%;cursor:inherit;
   background:#e3695e;border:0.17cqw solid #17151c;border-radius:.8cqw;
-  box-shadow:0 .5cqw 0 #262229;font-family:'Staatliches',cursive;font-size:1.2cqw;color:#fdfcff;
+  box-shadow:0 .5cqw 0 #262229;font-family:'Providence Sans',cursive;font-size:1.2cqw;color:#fdfcff;
   transition:transform .09s ease-out, box-shadow .09s ease-out;}
 .gm-clear:active{transform:translateY(.35cqw);box-shadow:0 .15cqw 0 #262229;}
 .gm-ship{left:42.9%;top:64.5%;width:9.2%;height:8.5%;cursor:inherit;padding:0;
@@ -1273,11 +1242,11 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   -webkit-text-stroke:.1em #fdfcff;paint-order:stroke fill;
   filter:drop-shadow(.05em .09em 0 rgba(20,18,28,.35));display:inline-block;}
 .gm-stage .fit-proj{left:42.9%;top:74.2%;width:9.2%;text-align:center;
-  font-family:'Staatliches',cursive;font-size:1.3cqw;color:#f0eef4;}
+  font-family:'Providence Sans',cursive;font-size:1.3cqw;color:#f0eef4;}
 
 .gm-invtab{left:68.7%;top:12.2%;width:14.6%;height:4.6%;display:flex;align-items:center;justify-content:center;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.9cqw;
-  font-family:'Staatliches',cursive;font-size:1.5cqw;color:#1b1a24;letter-spacing:.03em;}
+  font-family:'Providence Sans',cursive;font-size:1.5cqw;color:#1b1a24;letter-spacing:.03em;}
 .gm-inv{left:66.5%;top:15.6%;width:30.1%;height:48.8%;background:rgba(255,255,255,.13);
   border:0.17cqw solid rgba(255,255,255,.24);border-radius:1.4cqw;
   display:flex;align-items:center;justify-content:center;}
@@ -1286,7 +1255,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 
 .gm-disc{left:2.5%;top:69.6%;width:8.9%;display:flex;flex-direction:column;align-items:center;gap:.3cqw;}
 .gm-deck{left:89.0%;top:69.6%;width:8.9%;display:flex;flex-direction:column;align-items:center;gap:.3cqw;cursor:inherit;}
-.gm-pill-lbl{font-family:'Staatliches',cursive;font-size:1.25cqw;color:#f0eef4;letter-spacing:.03em;}
+.gm-pill-lbl{font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#f0eef4;letter-spacing:.03em;}
 .gm-deck-n{width:100%;height:3.1cqw;display:flex;align-items:center;justify-content:center;
   background:#eeb84b;border:0.17cqw solid #1b1a24;border-radius:.8cqw;box-shadow:0 .45cqw 0 #262229;
   font-family:'Lazydog',cursive;font-size:2.1cqw;color:#1b1a24;}
