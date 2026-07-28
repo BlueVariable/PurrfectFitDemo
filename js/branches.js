@@ -85,12 +85,16 @@ function hqCityCol(br){
   return HQ_CITY_COLS[h%HQ_CITY_COLS.length];
 }
 
+// Deck faces use the design's own cat avatars (assets/ui/face-*.png), sliced
+// out of the strip on deck page 4. 'black' has no avatar of its own and reads
+// as the siamese one, same as the in-game cat art does.
+const HQ_FACE={orange:'orange',grey:'grey',gray:'grey',tabby:'tabby',siamese:'siamese',black:'siamese'};
 function hqDeckFaces(br){
   const deck=DECKS[br.deck];
   const types=(deck&&deck.ty&&deck.ty.length)?deck.ty:['orange'];
   return types.slice(0,4).map(t=>{
-    const info=(typeof catArtInfo==='function')?catArtInfo('L',t):null;
-    return info?`<img src="${info.src}" alt="${t} cat">`:'';
+    const f=HQ_FACE[String(t).toLowerCase()];
+    return f?`<img src="assets/ui/face-${f}.png" alt="${t} cat">`:'';
   }).join('');
 }
 

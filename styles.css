@@ -8,6 +8,7 @@
 @font-face{font-family:'Lazydog';src:url('assets/fonts/Lazydog.woff2') format('woff2');font-display:swap;}
 @font-face{font-family:'Staatliches';src:url('assets/fonts/Staatliches-Regular.woff2') format('woff2');font-display:swap;}
 @font-face{font-family:'Handelson';src:url('assets/fonts/Handelson-One.woff2') format('woff2');font-display:swap;}
+@font-face{font-family:'Providence Sans';src:url('assets/fonts/ProvidenceSansPro.woff2') format('woff2');font-display:swap;}
 
 :root{
   --bg:#bbc0c9;--panel:#ffffff;--navy:#3a5070;--navy2:#2a3a55;
@@ -901,9 +902,9 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   transform:translate(calc(var(--px) * -.3), calc(var(--py) * -.3));
 }
 .hq-stage>*{position:absolute;}
-.hq-map {left:34.01%;top: 3.24%;width:65.99%;height:66.02%;pointer-events:none;--d:.35;
+.hq-map {left:34.43%;top: 3.24%;width:65.57%;height:66.48%;pointer-events:none;--d:.35;
          transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)));}
-.hq-note{left:29.58%;top:10.74%;width:14.95%;height:26.85%;pointer-events:none;--d:.75;
+.hq-note{left:29.79%;top:10.00%;width:14.27%;height:27.59%;pointer-events:none;--d:.75;
          transform:translate(calc(var(--px) * var(--d)), calc(var(--py) * var(--d)));}
 
 /* ── title plate: navy slab, white card overhanging it, flavour underneath ── */
@@ -915,7 +916,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   box-shadow:0 0 0 0.17cqw #fdfcff;display:flex;align-items:center;justify-content:center;}
 .hq-plate-card img{width:86%;}
 .hq-plate-flav{position:absolute;left:8%;right:8%;bottom:7%;text-align:left;
-  font-family:'Handelson',cursive;font-size:1.5cqw;color:rgba(255,255,255,.62);}
+  font-family:'Providence Sans',cursive;font-size:1.35cqw;color:rgba(255,255,255,.62);}
 
 .hq-paw{left:1.90%;top:3.70%;width:4.3%;height:7.6%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:1.0cqw;
@@ -944,8 +945,10 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   pointer-events:none;transition:left .22s cubic-bezier(.2,.7,.3,1),top .22s cubic-bezier(.2,.7,.3,1);}
 
 /* ── branch rail along the desk edge ── */
-.hq-desk{left:0;right:0;bottom:0;height:9.5%;background:linear-gradient(#464b6d,#3d4260);
-  border-top:0.17cqw solid #2a2b3d;}
+/* full-bleed: anchored to the screen, not the 16:9 stage, or it stops short
+   of the edges on wide viewports */
+.hq-desk{position:absolute;left:0;right:0;bottom:0;height:9.5%;z-index:3;
+  background:linear-gradient(#464b6d,#3d4260);border-top:2px solid #2a2b3d;}
 .hq-rail{left:2%;right:2%;bottom:0;height:47%;display:flex;align-items:flex-end;
   justify-content:space-evenly;gap:1.6cqw;padding:0 1cqw;}
 
