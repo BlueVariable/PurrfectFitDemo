@@ -118,12 +118,11 @@ function exitToMenu(){
   menuUpdateContinue();
 }
 function openRounds(){
-  shopBoughtIds=new Set();
-  rerollExtraCost=0;
+  rerollExtraCost=0;   // shopBoughtIds is cleared by restockShopPool() below
   g('shop-sub').textContent=G.shopClosed?'"the shopkeeper took a coffee break too!"':G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
   G.visitedShop=true;
   gmHeader('ps');
-  shopPool=generateShopPool();
+  restockShopPool();
   renderShopFull();
   renderRoundsTrack();
   g('rds-play-num').textContent=G.round;

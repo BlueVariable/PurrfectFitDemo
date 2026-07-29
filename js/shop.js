@@ -3,7 +3,10 @@
 //  SHOP
 // ══════════════════════════════════════════════════════
 let shopPool=[]; // current treat pool shown
-let shopBoughtIds=new Set(); // treats bought this shop visit
+// Treats bought off the CURRENT stock. Their card stays on the shelf stamped
+// SOLD instead of vanishing, so a purchase never reflows the shelf under the
+// player's cursor. Cleared on restock — fresh stock never opens stamped.
+let shopBoughtIds=new Set();
 let rerollExtraCost=0; // count of rerolls purchased this round; resets each round
 // REROLL_COST now comes from CFG.reroll_cost (loaded from sheets).
 // reroll_cost is an escalating comma-separated list (e.g. "3,5,8,12"): each
@@ -28,12 +31,16 @@ function generateShopPool(){
   return weightedSample(pool,stockCount,td=>RARITY_WEIGHTS[td.rar]??1);
 }
 
+// The single way to put new stock on the shelf: draw a pool and wipe the SOLD
+// stamps that belonged to the old one.
+function restockShopPool(){shopPool=generateShopPool();shopBoughtIds=new Set();}
+
 function rerollTreats(){
   if(G.shopClosed)return; // Coffee Break: shop is closed this prep — no rerolling
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
   rerollExtraCost++;
-  shopPool=generateShopPool();
+  restockShopPool();
   renderShopFull();
 }
 
@@ -197,9 +204,11 @@ function renderTreatsRow(){
     if(flavorEl)flavorEl.textContent='"back next round — the espresso machine won\'t clean itself"';
     return;
   }
-  // only show items not yet purchased, sorted: affordable first
+  // Bought treats keep their card (stamped SOLD) — only what is still for sale
+  // sorts, affordable first, into the slots the sold cards left free. A purchase
+  // therefore never makes the shelf jump around.
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
-  const available=shopPool.filter(td=>!shopBoughtIds.has(td.id)).sort((a,b)=>{
+  const forSale=shopPool.filter(td=>!shopBoughtIds.has(td.id)).sort((a,b)=>{
     const canA=G.cash>=a.pr;
     const canB=G.cash>=b.pr;
     const canSellA=G.cash+totalSellable>=a.pr;
@@ -208,10 +217,13 @@ function renderTreatsRow(){
     if(canSellA!==canSellB) return canSellA?-1:1;
     return 0;
   });
-  const flavors=available.filter(t=>t.fl).map(t=>t.fl);
+  let nextForSale=0;
+  const shelf=shopPool.map(td=>shopBoughtIds.has(td.id)?td:forSale[nextForSale++]);
+  const flavors=forSale.filter(t=>t.fl).map(t=>t.fl);
   const flavorEl=g('treats-flavor');
   if(flavorEl) flavorEl.textContent=flavors[0]||'';
-  available.forEach(td=>{
+  shelf.forEach(td=>{
+    const sold=shopBoughtIds.has(td.id);
     const broke=G.cash<td.pr;
     // bottomless_tote: buying an unowned tote widens the bag by a whole column
     // of empty cells, which its uno shape always fits — so a full bag must not
@@ -219,10 +231,10 @@ function renderTreatsRow(){
     // it grants). An already-owned duplicate adds no column: normal check.
     // Rotation-aware: the player can rotate (R / right-click) while dragging
     // the purchase, so any orientation that fits keeps the card buyable.
-    const noSpc=!bpCanFitRot(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
-    const dis=broke||noSpc;
+    const noSpc=!sold&&!bpCanFitRot(td.bpS)&&!(td.id===BOTTOMLESS_TOTE_ID&&!bpToteOwned());
+    const dis=sold||broke||noSpc;
     const card=document.createElement('div');
-    card.className='tc'+(dis?' tc-dis':'');
+    card.className='tc'+(sold?' tc-bought':dis?' tc-dis':'');
     card.addEventListener('mouseenter',e=>shopTreatTip(e,td.id));
     card.addEventListener('mousemove',shopTreatTipMove);
     card.addEventListener('mouseleave',shopTreatTipHide);
@@ -248,7 +260,8 @@ function renderTreatsRow(){
       </div>
       <div class="tc-right">
         <div class="${priceClass}"><div class="tc-price-coin">🪙</div>${td.pr}</div>
-      </div>`;
+      </div>
+      ${sold?'<div class="tc-stamp">SOLD</div>':''}`;
 
     if(!dis){
       card.style.cursor='grab';

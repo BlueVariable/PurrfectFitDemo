@@ -704,6 +704,20 @@ body::before{display:none;}
 #board-tip.tip-lg .tl-rq{font-size:19px;line-height:1.35;margin-top:5px;color:#ffc96b;}
 #board-tip.tip-lg .tl-sp{font-size:18px;margin-top:9px;opacity:.72;}
 .ps-stage .tc-dis{opacity:.92;}
+/* A bought treat keeps its card on the shelf, stamped SOLD, instead of
+   vanishing — the shelf never reflows under the player's cursor mid-visit.
+   The card goes flat and grey so the two treats still for sale keep the eye. */
+.ps-stage .tc-bought{background:#e8e5e8;}
+.ps-stage .tc-bought:hover{transform:none;}
+.ps-stage .tc-bought .tc-shape,
+.ps-stage .tc-bought .tc-nm,
+.ps-stage .tc-bought .tc-price{filter:grayscale(1);opacity:.42;}
+.ps-stage .tc-stamp{position:absolute;left:50%;top:50%;z-index:3;pointer-events:none;
+  transform:translate(-50%,-50%) rotate(-11deg);padding:.1cqw 1.4cqw .35cqw;
+  background:rgba(252,250,250,.82);border:.3cqw solid #e3695e;border-radius:.8cqw;
+  box-shadow:0 0 0 .17cqw rgba(252,250,250,.95);
+  font-family:'Lazydog',cursive;font-size:2.9cqw;line-height:1.1;color:#e3695e;
+  letter-spacing:.12cqw;white-space:nowrap;}
 /* ════════ MENU SCREEN (title) ════════
    The concrete floor, the torn note and the strewn cat toys are the Canva UI
    deck's page 1, re-cut into layers. Every layer is positioned by its CENTRE
