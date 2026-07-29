@@ -152,12 +152,7 @@ function shopBPLeave(){
 function showShopBPTip(e,r,c){
   if(H.kind==='shop-treat'||H.kind==='treat')return;
   const bd=G.bp[r][c];if(!bd.filled||!bd.tdef)return;
-  const td=bd.tdef;
-  const tip=g('board-tip');
-  const shopBpCur=treatCurrentEf(td);
-  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:13px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:10px;margin-top:3px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:12px;color:#9a7ed7;margin-top:2px;">${td.addEf}${shopBpCur?` <span style="color:#e040a0">${shopBpCur}</span>`:''}</div>`:''}${td.req?`<div style="font-size:12px;color:var(--or);margin-top:2px;">${td.req}</div>`:''}`;
-  tip.style.display='block';
-  moveShopBPTip(e);
+  tlShow(e,treatTipHTML(bd.tdef));
 }
 function moveShopBPTip(e){moveTip(e);}
 function hideShopBPTip(){g('board-tip').style.display='none';}
@@ -342,16 +337,7 @@ function shopDropOnBP(r,c){
 function shopTreatTip(e,id){
   if(H.kind) return;                       // never cover the thing being dragged
   const td=TDEFS.find(t=>t.id===id); if(!td) return;
-  const tip=g('board-tip'); if(!tip) return;
-  const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
-  tip.classList.add('tip-lg');
-  tip.innerHTML=`<div class="tl-nm">${td.nm}</div>`
-    +`<div class="tl-ef">${td.ef||''}</div>`
-    +(td.addEf?`<div class="tl-ae">${td.addEf}${cur?` <span class="tl-cur">${cur}</span>`:''}</div>`:'')
-    +(td.req?`<div class="tl-rq">${td.req}</div>`:'')
-    +`<div class="tl-sp">Sells back for $${td.sp}</div>`;
-  tip.style.display='block';
-  if(typeof moveTip==='function')moveTip(e);
+  tlShow(e,treatTipHTML(td,{sell:true}),true);   // the shelf reads at the larger scale
 }
 function shopTreatTipMove(e){ if(typeof moveTip==='function')moveTip(e); }
 function shopTreatTipHide(){ const t=g('board-tip'); if(t){t.style.display='none';t.classList.remove('tip-lg');} }
