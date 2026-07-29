@@ -62,25 +62,56 @@ function pickupCatFromBoard(r,c){
   updateGhost();showHUD();renderAll();
 }
 
-// Press-and-drag a placed cat off the board with the mouse — the gesture treats
-// already answer to. Treats lift on the mousedown itself; a cat cannot, because
-// its cell's `click` also means "pick up" and would drop a press-lifted cat
-// straight back down. So the lift arms on the same 5px threshold the backpack
-// drag uses: under it the press stays a plain click and onBoardClick does the
-// lifting, over it the cat comes up mid-drag and rides the cursor.
-function startBoardCatDrag(e,r,c){
+// The mouse half of a cat drag, armed for one press and torn down when it ends:
+// past a 5px threshold the cat rides the cursor, and letting go resolves the
+// drop right there instead of leaving the piece stuck to the pointer until the
+// next click. Touch has always worked this way (touchstart lifts,
+// handleTouchDrop places); this is what brings the mouse in line.
+//
+// It must stay per-press and must never become a standing document listener:
+// the tail of a click-to-place on a board cell is also a mouseup, and resolving
+// that one would let the cell's own trailing `click` pick the cat straight back
+// up again.
+//
+// `lift` runs once the threshold is cleared, and returns false if the pickup
+// fell through. The board passes one — its cat is still sitting on the board at
+// mousedown and has to be lifted mid-drag. The hand tray passes none, because
+// pickupCatWithGrab already lifted its cat on the press itself.
+function armCatDrag(e,lift){
   const startX=e.clientX,startY=e.clientY;
-  let lifted=false;
+  let dragged=false;
   const stop=()=>{
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
   };
   const onMove=(me)=>{
-    if(lifted)return;
+    if(dragged)return;
     if(Math.abs(me.clientX-startX)<=5&&Math.abs(me.clientY-startY)<=5)return;
-    lifted=true;
+    dragged=true;
+    if(lift&&lift(me)===false)stop();
+  };
+  const onUp=(ue)=>{
+    stop();
+    // Not a drag, or the discard pill already claimed the cat on the global
+    // mouseup (registered at load, so it runs ahead of this one).
+    if(!dragged||H.kind!=='cat')return;
+    H.dragging=false;
+    dropDraggedCatAt(ue.clientX,ue.clientY);
+  };
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+// Press-and-drag a placed cat off the board — the gesture treats already answer
+// to. Treats lift on the mousedown itself; a cat cannot, because its cell's
+// `click` also means "pick up" and would drop a press-lifted cat straight back
+// down. So the lift waits for armCatDrag's threshold: under it the press stays
+// a plain click and onBoardClick does the lifting, over it the cat comes up
+// mid-drag and rides the cursor.
+function startBoardCatDrag(e,r,c){
+  armCatDrag(e,(me)=>{
     pickupCatFromBoard(r,c);
-    if(H.kind!=='cat'){stop();return;}
+    if(H.kind!=='cat')return false;
     H.dragging=true;
     // renderAll() has just rebuilt the cells under the cursor, so no mouseenter
     // fires until the next move — seed the drop preview and the ghost here.
@@ -91,23 +122,14 @@ function startBoardCatDrag(e,r,c){
     gh.style.left=me.clientX+'px';
     gh.style.top=me.clientY+'px';
     trashHoverAt(me.clientX,me.clientY);
-  };
-  const onUp=(ue)=>{
-    stop();
-    // Not a drag, or the discard pill already claimed the cat on the global
-    // mouseup (registered at load, so it runs ahead of this one).
-    if(!lifted||H.kind!=='cat')return;
-    H.dragging=false;
-    dropDraggedCatAt(ue.clientX,ue.clientY);
-  };
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('mouseup',onUp);
+  });
 }
 
 // Where a dragged cat lands on release: a legal board spot takes it, anywhere
-// outside the board sends it back to the hand tray (pickupCatFromBoard already
-// put it there), and an illegal spot inside the board keeps it on the cursor so
-// the drop can be retried without losing the piece.
+// outside the board sends it back to the hand tray (a cat off the board always
+// lives there — pickupCatFromBoard puts a lifted one straight back), and an
+// illegal spot inside the board keeps it on the cursor so the drop can be
+// retried without losing the piece. Same resolution handleTouchDrop makes.
 function dropDraggedCatAt(cx,cy){
   const boardEl=g('board');
   if(boardEl){

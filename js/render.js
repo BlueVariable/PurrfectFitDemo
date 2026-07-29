@@ -654,6 +654,11 @@ function renderHand(){
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
       grabAt(e.clientX,e.clientY);
+      // grabAt already has the cat on the cursor, so this arms only the release:
+      // let go over the box and it lands there instead of hanging off the
+      // pointer until you tap a second time. Under armCatDrag's threshold the
+      // press is still a plain click, which keeps click-to-pick-up intact.
+      if(H.kind==='cat')armCatDrag(e);
     });
     d.addEventListener('touchstart',(e)=>{
       e.preventDefault();
