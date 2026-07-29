@@ -1048,8 +1048,11 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 }
 .sc-stage>*{position:absolute;}
 .sc-decor{pointer-events:none;user-select:none;}
-.sc-parcels{left:0;top:54.1%;width:27.6%;}
-.sc-tools  {left:70.5%;top:52.5%;width:27.5%;}
+.sc-parcels{left:-8.0%;top:46.4%;width:46.4%;}
+/* the tools art is a narrow vertical strip in a wide canvas; the deck also
+   rotates it. Sized so the props read at the design's scale rather than
+   reverse-engineering that rotation for a background prop. */
+.sc-tools  {left:22.1%;top:38.8%;width:78%;}
 
 .sc-paw{left:2.4%;top:11.4%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1084,8 +1087,8 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   justify-content:center;gap:0;}
 .sc-card{position:relative;flex:0 0 auto;width:18.4cqw;margin:0 -0.3cqw;border-radius:1.2cqw;
   border:0.17cqw solid #1b1a24;padding:2.4cqw 1cqw 1.1cqw;text-align:center;}
-.sc-past  {background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;}
-.sc-future{background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;}
+.sc-past  {background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;min-height:20.2cqw;}
+.sc-future{background:#3f4363;color:rgba(255,255,255,.42);margin-top:1.3cqw;width:16.8cqw;min-height:20.2cqw;}
 .sc-now   {background:#e9e8f2;color:#1b1a24;box-shadow:0 0 0 0.17cqw #fdfcff;z-index:2;}
 .sc-tab{position:absolute;left:-.3cqw;top:-.9cqw;display:flex;align-items:center;gap:.5cqw;
   background:#5b608c;border:0.17cqw solid #1b1a24;border-radius:.8cqw;padding:.2cqw .8cqw;
@@ -1110,7 +1113,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-pill b{font-family:'Lazydog',cursive;font-size:1.7cqw;font-weight:400;line-height:1;display:flex;align-items:center;}
 .sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
 .sc-pill span{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;}
-.sc-modtag{position:absolute;right:-0.6cqw;bottom:1cqw;z-index:3;background:#eeb84b;
+.sc-modtag{position:absolute;right:-1.4cqw;bottom:-1cqw;z-index:3;background:#eeb84b;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;max-width:9cqw;
   font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;color:#1b1a24;line-height:1.15;}
 .sc-modtag-now{position:static;margin-top:.5cqw;max-width:none;}
