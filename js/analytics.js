@@ -28,7 +28,7 @@
 // See docs/analytics.md for the one-time deploy. The General sheet tab can
 // override this at runtime with an `analytics_url` key, so the endpoint can be
 // re-pointed from the sheet without a code change.
-const PF_ANALYTICS_URL = '';
+const PF_ANALYTICS_URL = 'https://script.google.com/macros/s/AKfycby9YrCUTV3AlMsTwJ1XTOSomm1XKYEyONOkFp2BzbucGqo7zoVbeLyPcCAUApDQsTau/exec';
 
 const PF_TM = {
   q: [],              // pending events, oldest first
@@ -242,16 +242,9 @@ function pfTrackRoundFail(o){ pfTrack('round_fail',o||{}); pfTrackFlush(); }
 function pfTrackRunComplete(o){ pfTrack('run_complete',o||{}); pfTrackFlush(); }
 
 // ── Boot ──
-(function pfTmInit(){
+function pfTmStart(){
   try{
-    // The headless sim runs the real game inside a hidden iframe (js/sim/) and
-    // would otherwise post thousands of bot rows. Anything embedded is skipped:
-    // the sim injects SIM_BRIDGE only AFTER load, so the iframe test is the one
-    // that is reliable this early.
-    if(window.self!==window.top) return;
-    if(typeof SIM_BRIDGE!=='undefined') return;
-    if(!pfTmEndpoint()) return;         // not configured yet: stay completely inert
-
+    if(PF_TM.ready) return;
     PF_TM.vid=pfTmLS(PF_TM_VKEY)||'';
     if(!PF_TM.vid){ PF_TM.vid=pfTmId(12); pfTmLSSet(PF_TM_VKEY,PF_TM.vid); }
     try{
@@ -297,5 +290,28 @@ function pfTrackRunComplete(o){ pfTrack('run_complete',o||{}); pfTrackFlush(); }
       if(now-(PF_TM.lastBeat||0)>=PF_TM_BEAT){ PF_TM.lastBeat=now; pfTrack('heartbeat',{}); }
       pfTrackFlush();
     },PF_TM_INTERVAL);
+  }catch(e){ PF_TM.ready=false; }
+}
+
+(function pfTmBoot(){
+  try{
+    // The headless sim runs the real game inside a hidden iframe (js/sim/) and
+    // would otherwise post thousands of bot rows. Anything embedded is skipped:
+    // the sim injects SIM_BRIDGE only AFTER load, so the iframe test is the one
+    // that is reliable this early.
+    if(window.self!==window.top) return;
+    if(typeof SIM_BRIDGE!=='undefined') return;
+
+    if(pfTmEndpoint()){ pfTmStart(); return; }
+    // No endpoint in code — the General sheet tab may still carry one as
+    // `analytics_url`, but CFG is fetched asynchronously and is empty this
+    // early. Watch for it briefly, then give up and stay inert for good. Without
+    // this the sheet-side override could never take effect, because boot runs
+    // long before the config CSV lands.
+    let tries=0;
+    const watch=setInterval(()=>{
+      if(pfTmEndpoint()){ clearInterval(watch); pfTmStart(); return; }
+      if(++tries>40) clearInterval(watch);   // ~60s, then done looking
+    },1500);
   }catch(e){ PF_TM.ready=false; }
 })();

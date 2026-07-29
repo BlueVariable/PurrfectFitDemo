@@ -10,35 +10,45 @@ index.html ──▶ js/analytics.js ──POST──▶ Apps Script web app ─
 stats.html ◀────────── published CSV ◀────────────────────────────────┘
 ```
 
-## One-time setup (~3 minutes, and only you can do it)
+## Status: live — nothing left to set up
 
-Everything else is already built and committed. The game stays **completely
-inert** — no network calls, no geo lookup, nothing — until the endpoint below
-exists.
+The collector is deployed and the game is wired to it. Rounds played on the live
+site land in the `Telemetry` tab within seconds.
 
-1. Open the config spreadsheet → **Extensions → Apps Script**.
-2. Delete whatever is in `Code.gs` and paste the contents of
-   [`apps-script/telemetry.gs`](../apps-script/telemetry.gs). Save.
-3. **Deploy → New deployment** → gear icon → **Web app**.
-   - *Description:* `purrfect telemetry`
-   - *Execute as:* **Me**
-   - *Who has access:* **Anyone** ← required; players are anonymous and not
-     signed in to Google.
-4. **Deploy**, then authorise (Google will warn about an unverified app because
-   it's your own script — *Advanced → Go to project → Allow*).
-5. Copy the **Web app URL**. It ends in `/exec`.
-6. Switch it on, either way:
-   - **From the sheet, no code change:** add a row to the **General** tab —
-     Setting `analytics_url`, Value the `/exec` URL. Takes effect on the next
-     config load (the published CSV lags a few minutes).
-   - **In code:** paste it into `PF_ANALYTICS_URL` at the top of
-     `js/analytics.js` and push.
+| | |
+|---|---|
+| Apps Script project | **Purrfect Fit — telemetry collector** (standalone, in your Drive) |
+| Web app URL | `https://script.google.com/macros/s/AKfycby9YrCUTV3AlMsTwJ1XTOSomm1XKYEyONOkFp2BzbucGqo7zoVbeLyPcCAUApDQsTau/exec` |
+| Execute as | you · **Who has access:** Anyone (players aren't signed in to Google) |
+| Wired in at | `PF_ANALYTICS_URL`, top of `js/analytics.js` |
 
-Paste the URL into a chat with me and I'll do step 6 for you.
+**Health check:** open the `/exec` URL in a browser — it prints
+`{"ok":true,"service":"purrfect-fit telemetry","rows":N}`, where `N` is the
+number of events logged so far.
 
-**Check it worked:** open the `/exec` URL in a browser — it prints
-`{"ok":true,"service":"purrfect-fit telemetry","rows":N}`. Then play a round on
-the live site and watch a row land in the `Telemetry` tab.
+### Moving or rotating the endpoint
+
+Two ways, no code change needed for the first:
+
+- **From the sheet:** add a row to the **General** tab — Setting
+  `analytics_url`, Value the new `/exec` URL. It overrides the constant. The
+  published CSV lags a few minutes, and the client watches for it for the first
+  ~60 seconds of a session, so it takes effect on the next page load.
+- **In code:** edit `PF_ANALYTICS_URL` in `js/analytics.js` and push.
+
+Setting either to an empty value turns collection off entirely — the client then
+makes no network calls and no geo lookup at all.
+
+### If you ever need to rebuild it from scratch
+
+1. [script.new](https://script.new) → paste
+   [`apps-script/telemetry.gs`](../apps-script/telemetry.gs) → save.
+2. **Deploy → New deployment** → gear → **Web app**; *Execute as* **Me**,
+   *Who has access* **Anyone**.
+3. **Deploy**, then **Authorize access** and allow the script to reach your
+   spreadsheet (Google warns about an unverified app because it's your own
+   script — *Advanced → Go to project → Allow*).
+4. Point the game at the new `/exec` URL as above.
 
 ## Redeploying after a change to `telemetry.gs`
 

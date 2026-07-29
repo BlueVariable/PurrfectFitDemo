@@ -323,16 +323,13 @@ function cardSessions(ses){
 function cardEmpty(){
   return '<div class="card"><div class="empty">'
     +'<div class="em">📦</div>'
-    +'<h3>No plays logged yet</h3>'
-    +'<p>The <code>Telemetry</code> tab is empty. Either nobody has played since tracking went in, '
-    +'or the collector has not been deployed yet — the game stays completely silent until it is.</p>'
-    +'<ol>'
-    +'<li>Config spreadsheet → <b>Extensions → Apps Script</b>, paste <code>apps-script/telemetry.gs</code>.</li>'
-    +'<li><b>Deploy → New deployment → Web app</b>, execute as <b>Me</b>, access <b>Anyone</b>.</li>'
-    +'<li>Copy the <code>/exec</code> URL into the <b>General</b> tab as <code>analytics_url</code>, '
-    +'or into <code>PF_ANALYTICS_URL</code> in <code>js/analytics.js</code>.</li>'
-    +'</ol>'
-    +'<p style="margin-top:12px;">Full walkthrough: <code>docs/analytics.md</code></p>'
+    +'<h3>Waiting for the first play</h3>'
+    +'<p>The collector is live and the game is wired to it — the <code>Telemetry</code> tab '
+    +'just has nothing in it yet. Play a round and a row lands within seconds.</p>'
+    +'<p>Two things worth knowing: this feed trails live play by a few minutes, so hit '
+    +'<b>Refresh</b> rather than expecting it instantly; and your own testing on '
+    +'<code>localhost</code> is tagged <b>local</b>, which the <b>Source</b> filter hides by default.</p>'
+    +'<p style="margin-top:12px;">Setup and privacy notes: <code>docs/analytics.md</code></p>'
     +'</div></div>';
 }
 function cardError(msg){
