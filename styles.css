@@ -387,6 +387,25 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .seq-log-line.show{opacity:1;transform:translateY(0);}
 /* Oldest lines fade up and out so the log stays a compact bottom-margin strip. */
 .seq-log-line.seq-log-retire{opacity:0;transform:translateY(-6px);}
+/* ── Step-through scan: the player advances the scoring one piece at a time ──
+   runScoreSequence() re-anchors both of these onto SHIP's vacated slot under the
+   board; the values here are the fallback for a board it can't measure. */
+.seq-step-explain{
+  position:fixed;bottom:calc(12% + 64px);left:50%;transform:translateX(-50%);
+  z-index:403;max-width:340px;width:90%;text-align:center;
+  background:rgba(26,26,42,.9);color:#fff;border-radius:14px;padding:9px 18px;
+  font-family:'Fredoka One',cursive;font-size:14px;
+}
+/* Carries SHIP's lime: it is the button standing in SHIP's place mid-scan. */
+.seq-step-btn{
+  position:fixed;left:50%;top:88%;transform:translate(-50%,-50%);
+  z-index:404;padding:11px 34px;cursor:pointer;white-space:nowrap;
+  background:#d2f886;color:#1a1a2a;font-family:'Fredoka One',cursive;font-size:17px;
+  border-radius:14px;border:3px solid #1a1a2a;box-shadow:0 5px 0 #7fa844;
+  transition:transform .09s ease-out,box-shadow .09s ease-out;
+}
+.seq-step-btn:hover {transform:translate(-50%,calc(-50% - 2px));box-shadow:0 7px 0 #7fa844;}
+.seq-step-btn:active{transform:translate(-50%,calc(-50% + 4px));box-shadow:0 1px 0 #7fa844;}
 /* ── Feature 3: purrfect streak + near-miss callouts ── */
 @keyframes streak-callout-in{
   0%{opacity:0;transform:translateX(-50%) scale(.4) rotate(-6deg);}
@@ -1388,6 +1407,13 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   filter:drop-shadow(.05em .09em 0 rgba(20,18,28,.35));display:inline-block;}
 .gm-stage .fit-proj{left:42.9%;top:74.2%;width:9.2%;text-align:center;
   font-family:'Bobby Jones Soft',cursive;font-size:1.3cqw;color:#f0eef4;}
+/* Mid-scan the hand is already committed: SHIP, CLEAR and SHIP's projection chip
+   fade off the stage so the scoring sequence has the board to itself. Class is
+   toggled by setScoringChrome() in js/scoring.js. */
+.gm-stage.gm-scoring .gm-clear,
+.gm-stage.gm-scoring .gm-ship,
+.gm-stage.gm-scoring .fit-proj{
+  opacity:0;visibility:hidden;transition:opacity .18s ease-out,visibility 0s .18s;}
 
 .gm-invtab{left:68.7%;top:12.2%;width:14.6%;height:4.6%;display:flex;align-items:center;justify-content:center;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.9cqw;
