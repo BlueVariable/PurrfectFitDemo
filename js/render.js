@@ -377,45 +377,91 @@ function treatCurrentEf(td){
   return isMul?`Now: ×${cur}`:`Now: +${cur}`;
 }
 
+// ── hover card (#board-tip) ────────────────────────────────────────────────
+// One builder behind every treat tooltip — board, backpack, shop backpack and
+// the shop shelf — so a treat reads the same wherever it is inspected. The
+// card is the deck's own layering: name tab, white effect pill, yellow chips
+// for the requirement and additional effect. Styling lives in styles.css.
+//
+// The colour rule is the point: × is ORANGE, + / - is BLUE. tlOps() finds the
+// operators in the sheet's own effect text so nothing has to be authored twice.
+const TL_OPS=/([×xX]\s*\$?\d+(?:\.\d+)?)|([+\-−]\s*\$?\d+(?:\.\d+)?)/g;
+function tlEsc(s){
+  return String(s==null?'':s).replace(/[&<>"]/g,ch=>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[ch]);
+}
+function tlOps(s){
+  const raw=String(s==null?'':s);
+  let out='',last=0,m;
+  TL_OPS.lastIndex=0;
+  while((m=TL_OPS.exec(raw))!==null){
+    const mul=!!m[1];
+    // a bare "x" only multiplies when it opens a word — never inside "box6"
+    if(mul&&m.index>0&&/[0-9A-Za-z]/.test(raw[m.index-1]))continue;
+    // the sheet writes both "×2" and "x2" — the card always shows ×
+    const tok=mul?m[0].replace(/^[xX]/,'×'):m[0];
+    out+=tlEsc(raw.slice(last,m.index))
+       +`<span class="${mul?'tl-mul':'tl-add'}">${tlEsc(tok)}</span>`;
+    last=m.index+m[0].length;
+  }
+  return out+tlEsc(raw.slice(last));
+}
+// opts: {reqFail} paints the requirement chip red, {sell} adds the sell-back line
+function treatTipHTML(td,opts){
+  opts=opts||{};
+  const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
+  const tags=[];
+  if(td.req)tags.push(`<div class="tl-tag${opts.reqFail?' bad':''}">${tlOps(td.req)}</div>`);
+  if(td.addEf)tags.push(`<div class="tl-tag">${tlOps(td.addEf)}</div>`);
+  return `<div class="tl-nm">${tlEsc(td.nm)}</div>`
+    +`<div class="tl-body${tags.length?' has-tags':''}">`   // deepens the pill so the chips overlap it
+    +`<div class="tl-ef">${tlOps(td.ef||'')}</div>`
+    +(cur?`<div class="tl-now"><b>NOW</b>${tlOps(String(cur).replace(/^Now:\s*/,''))}</div>`:'')
+    +(opts.sell?`<div class="tl-sub">Sells back for $${tlEsc(td.sp)}</div>`:'')
+    +`</div>`
+    +(tags.length?`<div class="tl-tags">${tags.join('')}</div>`:'');
+}
+// Every show* path routes through this so a leftover .tip-lg from the shop
+// shelf can't follow the cursor onto a board or backpack card.
+function tlShow(e,html,big){
+  const tip=g('board-tip');if(!tip)return;
+  tip.className=big?'tip-lg':'';
+  tip.innerHTML=html;
+  tip.style.display='block';
+  moveTip(e);
+}
+
 function showBoardTip(e,r,c){
   if(H.kind)return; // don't show tip while dragging
   const bd=G.board[r][c];if(!bd.filled)return;
-  const tip=g('board-tip');
   if(bd.kind==='cat'){
     // find cat group score (cells * 10 base)
     const grp=G.cats.find(g=>g.cells.some(([gr,gc])=>gr===r&&gc===c));
     if(!grp)return;
     const base=grp.cells.length*(CFG.base_score_per_cell||10);
-    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:var(--or)">${cap(grp.type)} Cat</div><div style="font-size:13px;margin-top:3px;">${grp.shape} shape · ${grp.cells.length} cells</div><div style="font-size:13px;color:#72cc60;margin-top:3px;">Base: +${base} pts</div>`;
+    tlShow(e,`<div class="tl-nm cat">${tlEsc(cap(grp.type))} CAT</div><div class="tl-body">`
+      +`<div class="tl-ef">${tlOps('+'+base)} pts</div>`
+      +`<div class="tl-sub">${tlEsc(grp.shape)} shape · ${grp.cells.length} cells</div></div>`);
   } else if(bd.kind==='treat'){
-    const gid=bd.gid;
-    const ti=G.treats.find(t=>t.gid===gid);
+    const ti=G.treats.find(t=>t.gid===bd.gid);
     if(!ti)return;
-    const td=ti.tdef;
-    const curEf=treatCurrentEf(td);
-    tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:13px;margin-top:4px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:11px;color:#9a7ed7;margin-top:3px;">${td.addEf}${curEf?` <span style="color:#e040a0">${curEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:11px;color:var(--or);margin-top:3px;">${td.req}</div>`:''}`;
+    tlShow(e,treatTipHTML(ti.tdef));
   }
-  tip.style.display='block';
-  moveBoardTip(e);
 }
 function moveTip(e){
   const tip=g('board-tip');
   if(tip.style.display==='none')return;
-  tip.style.left=Math.min(e.clientX+14,window.innerWidth-240)+'px';
-  tip.style.top=Math.max(e.clientY-8,4)+'px';
+  // clamp against the card's real size — it is far wider than the old tooltip
+  const w=tip.offsetWidth||240,h=tip.offsetHeight||80;
+  tip.style.left=Math.max(4,Math.min(e.clientX+16,window.innerWidth-w-6))+'px';
+  tip.style.top=Math.max(4,Math.min(e.clientY-14,window.innerHeight-h-6))+'px';
 }
 function moveBoardTip(e){moveTip(e);}
 function hideBoardTip(){g('board-tip').style.display='none';}
 function showBPTip(e,r,c){
   if(H.kind)return;
   const bd=G.bp[r][c];if(!bd.filled||!bd.tdef)return;
-  const td=bd.tdef;
-  const fail=treatReqFails(td);
-  const tip=g('board-tip');
-  const bpCurEf=treatCurrentEf(td);
-  tip.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:17px;color:#f060a8">${td.em} ${td.nm}</div><div style="font-size:13px;margin-top:4px;color:#c8d0e8;">${td.ef}</div>${td.addEf?`<div style="font-size:11px;color:#9a7ed7;margin-top:3px;">${td.addEf}${bpCurEf?` <span style="color:#e040a0">${bpCurEf}</span>`:''}</div>`:''}${td.req?`<div style="font-size:11px;color:var(--or);margin-top:3px;">${td.req}</div>`:''}${fail?'<div style="font-size:11px;color:#f04040;margin-top:4px;">⚠ Requirement not met</div>':''}`;
-  tip.style.display='block';
-  moveBPTip(e);
+  tlShow(e,treatTipHTML(bd.tdef,{reqFail:treatReqFails(bd.tdef)}));
 }
 function moveBPTip(e){moveTip(e);}
 function hideBPTip(){g('board-tip').style.display='none';}
