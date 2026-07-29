@@ -79,7 +79,6 @@ function pickupTreat(){
      color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:grp.gid,
      grabDr:_tDr,grabDc:_tDc,dragging:false,bpOrigin:pose};
   updateGhost();showHUD();renderBP();
-  if(typeof shopSellLabel==='function')shopSellLabel();
 }
 
 function dropHeld(){
@@ -91,7 +90,6 @@ function dropHeld(){
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
-  if(typeof shopSellLabel==='function')shopSellLabel();
   clrBoardPrev(); // also clears the Feature 2b paw tip / affected-cell pulse (e.g. ESC-cancel mid-hover)
   if(g('shop-bpg'))renderShopFull();
   const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}
@@ -365,6 +363,10 @@ function handleTouchDrop(cx,cy){
 }
 
 function updateGhost(){
+  // Every H change funnels through here (mouse and touch, pickup and drop, on
+  // every screen), so the pet shop's SELL BACK plate keeps itself in step from
+  // this one seam rather than from each individual pickup site.
+  if(typeof shopSellLabel==='function')shopSellLabel();
   if(!H.kind){g('ghost').style.display='none';return;}
   const cells=H.cells;
   const cols=cells[0].length;

@@ -578,7 +578,6 @@ function renderBP(){
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
                grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
-  if(typeof shopSellLabel==='function')shopSellLabel();
           }
         };
         const onUp=()=>{
@@ -623,7 +622,6 @@ function renderBP(){
                color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:gid,
                grabDr:gDr,grabDc:gDc,dragging:true,bpOrigin:pose};
             updateGhost();showHUD();renderBP();
-  if(typeof shopSellLabel==='function')shopSellLabel();
           }
         };
         const onTEnd=()=>{

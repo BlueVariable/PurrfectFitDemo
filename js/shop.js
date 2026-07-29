@@ -333,21 +333,38 @@ function shopTreatTipHide(){ const t=g('board-tip'); if(t){t.style.display='none
 
 // Label the plate for whatever is (or is not) in hand.
 function shopSellLabel(){
+  const scr=document.getElementById('s-rounds');
+  if(!scr||!scr.classList.contains('on')) return;
   const el=g('ps-sell-lbl'); if(!el) return;
   const plate=g('ps-sell');
-  const held=(H.kind==='treat'&&H.bpGid);
-  if(held){
-    const grp=G.bpGroups.find(x=>x.gid===H.bpGid);
-    el.innerHTML=grp?('SELL FOR '+grp.tdef.sp+'<img src="assets/ui/coin.png" alt="">'):'SELL BACK';
-  } else el.innerHTML='SELL BACK';
+  // Price comes off the held tdef, NOT a bpGroups lookup: the shop grid removes
+  // the group at pickup, so while a treat is in hand it is not in G.bpGroups.
+  const held=(H.kind==='treat'&&H.bpGid&&H.data);
+  el.innerHTML=held
+    ? ('SELL FOR '+H.data.sp+'<img src="assets/ui/coin.png" alt="">')
+    : 'SELL BACK';
   if(plate)plate.classList.toggle('armed',!!held);
 }
 function shopSellDrop(){
-  if(H.kind!=='treat'||!H.bpGid) return;
-  const gid=H.bpGid;
-  H=resetH(); updateGhost(); hideHUD();
-  sellTreatFromShop(gid);
-  shopSellLabel();
+  if(H.kind!=='treat'||!H.bpGid||!H.data) return;
+  const gid=H.bpGid, td=H.data;
+  const stillInBag=G.bpGroups.some(x=>x.gid===gid);
+  H=resetH(); hideHUD();
+  const plate=g('ps-sell'); if(plate)plate.classList.remove('over');
+  if(stillInBag){
+    sellTreatFromShop(gid);          // normal path: group still seated
+  }else{
+    // Dragged out of the grid — removeBpGid already ran at pickup, so finish
+    // the sale from the held tdef instead of re-looking it up.
+    G.cash+=td.sp;
+    G.purchasedTreatIds.delete(td.id);
+    bpReconcileWidth();
+    bpRetryPending();
+    renderAll();
+    renderShopFull();
+    const c=g('shop-cash'); if(c)c.textContent=G.cash;
+  }
+  updateGhost();
 }
 
 // Hover feedback on the sell plate — only meaningful while a treat is held.
