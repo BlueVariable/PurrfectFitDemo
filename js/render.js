@@ -310,6 +310,27 @@ function checkBoardFull(){
   setTimeout(()=>ov.remove(),2500);
 }
 
+// The DISCARDS pill is a drop target, so it advertises itself the way the pet
+// shop's SELL BACK plate does: lit the moment a cat is in hand (and you still
+// have a discard left), brighter still while the cursor is over it. Every path
+// that changes H or G.disc funnels through here, so the pill can never be left
+// glowing after the cat has gone somewhere else.
+function updateTrashZone(){
+  const badge=g('trash-badge');
+  if(badge&&badge.textContent!==String(G.disc)) badge.textContent=G.disc;
+  const el=g('trash-drop');
+  if(!el)return;
+  const live=H.kind==='cat'&&G.disc>0;
+  el.classList.toggle('no-disc',G.disc<=0);
+  el.classList.toggle('armed',live);
+  el.classList.toggle('drag-active',live&&!!el._hover);
+  const col=el.parentElement; // .gm-disc — owns the label that names the drop
+  if(col){
+    col.classList.toggle('disc-armed',live);
+    col.classList.toggle('disc-live',live&&!!el._hover);
+  }
+}
+
 function renderStats(){
   g('g-tgt').textContent=G.tgt.toLocaleString();
   g('g-earn').textContent=G.earn;
@@ -322,13 +343,7 @@ function renderStats(){
   g('g-bsize').textContent=`${G.bsr}×${G.bsc} board`;
   const pfEl=g('g-purrfect-rate');
   if(pfEl&&typeof purrfectPerCell==='function')pfEl.textContent=`✨ +${purrfectPerCell(G.round)}/cell purrfect`;
-  const trashBadge=g('trash-badge');
-  if(trashBadge) trashBadge.textContent=G.disc;
-  const trashEl=g('trash-drop');
-  if(trashEl){
-    trashEl.classList.toggle('no-disc',G.disc<=0);
-    trashEl.classList.toggle('drag-active',H.kind==='cat'&&G.disc>0&&!!trashEl._hover);
-  }
+  updateTrashZone();
   if (g('g-topbar-round')) g('g-topbar-round').textContent = 'Round ' + G.round;
   if (g('g-topbar-cash'))  g('g-topbar-cash').querySelector('span:last-child').textContent = G.cash;
   renderTopbarModifier();
