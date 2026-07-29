@@ -79,6 +79,7 @@ function pickupTreat(){
      color:grp.tdef.col,em:grp.tdef.em,handIdx:null,boardGid:null,bpGid:grp.gid,
      grabDr:_tDr,grabDc:_tDc,dragging:false,bpOrigin:pose};
   updateGhost();showHUD();renderBP();
+  if(typeof shopSellLabel==='function')shopSellLabel();
 }
 
 function dropHeld(){
@@ -90,6 +91,7 @@ function dropHeld(){
   }
   H=resetH();
   updateGhost();hideHUD();renderHand();renderBP();
+  if(typeof shopSellLabel==='function')shopSellLabel();
   clrBoardPrev(); // also clears the Feature 2b paw tip / affected-cell pulse (e.g. ESC-cancel mid-hover)
   if(g('shop-bpg'))renderShopFull();
   const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}

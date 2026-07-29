@@ -45,6 +45,7 @@ function renderShopFull(){
   renderShopBPGrid();
   renderShopBPList();
   renderTreatsRow();
+  if(typeof shopSellLabel==='function')shopSellLabel();
   // Coffee Break: café-flavored boarded-up styling while the shop is closed
   const sec=g('treats-section');
   if(sec)sec.classList.toggle('shop-closed-sec',!!G.shopClosed);
@@ -57,12 +58,14 @@ function renderShopFull(){
 function renderShopBPGrid(){
   const grid=g('shop-bpg');if(!grid)return;
   const cs=window._boardCellSize||60;
+  // the pet shop sizes its own grid from CSS (--bpc); elsewhere keep the px columns
+  grid.style.setProperty('--bpc',getBPC());
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
     const div=document.createElement('div');
     div.className='sp-bpc';
-    div.style.width=cs+'px';div.style.height=cs+'px';
+    if(!document.getElementById('s-rounds').classList.contains('on')){div.style.width=cs+'px';div.style.height=cs+'px';}
     const bd=G.bp[r][c];
     if(bd.filled){
       div.classList.add('ft');
@@ -220,6 +223,9 @@ function renderTreatsRow(){
     const dis=broke||noSpc;
     const card=document.createElement('div');
     card.className='tc'+(dis?' tc-dis':'');
+    card.addEventListener('mouseenter',e=>shopTreatTip(e,td.id));
+    card.addEventListener('mousemove',shopTreatTipMove);
+    card.addEventListener('mouseleave',shopTreatTipHide);
 
     // backpack shape mini grid
     const cols=td.bpS[0].length;
@@ -302,4 +308,43 @@ function shopDropOnBP(r,c){
   H=resetH();
   updateGhost();hideHUD();
   renderShopFull();
+}
+
+// ── Pet shop (deck page 6) extras ───────────────────────────────────────────
+// Treat cards carry their own hover card, and the SELL BACK plate is a drop
+// target rather than a button: drag a treat out of the inventory and let go
+// over it. It reads "SELL BACK" while idle and shows the price mid-drag.
+function shopTreatTip(e,id){
+  if(H.kind) return;                       // never cover the thing being dragged
+  const td=TDEFS.find(t=>t.id===id); if(!td) return;
+  const tip=g('board-tip'); if(!tip) return;
+  const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
+  tip.innerHTML=`<div style="font-family:'Lazydog',cursive;font-size:15px;">${td.em||''} ${td.nm}</div>`
+    +`<div style="font-size:11px;margin-top:3px;opacity:.85;">${td.ef||''}</div>`
+    +(td.addEf?`<div style="font-size:11px;margin-top:2px;color:#c9b6ff;">${td.addEf}${cur?` <span style="color:#ffb0d8">${cur}</span>`:''}</div>`:'')
+    +(td.req?`<div style="font-size:11px;margin-top:2px;color:#ffc96b;">${td.req}</div>`:'')
+    +`<div style="font-size:11px;margin-top:4px;opacity:.7;">Sells back for $${td.sp}</div>`;
+  tip.style.display='block';
+  if(typeof moveTip==='function')moveTip(e);
+}
+function shopTreatTipMove(e){ if(typeof moveTip==='function')moveTip(e); }
+function shopTreatTipHide(){ const t=g('board-tip'); if(t)t.style.display='none'; }
+
+// Label the plate for whatever is (or is not) in hand.
+function shopSellLabel(){
+  const el=g('ps-sell-lbl'); if(!el) return;
+  const plate=g('ps-sell');
+  const held=(H.kind==='treat'&&H.bpGid);
+  if(held){
+    const grp=G.bpGroups.find(x=>x.gid===H.bpGid);
+    el.textContent=grp?('SELL $'+grp.tdef.sp):'SELL BACK';
+  } else el.textContent='SELL BACK';
+  if(plate)plate.classList.toggle('armed',!!held);
+}
+function shopSellDrop(){
+  if(H.kind!=='treat'||!H.bpGid) return;
+  const gid=H.bpGid;
+  H=resetH(); updateGhost(); hideHUD();
+  sellTreatFromShop(gid);
+  shopSellLabel();
 }

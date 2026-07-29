@@ -147,8 +147,8 @@
 
     <div class="ps-invtab">INVENTORY</div>
     <div class="ps-inv"><div class="ps-invcard"><div class="sp-bpg" id="shop-bpg"></div></div></div>
-    <div class="ps-deck"><img src="assets/ui/icon-box.png" alt=""><div class="ps-deck-col"><span class="ps-deck-lbl">DECK</span><span class="ps-deck-n" id="ps-deck-n">24</span></div></div>
-    <button class="ps-sell" id="treats-reroll" onclick="rerollTreats()">SELL<span id="reroll-cost">$3</span></button>
+    <div class="ps-sell" id="ps-sell" onmouseup="shopSellDrop()"><span id="ps-sell-lbl">SELL BACK</span></div>
+    <span class="ps-hidden" id="treats-reroll"><span id="reroll-cost">$3</span></span>
 
     <div class="ps-shelf-lbl">&ldquo;best treats in town&rdquo;</div>
     <div class="ps-hidden" id="treats-flavor"></div>
@@ -160,7 +160,7 @@
     <button class="ps-restock" onclick="rerollTreats()">RESTOCK<span id="ps-restock-cost">3</span><img src="assets/ui/coin.png" alt=""></button>
 
     <div class="ps-hidden">
-      <span id="rds-tgt">180</span><span id="rds-earn">+$4</span><span id="rds-board">4x4</span><span id="rds-purrfect"></span>
+      <span id="rds-tgt">180</span><span id="rds-earn">+$4</span><span id="rds-board">4x4</span><span id="ps-deck-n"></span><span id="rds-purrfect"></span>
       <div id="rds-pips"></div>
       <div id="rds-mod-card"><span id="rds-mod-em"></span><span id="rds-mod-name"></span><span id="rds-mod-desc"></span></div>
       <span id="rds-hint"></span>
