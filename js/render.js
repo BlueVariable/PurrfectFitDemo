@@ -450,10 +450,17 @@ function showBoardTip(e,r,c){
 function moveTip(e){
   const tip=g('board-tip');
   if(tip.style.display==='none')return;
-  // clamp against the card's real size — it is far wider than the old tooltip
-  const w=tip.offsetWidth||240,h=tip.offsetHeight||80;
-  tip.style.left=Math.max(4,Math.min(e.clientX+16,window.innerWidth-w-6))+'px';
-  tip.style.top=Math.max(4,Math.min(e.clientY-14,window.innerHeight-h-6))+'px';
+  // The game draws its own marker arrow for a cursor, and at 72x102 it is big
+  // enough to sit right on top of the card. So clear the whole arrow rather
+  // than nudge past it — and when the screen edge runs out, flip the card to
+  // the cursor's other side instead of sliding it back underneath.
+  const w=tip.offsetWidth||240,h=tip.offsetHeight||80,GAP=78;
+  let x=e.clientX+GAP;
+  if(x+w>window.innerWidth-6)x=Math.max(4,e.clientX-w-18);
+  let y=e.clientY+10;
+  if(y+h>window.innerHeight-6)y=Math.max(4,e.clientY-h-10);
+  tip.style.left=x+'px';
+  tip.style.top=y+'px';
 }
 function moveBoardTip(e){moveTip(e);}
 function hideBoardTip(){g('board-tip').style.display='none';}
