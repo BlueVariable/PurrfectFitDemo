@@ -1311,13 +1311,15 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-stage .trash-badge{position:static;font-family:'Lazydog',cursive;font-size:2.1cqw;color:#1b1a24;
   background:none;border:0;width:auto;height:auto;}
 /* Lights up while a cat is in hand, so the drop target is obvious — the same
-   idiom as the pet shop's SELL BACK plate. The hop is smaller than the plate's:
-   the DISCARDS label sits .3cqw above the pill and a taller one butts into it. */
-.gm-stage .trash-zone.armed{background:#d2f886;transform:translateY(-0.15cqw);
-  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .6cqw 0 #262229;}
+   idiom as the pet shop's SELL BACK plate, minus that plate's white ring: the
+   DISCARDS label sits only .3cqw above the pill, and a ring that reads outwards
+   (plus the hop) would print straight over the label's glyphs. The hop and the
+   deepening drop shadow carry the lift instead, and both stay inside .3cqw. */
+.gm-stage .trash-zone.armed{background:#d2f886;transform:translateY(-0.12cqw);
+  box-shadow:0 .6cqw 0 #262229;}
 /* hovering the pill with a cat in hand: the drop is live, say so loudly */
-.gm-stage .trash-zone.armed.drag-active{background:#b6f24e;transform:translateY(-0.32cqw) scale(1.05);
-  box-shadow:0 0 0 0.3cqw #fdfcff, 0 .8cqw 0 #262229;}
+.gm-stage .trash-zone.armed.drag-active{background:#b6f24e;transform:translateY(-0.22cqw) scale(1.04);
+  box-shadow:0 .8cqw 0 #262229;}
 /* out of discards for this hand — reads as spent, and never lights up */
 .gm-stage .trash-zone.no-disc{opacity:.45;filter:saturate(.55);}
 /* The column label carries the wording, the way SELL BACK becomes SELL FOR $n.
