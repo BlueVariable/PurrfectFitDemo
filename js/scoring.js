@@ -300,9 +300,10 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
   const labelH=Math.max(20,Math.min(30,cellW*.45));
   const labelFS=Math.max(9,Math.min(14,cellW*.22));
 
-  const dim=document.createElement('div');
-  dim.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:-1;';
-  seq.appendChild(dim);
+  // No screen dim: the board and its cats stay fully lit while they score. Every
+  // element the sequence draws (labels, log lines, banner) carries its own dark
+  // backing, so they read fine straight over the board. `#ov-score-seq.active`
+  // still swallows pointer events, so the hand can't be disturbed mid-scan.
 
   // One centered label per cat group, revealed when the cat fires
   const grpMap={};
