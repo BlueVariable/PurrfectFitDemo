@@ -52,8 +52,18 @@ hands-to-clear (`G.roundLog`; `☕` for a coffee-break'd round). It is the fork 
 🏪 **Go to Shop** (→ shop/prep screen, then Play) or ☕ **Coffee Break** (skip, see
 `js/cafe.js`). `openCalendar()` delegates to `openRounds()` for all state setup, so
 `goShop()` / `selectBranch()` / `cafeFinish()` / `menuContinue()` route through it
-without changing shop-pool generation or the single per-round RNG draw the headless
-sim depends on.
+without changing shop-pool generation or the RNG draw order the headless sim
+depends on.
+
+Every deadline card **names its actual condition**, the ones still ahead included.
+That works because the whole week's modifiers are drawn **once, at run start**, by
+`rollModSchedule()` (`js/state.js`) into `G.modSchedule` (round → modifier);
+`pickRoundModifier(round)` then just reads the schedule, so the round plays exactly
+the modifier its card advertised. Two rules follow: **`renderCalendar()` must stay
+RNG-free** (no `Math.random`, ever — the sim's determinism rests on it), and a
+deadline **must not be re-rolled at round setup**. `rollRoundModifier()` is the raw
+draw and is only a fallback for a run whose schedule came up empty (Modifiers tab
+failed to load before `newGame()`).
 
 ## Scoring
 

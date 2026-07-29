@@ -1180,8 +1180,9 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
 .sc-pill span{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;}
 /* Deadline detail (js/calendar.js) — the schedule spells a deadline out rather
-   than only labelling it: the round you're on names its condition, a round
-   still ahead states the rules and previews the pool it draws from. */
+   than only labelling it: every deadline on the day, the one you're standing
+   on and the ones still ahead, names the exact condition it lands with.
+   (.sc-dl-note / .sc-dl-chip are the no-schedule fallback preview.) */
 .sc-boss{border-color:#eeb84b;}
 .sc-dl{width:100%;margin-top:.55cqw;background:#eeb84b;border:0.17cqw solid #1b1a24;
   border-radius:.7cqw;padding:.3cqw .5cqw .4cqw;color:#1b1a24;text-align:center;}

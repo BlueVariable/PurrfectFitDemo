@@ -166,12 +166,10 @@ function setupBoardLayout(round,mod){
   };
 }
 
-// Pick a random enabled modifier (weighted by sheet "Weight") for a round
-// that's listed in General!modifier_rounds; null otherwise. night_shift
+// Roll one random enabled modifier (weighted by sheet "Weight"). night_shift
 // (type_mult) additionally rolls a random cat TYPE from the current deck
 // and substitutes it into the "{TYPE}" placeholder of the description.
-function pickRoundModifier(round){
-  if(!isModifierRound(round))return null;
+function rollRoundModifier(){
   const pool=(typeof MODIFIERS!=='undefined'?MODIFIERS:[]).filter(m=>m.enabled);
   if(!pool.length)return null;
   const picked=weightedSample(pool,1,m=>m.weight||1)[0];
@@ -185,6 +183,37 @@ function pickRoundModifier(round){
     mod.desc=mod.desc.replace(/\{TYPE\}/g,type.toUpperCase());
   }
   return mod;
+}
+
+// The week's deadlines are drawn ONCE, at run start, into G.modSchedule
+// (round → modifier). A deadline is a scheduled condition you can see coming,
+// so the work-week calendar names it a day or two ahead instead of only
+// warning that one is due — and the round itself then reads the same object
+// it advertised, never a fresh roll.
+//
+// SIM-SAFETY: drawing here keeps the number of RNG draws per run identical
+// (one per modifier round, still exactly one weightedSample each) and keeps
+// renderCalendar() free of Math.random, which is what the headless sim
+// depends on. Both the sim and the real game reach this through newGame().
+function rollModSchedule(){
+  const sched={};
+  modifierRoundsList().forEach(r=>{
+    if(r<1||r>RCFG.length||sched[r])return;
+    const mod=rollRoundModifier();
+    if(mod)sched[r]=mod;
+  });
+  return sched;
+}
+
+// This round's modifier: the one the schedule already promised for a round
+// listed in General!modifier_rounds; null otherwise. The live roll is only a
+// fallback for a run whose schedule came up empty (e.g. the Modifiers tab
+// failed to load before newGame ran).
+function pickRoundModifier(round){
+  if(!isModifierRound(round))return null;
+  const sched=(typeof G!=='undefined'&&G)?G.modSchedule:null;
+  if(sched&&sched[round])return sched[round];
+  return rollRoundModifier();
 }
 
 
@@ -202,8 +231,12 @@ function newGame(deckId){
     board:[],cats:[],treats:[],usedTreats:[],bpPending:[],bpHomes:[],bpSnapshot:null,treatLossEvents:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,shopClosed:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
     branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,
-    roundModifier:null,roundLog:{},
+    roundModifier:null,roundLog:{},modSchedule:{},
   };
+  // Draw the week's deadline conditions up front so the calendar can name them
+  // before they land (rollModSchedule above). After the G literal — type_mult
+  // reads G.deckId — and before mkDeck(), so the draw order is fixed.
+  G.modSchedule=rollModSchedule();
   // The bp grid in the literal above was sized with getBPR()/getBPC() reading
   // the PREVIOUS game's G (tote ownership, bp-small/bp-large overrides), so it
   // can be stale-sized for this game — resync to this game's true width.

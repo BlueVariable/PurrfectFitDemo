@@ -32,14 +32,15 @@ function calIsBoss(round){ return (typeof isModifierRound === 'function') && isM
 function calEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
 
 // ── Deadline detail ────────────────────────────────────────────────────────
-// The schedule spells a deadline out instead of only labelling it. What is
-// knowable depends on when you look:
-//   • the round you are ON — G.roundModifier is already rolled, so the exact
-//     condition (emoji, name, description) is shown.
-//   • a round still ahead — its condition must NOT be rolled here
-//     (pickRoundModifier draws from the shared RNG and the headless sim
-//     depends on exactly one draw per round), so the card instead states what
-//     a deadline always costs and previews the pool it will draw from.
+// A deadline names its condition on the schedule — the round you are standing
+// on and the ones still ahead alike. Nothing is rolled here: the whole week's
+// conditions are drawn once at run start into G.modSchedule (rollModSchedule
+// in js/state.js), so renderCalendar() stays pure DOM with no RNG draw, and
+// the round plays the very modifier its card advertised.
+function calModFor(round){
+  if(round === G.round && G.roundModifier) return G.roundModifier;
+  return (G.modSchedule && G.modSchedule[round]) || null;
+}
 function calDeadlinePool(){
   return (typeof MODIFIERS !== 'undefined' ? MODIFIERS : []).filter(m => m.enabled);
 }
@@ -50,16 +51,17 @@ function calModChips(){
     '<span class="sc-dl-chip" title="' + calEsc(m.name) + ' — ' + calEsc(m.desc) + '">' +
       calEsc(m.em || '⚠️') + '</span>').join('') + '</div>';
 }
-// Upcoming deadline: the rules of the day, plus every condition it can draw.
+// Fallback only — a run whose schedule came up empty (Modifiers tab failed to
+// load): state the rules of the day and preview the pool it can draw from.
 function calDeadlinePreview(){
   return '<div class="sc-dl"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
     '<div class="sc-dl-note">No break — this one gets worked.</div>' +
     '<div class="sc-dl-note">One of these lands on the day:</div>' +
     calModChips() + '</div>';
 }
-// The deadline you are standing on: name it and say what it does.
-function calDeadlineNow(rm){
-  return '<div class="sc-dl sc-dl-now"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
+// The deadline itself: name it and say what it does.
+function calDeadlineCard(rm, now){
+  return '<div class="sc-dl' + (now ? ' sc-dl-now' : '') + '"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
     '<div class="sc-dl-name">' + calEsc(rm.em || '⚠️') + ' ' +
       calEsc(String(rm.name || rm.id || '').toUpperCase()) + '</div>' +
     (rm.desc ? '<div class="sc-dl-desc">' + calEsc(rm.desc) + '</div>' : '') +
@@ -127,17 +129,18 @@ function calDoneCard(r){
 }
 function calNextCard(r){
   const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
-  // Never roll a future round's modifier here — pickRoundModifier() draws from
-  // the shared RNG and the headless sim depends on exactly one draw per round.
-  // A future deadline round only advertises that it IS one.
+  // A deadline still ahead names the condition it will land with, read from
+  // the schedule drawn at run start — never rolled here (renderCalendar must
+  // stay RNG-free for the headless sim).
   const boss = calIsBoss(r);
+  const rm = boss ? calModFor(r) : null;
   return '<div class="sc-card sc-future' + (boss ? ' sc-boss' : '') + '"><div class="sc-tab">#' +
     ((r-1)%CAL_ROUNDS_PER_DAY+1) + '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
     '<div class="sc-sub">REACH SCORE</div><div class="sc-target">' + (cfg ? cfg.tgt : '—') + '</div>' +
     '<div class="sc-pills">' + calStatPill(cfg ? (cfg.h || CFG.hand_count || 3) : '—', 'HANDS') +
       calStatPill(CFG.discard_count || 3, 'DISCARDS') +
       calStatPill(cfg ? cfg.earn : '—', 'EARN', true) + '</div>' +
-    (boss ? calDeadlinePreview() : '') +
+    (rm ? calDeadlineCard(rm, false) : boss ? calDeadlinePreview() : '') +
     '</div></div>';
 }
 function calActiveCard(r){
@@ -160,7 +163,7 @@ function calActiveCard(r){
     '<div class="sc-sub">TARGET SCORE</div><div class="sc-target sc-red">' + (G.tgt || 0) + '</div>' +
     '<div class="sc-pills">' + calStatPill(G.hands || 0, 'HANDS') +
       calStatPill(G.disc || 0, 'DISCARDS') + calStatPill(G.earn || 0, 'EARN', true) + '</div>' +
-    (G.roundModifier ? calDeadlineNow(G.roundModifier) : '') +
+    (calModFor(r) ? calDeadlineCard(calModFor(r), true) : '') +
     '<div class="sc-fork">' +
       '<div class="sc-fork-col"><span class="sc-fork-lbl">CONTINUE TO SHOP</span>' +
         '<button class="sc-work" onclick="goToShopFromCalendar()">WORK</button></div>' +
