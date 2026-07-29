@@ -286,11 +286,21 @@ function getMulFactorForCat(buf,cat){
   return 1;
 }
 
+// SHIP / CLEAR (and the projection chip hanging off SHIP) belong to the hand the
+// player is packing, not to the scan that follows it — they step off the stage
+// for the length of the sequence. endScoreSequence() is the single funnel back,
+// so every exit path (including the no-board early return) restores them.
+function setScoringChrome(on){
+  const stage=document.querySelector('#s-game .gm-stage');
+  if(stage)stage.classList.toggle('gm-scoring',!!on);
+}
+
 // ── Scan-order animation ──
 function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,cellsUnfilled){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.add('active');
+  setScoringChrome(true);
 
   const boardEl=g('board');
   const firstCell=boardEl.children[0]?.getBoundingClientRect();
@@ -357,16 +367,30 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
   const banner=document.createElement('div');banner.className='score-total-banner';
   banner.textContent='+'+total.toLocaleString();seq.appendChild(banner);
 
+  // The scan is stepped by the player, not by a timer — one cat or one treat per
+  // click, so every piece is read before the next one fires. This used to be a
+  // DEV_MODE-only view; it is now how scoring plays for everyone.
   const stepExplain=document.createElement('div');
-  stepExplain.style.cssText='position:fixed;bottom:calc(12% + 60px);left:50%;transform:translateX(-50%);z-index:403;text-align:center;font-family:\'Fredoka One\',cursive;font-size:14px;color:rgba(255,255,255,.8);max-width:340px;width:90%;background:rgba(26,34,54,.88);border-radius:14px;padding:10px 18px;';
-  if(!DEV_MODE)stepExplain.style.display='none';
+  stepExplain.className='seq-step-explain';
   seq.appendChild(stepExplain);
 
   const nextBtn=document.createElement('button');
-  nextBtn.style.cssText='position:fixed;bottom:12%;left:50%;transform:translateX(-50%);z-index:404;padding:12px 36px;border:none;cursor:pointer;background:#fff;color:var(--tx);font-family:\'Fredoka One\',cursive;font-size:16px;border-radius:50px;box-shadow:0 4px 0 rgba(0,0,0,.2);';
+  nextBtn.className='seq-step-btn';
   nextBtn.textContent='Next →';
-  if(!DEV_MODE)nextBtn.style.display='none';
   seq.appendChild(nextBtn);
+
+  // Anchor the step controls to the slot SHIP just vacated, under the board:
+  // the scan's control sits exactly where the hand's control was, instead of
+  // floating over the hand tray. `visibility:hidden` keeps SHIP's box in the
+  // layout, so its rect is still the right measurement after it fades out.
+  const shipRect=g('btn-fit')?.getBoundingClientRect();
+  if(shipRect&&shipRect.width){
+    const cx=shipRect.left+shipRect.width/2;
+    nextBtn.style.left=cx+'px';
+    nextBtn.style.top=(shipRect.top+shipRect.height/2)+'px';
+    stepExplain.style.left=cx+'px';
+    stepExplain.style.bottom=(window.innerHeight-shipRect.top+10)+'px';
+  }
 
   const steps=[];
   let runningTotal=0;
@@ -574,21 +598,28 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
     isLast:true
   });
 
+  // Space / Enter advance too, so a long scan doesn't have to be all mouse.
+  const onStepKey=e=>{
+    if(e.repeat)return;
+    if(e.key!==' '&&e.key!=='Enter'&&e.key!=='Spacebar')return;
+    e.preventDefault();
+    nextBtn.click();
+  };
+  document.addEventListener('keydown',onStepKey);
+  function finishSeq(){
+    document.removeEventListener('keydown',onStepKey);
+    endScoreSequence(total);
+  }
+
   let stepIdx=-1;
   function runNextStep(){
     stepIdx++;
-    if(stepIdx>=steps.length){endScoreSequence(total);return;}
+    if(stepIdx>=steps.length){finishSeq();return;}
     const step=steps[stepIdx];
     if(stepExplain)stepExplain.textContent=step.explain||'';
     setTimeout(()=>step.run(),120);
-    if(DEV_MODE){
-      nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
-      nextBtn.onclick=step.isLast?()=>endScoreSequence(total):runNextStep;
-    }else{
-      const delay=step.isLast?(step.endDelay||2400):step.kind==='treat'?550:750;
-      if(step.isLast)setTimeout(()=>endScoreSequence(total),delay);
-      else setTimeout(runNextStep,delay);
-    }
+    nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
+    nextBtn.onclick=step.isLast?finishSeq:runNextStep;
   }
   runNextStep();
 }
@@ -712,6 +743,7 @@ function endScoreSequence(total){
   const seq=g('ov-score-seq');
   seq.innerHTML='';
   seq.classList.remove('active');
+  setScoringChrome(false);
   G.score+=total;
   // Sync score display
   const scoreEl=g('g-score');
