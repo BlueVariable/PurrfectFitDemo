@@ -212,6 +212,19 @@ body::before{display:none;}
 }
 .cell.treat-affect-preview{animation:cell-affect-pulse 1.1s ease-in-out infinite;}
 
+/* ── TREAT PIECE SILHOUETTE (js/piece.js) ──
+   A treat's cells bleed across the grid gap into each other so the piece reads
+   as one tetromino instead of a cluster of tiles. Painted INSIDE the real cell,
+   so the board's pop / glow / affect-pulse animations still carry it. */
+.pc-skin{position:absolute;box-sizing:border-box;pointer-events:none;z-index:0;}
+.pc-em{position:absolute;transform:translate(-50%,-50%);pointer-events:none;
+  z-index:2;line-height:1;white-space:nowrap;}
+.pc-box{position:relative;}
+.pc-cell{position:absolute;}
+/* a drop preview lands ON a piece sometimes — keep the red/green readable */
+.cell.ok .pc-skin,.cell.bad .pc-skin,.bpc.ok .pc-skin,.bpc.bad .pc-skin,
+.sp-bpc.ok .pc-skin,.sp-bpc.bad .pc-skin{opacity:.22;}
+
 /* ── GHOST (follows cursor) ── */
 #ghost{position:fixed;pointer-events:none;z-index:9999;display:none;transform:translate(-50%,-50%);transition:none;}
 .gh-grid{display:grid;gap:3px;}
@@ -688,10 +701,11 @@ body::before{display:none;}
 /* the deck's card shows only the shape, a name tab and a cost tag */
 .ps-stage .tc-info>*{display:none;}
 .ps-stage .tc-info>.tc-nm{display:block;}
+/* The shape art is one silhouette painted by js/piece.js (paintShapePreview).
+   It keeps this block's old cqw sizing — the constants moved into shop.js
+   (SHOP_SHAPE_CELL / SHOP_SHAPE_GAP) because the painter positions each cell
+   itself; what went away is the grid of separate tiles it used to draw. */
 .ps-stage .tc-shape{display:flex;align-items:center;justify-content:center;}
-.ps-stage .tc-shape>div{gap:.35cqw!important;padding:0!important;background:none!important;
-  grid-template-columns:repeat(var(--tcc,3),2.9cqw)!important;}
-.ps-stage .tc-shape>div>div{width:2.9cqw!important;height:2.9cqw!important;border-radius:.5cqw!important;}
 .ps-stage .tc-price{position:absolute;right:-2.4cqw;top:1.2cqw;min-width:4.4cqw;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   background:#d2f886;border:0.17cqw solid #1b1a24;border-radius:.8cqw;padding:.25cqw .5cqw;

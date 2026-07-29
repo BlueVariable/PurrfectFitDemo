@@ -412,6 +412,21 @@ function renderBoard(){
   window._boardCellSize=cs;
   el.style.gridTemplateColumns=`repeat(${G.bsc},${cs}px)`;
   el.innerHTML='';
+  // Treats are drawn as ONE silhouette per piece (js/piece.js), so collect each
+  // treat's cells up front: the skin needs to know which neighbours are the
+  // same treat, and the emoji is placed once, on the middle of the whole piece.
+  const bgap=parseFloat(getComputedStyle(el).columnGap)||4;
+  const isTreatCell=(rr,cc)=>{
+    const b=G.board[rr]&&G.board[rr][cc];
+    return!!(b&&b.filled&&b.kind!=='cat');
+  };
+  const treatCells={};
+  for(let r=0;r<G.bsr;r++)for(let c=0;c<G.bsc;c++){
+    const b=G.board[r][c];
+    if(isTreatCell(r,c)&&b.gid)(treatCells[b.gid]=treatCells[b.gid]||[]).push([r,c]);
+  }
+  const treatLabel={};
+  Object.keys(treatCells).forEach(gid=>{treatLabel[gid]=pieceLabelSpot(treatCells[gid],cs,bgap);});
   for(let r=0;r<G.bsr;r++) for(let c=0;c<G.bsc;c++){
     const div=document.createElement('div');
     div.className='cell';
@@ -448,18 +463,33 @@ function renderBoard(){
       if(bd.kind==='cat'){
         div.textContent='';
       } else {
-        div.style.fontSize=Math.floor(cs*.45)+'px';
-        div.textContent=bd.em||'';
-        // outline treat if its requirement fails
+        // Treat: the cell is only a spacer. The piece's own skin is painted
+        // inside it and bleeds across the board gap into its other cells, so a
+        // two-cell treat reads as one tetromino instead of two tiles. Keeping
+        // it inside the cell (not on an overlay) is what lets the scoring pop,
+        // the board-full glow and the affect pulse still carry the treat.
         const gid=bd.gid;
         const bt=G.treats.find(t=>t.gid===gid);
-        if(bt&&treatReqFails(bt.tdef)){
-          div.style.borderColor='#e04848';
-          div.style.position='relative';
-          const badge=document.createElement('span');
-          badge.style.cssText='position:absolute;top:2px;right:2px;background:#e04848;color:#fff;border-radius:50%;width:13px;height:13px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;line-height:1;';
-          badge.textContent='!';
-          div.appendChild(badge);
+        const reqFails=!!(bt&&treatReqFails(bt.tdef));
+        div.style.background='transparent';
+        div.style.border='none';
+        div.style.position='relative';
+        paintPieceCell(div,(rr,cc)=>isTreatCell(rr,cc)&&G.board[rr][cc].gid===gid,r,c,cs,bgap,{
+          fill:bd.col,
+          stroke:reqFails?'#e04848':'rgba(255,255,255,.28)',
+          bw:reqFails?3:2,
+          rad:Math.max(5,Math.round(cs*0.16))});
+        // One emoji per treat, on the middle of the whole piece — and the
+        // failed-requirement badge with it, so both are stamped once.
+        const spot=treatLabel[gid];
+        if(spot&&spot.r===r&&spot.c===c){
+          div.appendChild(pieceLabelEl(bd.em,spot.dx,spot.dy,Math.floor(cs*.45)));
+          if(reqFails){
+            const badge=document.createElement('span');
+            badge.style.cssText='position:absolute;top:2px;right:2px;background:#e04848;color:#fff;border-radius:50%;width:13px;height:13px;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900;z-index:3;box-shadow:0 1px 3px rgba(0,0,0,.5);pointer-events:none;line-height:1;';
+            badge.textContent='!';
+            div.appendChild(badge);
+          }
         }
         // mousedown on treat: start drag immediately
         div.addEventListener('mousedown',(e)=>{if(e.button!==0||H.kind)return;e.stopPropagation();onBoardClick(r,c);});
@@ -568,6 +598,10 @@ function renderBP(){
   const cs=bpFitCellSize(grid,document.querySelector('.bpgw'),cols,rows);
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.innerHTML='';
+  // Treats draw as one silhouette per piece, exactly as the pet shop's grid
+  // does — see bpPieceLayout (js/piece.js).
+  const bgap=gridGap(grid,cs);
+  const piece=bpPieceLayout(cs,bgap);
   for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
     const div=document.createElement('div');
     div.className='bpc';
@@ -575,10 +609,12 @@ function renderBP(){
     const bd=G.bp[r][c];
     if(bd.filled){
       div.classList.add('ft');
-      div.style.background=bd.col+'bb';
-      div.style.borderColor=bd.col;
+      div.style.background='transparent';
+      div.style.border='none';
       div.style.position='relative';
-      div.textContent=bd.em||'';
+      paintPieceCell(div,bpHasGid(bd.gid),r,c,cs,bgap,bpSkinOpts(cs,bd.col));
+      const spot=piece.label[bd.gid];
+      if(spot&&spot.r===r&&spot.c===c)div.appendChild(pieceLabelEl(bd.em,spot.dx,spot.dy,Math.round(cs*0.45)));
       if(bd.gid===G.selBpGid) div.classList.add('sel-t');
       // Use drag-threshold: only pick up if mouse moves > 5px after mousedown
       div.addEventListener('mousedown',(e)=>{

@@ -226,9 +226,26 @@ document.addEventListener('touchend',e=>{
   handleTouchDrop(clientX,clientY);
 });
 
+// A held treat is drawn at the pitch of whatever it is about to drop into, and
+// the board and the inventory are different sizes — so crossing between them
+// has to redraw the ghost. Only fires on the crossing, not on every pixel.
+function ghostRetarget(cx,cy){
+  if(H.kind!=='treat')return;
+  const b=g('board');
+  let over=false;
+  if(b){
+    const r=b.getBoundingClientRect();
+    over=r.width>0&&cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom;
+  }
+  if(over===!!H._overBoard)return;
+  H._overBoard=over;
+  updateGhost();
+}
+
 // ghost follows mouse
 document.addEventListener('mousemove',e=>{
   if(!H.kind){g('ghost').style.display='none';return;}
+  ghostRetarget(e.clientX,e.clientY);
   const gh=g('ghost');
   gh.style.display='block';
   gh.style.left=e.clientX+'px';
@@ -249,6 +266,7 @@ document.addEventListener('touchmove',e=>{
   e.preventDefault();
   _touchMovedWhileHeld=true;
   const{clientX,clientY}=getCoords(e);
+  ghostRetarget(clientX,clientY);
   const gh=g('ghost');
   gh.style.display='block';
   gh.style.left=clientX+'px';
@@ -362,6 +380,41 @@ function handleTouchDrop(cx,cy){
   }
 }
 
+// The pitch of the grid the held piece is about to drop into, so what you hold
+// is exactly the size of the hole it is heading for. Cats always mean the
+// board. Treats used to be pinned to a 26px doll's-house copy no matter what,
+// which read as a different, much smaller object than the slot it was aimed at
+// — most obviously while dragging a purchase into the pet shop's inventory,
+// whose cells are four times that. They now measure the same way: the board
+// while the cursor is over it, otherwise whichever inventory grid is on screen.
+function heldPitch(){
+  const board=g('board');
+  const bGap=board?parseFloat(getComputedStyle(board).columnGap):NaN;
+  const boardPitch={cs:window._boardCellSize||38,gap:isFinite(bGap)?bGap:3};
+  if(H.kind==='cat')return boardPitch;
+  if(H._overBoard&&board&&board.getBoundingClientRect().width>0)return boardPitch;
+  // A grid on a hidden screen measures 0 — that is how we tell which of the two
+  // inventories (game scene / pet shop) is the live one.
+  for(const[id,sel]of[['shop-bpg','.sp-bpc'],['bpg','.bpc']]){
+    const grid=g(id);if(!grid)continue;
+    const cell=grid.querySelector(sel);if(!cell)continue;
+    const w=cell.getBoundingClientRect().width;
+    if(w>1){
+      const gp=parseFloat(getComputedStyle(grid).columnGap);
+      return{cs:w,gap:isFinite(gp)?gp:3};
+    }
+  }
+  return boardPitch;
+}
+
+// Skin styling for the carried treat: a bold rim so the piece stays legible
+// over a busy board, sized off the pitch so it holds up at every cell size.
+function ghostSkinOpts(cs){
+  return{fill:H.color,stroke:'rgba(255,255,255,.66)',
+         bw:Math.max(2,Math.round(cs*0.028)),
+         rad:Math.max(4,Math.round(cs*0.16))};
+}
+
 function updateGhost(){
   // Every H change funnels through here (mouse and touch, pickup and drop, on
   // every screen), so the pet shop's SELL BACK plate keeps itself in step from
@@ -370,15 +423,8 @@ function updateGhost(){
   if(!H.kind){g('ghost').style.display='none';return;}
   const cells=H.cells;
   const cols=cells[0].length;
-  // A carried cat is drawn at the board's own cell pitch, so what you hold is
-  // exactly the size of the hole it is about to fill — and it does not jump
-  // scale on the way out of the hand tray. Treats keep the compact ghost: they
-  // are dragged around the inventory grid as much as the board.
-  const isCat=H.kind==='cat';
-  const board=g('board');
-  const boardGap=board?parseFloat(getComputedStyle(board).columnGap):NaN;
-  const cs=isCat?(window._boardCellSize||38):26;
-  const gap=isCat?(isFinite(boardGap)?boardGap:3):3;
+  const isTreat=H.kind==='treat'||H.kind==='shop-treat';
+  const{cs,gap}=heldPitch();
   const grid=g('gh-grid');
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.style.gap=gap+'px';
@@ -387,14 +433,29 @@ function updateGhost(){
   // Resolve cat art so the drag ghost shows the illustration (not blocks),
   // matching the board/hand rendering. Treats (no shape/type) return null.
   const catInfo=(H.kind==='cat'&&typeof catArtInfo==='function')?catArtInfo(H.data&&H.data.shape,H.data&&H.data.type):null;
-  cells.forEach(row=>row.forEach(v=>{
+  cells.forEach((row,r)=>row.forEach((v,c)=>{
     const d=document.createElement('div');
     d.className='gh-cell';
     d.style.width=cs+'px';d.style.height=cs+'px';
-    if(v){d.style.background=catInfo?H.color+'33':H.color;d.style.borderColor=catInfo?'rgba(255,255,255,.35)':'rgba(255,255,255,.55)';}
+    if(isTreat){
+      // One solid tetromino: the cell is only a spacer, the silhouette is
+      // painted into it and bleeds across the gap (js/piece.js).
+      d.style.background='transparent';d.style.border='none';d.style.position='relative';
+      if(v)paintPieceCell(d,shapeHas(cells),r,c,cs,gap,ghostSkinOpts(cs));
+    }
+    else if(v){d.style.background=catInfo?H.color+'33':H.color;d.style.borderColor=catInfo?'rgba(255,255,255,.35)':'rgba(255,255,255,.55)';}
     else{d.style.background='transparent';d.style.border='none';}
     grid.appendChild(d);
   }));
+  // …and one emoji, sitting on the middle of the whole piece rather than being
+  // stamped once per cell.
+  if(isTreat&&H.em){
+    const filled=[];
+    cells.forEach((row,r)=>row.forEach((v,c)=>{if(v)filled.push([r,c]);}));
+    const spot=pieceLabelSpot(filled,cs,gap);
+    const host=spot&&grid.children[spot.r*cols+spot.c];
+    if(host)host.appendChild(pieceLabelEl(H.em,spot.dx,spot.dy,Math.round(cs*0.5)));
+  }
   // Illustration overlay across the (already-rotated) ghost bounding box.
   if(catInfo){
     const rows=cells.length;

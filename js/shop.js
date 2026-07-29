@@ -69,6 +69,10 @@ function renderShopBPGrid(){
   const cs=bpFitCellSize(grid,document.querySelector('.ps-invcard'),getBPC(),getBPR());
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
+  // Treats draw as one silhouette per piece, exactly as the game scene's grid
+  // does — see bpPieceLayout (js/piece.js).
+  const bgap=gridGap(grid,cs);
+  const piece=bpPieceLayout(cs,bgap);
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
     const div=document.createElement('div');
     div.className='sp-bpc';
@@ -76,10 +80,12 @@ function renderShopBPGrid(){
     const bd=G.bp[r][c];
     if(bd.filled){
       div.classList.add('ft');
-      div.style.background=bd.col+'bb';
-      div.style.borderColor=bd.col;
+      div.style.background='transparent';
+      div.style.border='none';
       div.style.position='relative';
-      div.textContent=bd.em||'';
+      paintPieceCell(div,bpHasGid(bd.gid),r,c,cs,bgap,bpSkinOpts(cs,bd.col));
+      const spot=piece.label[bd.gid];
+      if(spot&&spot.r===r&&spot.c===c)div.appendChild(pieceLabelEl(bd.em,spot.dx,spot.dy,Math.round(cs*0.45)));
       // Rearrange: drag from shop BP — keeps the treat's saved rotation, and
       // remembers its origin pose so an illegal drop reverts it exactly there
       div.addEventListener('mousedown',(e)=>{
@@ -188,6 +194,12 @@ function renderShopBPList(){
 }
 
 // ── Treat cards row ──
+// The shelf card's shape art keeps the stylesheet's own cqw sizing (2.9cqw
+// cells, .35cqw gaps against .ps-stage's container) rather than a measured
+// pixel size: renderShopFull runs while the screen is still hidden, where every
+// measurement reads 0, and cqw also stays responsive with no resize hook.
+const SHOP_SHAPE_CELL=2.9, SHOP_SHAPE_GAP=0.35;
+
 function renderTreatsRow(){
   const row=g('treats-row');if(!row)return;
   row.innerHTML='';
@@ -239,13 +251,7 @@ function renderTreatsRow(){
     card.addEventListener('mousemove',shopTreatTipMove);
     card.addEventListener('mouseleave',shopTreatTipHide);
 
-    // backpack shape mini grid
-    const cols=td.bpS[0].length;
-    let shapeHtml=`<div class="tc-shape"><div style="display:grid;grid-template-columns:repeat(${cols},40px);gap:2px;background:rgba(0,0,0,.07);padding:4px;border-radius:6px;">`;
-    td.bpS.forEach(row=>row.forEach(v=>{
-      shapeHtml+=`<div style="width:40px;height:40px;border-radius:3px;background:${v?td.col+'ee':'rgba(0,0,0,.08)'};border:1px solid ${v?td.col+'88':'rgba(0,0,0,.08)'}"></div>`;
-    }));
-    shapeHtml+='</div></div>';
+    const shapeHtml='<div class="tc-shape"></div>';
 
     const priceClass=dis?'tc-price sold':'tc-price';
     card.innerHTML=`
@@ -262,6 +268,12 @@ function renderTreatsRow(){
         <div class="${priceClass}"><div class="tc-price-coin">🪙</div>${td.pr}</div>
       </div>
       ${sold?'<div class="tc-stamp">SOLD</div>':''}`;
+
+    // The card shows the shape you are about to carry, so it is drawn by the
+    // same silhouette painter as the ghost and the bag: one solid tetromino,
+    // and no faint placeholder tiles in the empty corners of an L.
+    paintShapePreview(card.querySelector('.tc-shape'),td.bpS,SHOP_SHAPE_CELL,SHOP_SHAPE_GAP,{
+      unit:'cqw',fill:td.col,stroke:'rgba(20,18,28,.34)',bw:0.17,rad:0.5});
 
     if(!dis){
       card.style.cursor='grab';

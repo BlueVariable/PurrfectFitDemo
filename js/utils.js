@@ -51,4 +51,7 @@ window.addEventListener('resize',()=>{
   if(!G.bp)return;
   if(typeof renderBP==='function'&&g('s-game').classList.contains('on'))renderBP();
   if(typeof renderShopBPGrid==='function'&&g('s-rounds').classList.contains('on'))renderShopBPGrid();
+  // A piece in hand is drawn at the pitch of the grid it is aimed at, so it has
+  // to be re-fitted alongside them.
+  if(typeof updateGhost==='function'&&typeof H==='object'&&H&&H.kind)updateGhost();
 });
