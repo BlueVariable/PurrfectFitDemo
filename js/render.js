@@ -406,7 +406,7 @@ function tlOps(s){
   }
   return out+tlEsc(raw.slice(last));
 }
-// opts: {reqFail} paints the requirement chip red, {sell} adds the sell-back line
+// opts: {reqFail} paints the requirement chip red
 function treatTipHTML(td,opts){
   opts=opts||{};
   const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
@@ -417,7 +417,6 @@ function treatTipHTML(td,opts){
     +`<div class="tl-body${tags.length?' has-tags':''}">`   // deepens the pill so the chips overlap it
     +`<div class="tl-ef">${tlOps(td.ef||'')}</div>`
     +(cur?`<div class="tl-now"><b>NOW</b>${tlOps(String(cur).replace(/^Now:\s*/,''))}</div>`:'')
-    +(opts.sell?`<div class="tl-sub">Sells back for $${tlEsc(td.sp)}</div>`:'')
     +`</div>`
     +(tags.length?`<div class="tl-tags">${tags.join('')}</div>`:'');
 }
