@@ -108,8 +108,9 @@ A running total accumulates.
   ```
 
   Read the live value off the UI rather than assuming: prep-screen chip
-  "✨ DAY N · PURRFECT +N/cell", the in-game target card chip, and the FIT projection
-  tooltip all print it.
+  "✨ DAY N · PURRFECT +N/cell" and the in-game target card chip both print it. (The
+  SHIP projection chip prints it too, but it only renders with **Dev Mode ON** — call
+  `purrfectPerCell(G.round)` directly instead of relying on it.)
 - **The purrfect bonus is added at the very END and is NOT multiplied** by any treat
   multiplier (only the `fill_bonus_mult` boss modifier scales it). Multipliers only act on
   cats + flat treats that scanned *before* them. This is what makes positional play matter.

@@ -100,9 +100,20 @@ snowballing. Do not "fix" it by folding the bonus into `runningTotal`.
 stays exactly equal to the next `doFit()` total. Any change to the formula must be made
 in the shared helper, not duplicated.
 
-Player-visible: prep-screen chip `#rds-purrfect` ("✨ DAY N · PURRFECT +N/cell"),
-in-game chip `#g-purrfect-rate`, and the FIT projection chip's tooltip (all in
-`js/render.js`).
+Player-visible: prep-screen chip `#rds-purrfect` ("✨ DAY N · PURRFECT +N/cell") and
+in-game chip `#g-purrfect-rate` (both in `js/render.js`). The SHIP projection chip
+`#fit-proj` prints it too, but that chip is **DEV_MODE only** — see below.
+
+### Projected score chip (`#fit-proj`) — dev-only
+
+The live "~N if you SHIP now" readout beside the SHIP button is a **dev tool, not a
+player affordance**: `.fit-proj` is `display:none` and revealed by
+`body:has(#btn-dev-float.active) .fit-proj` — the same CSS-only gate the Auto-fit pill
+uses, driven by `applyDevModeUI()`. `updateProjectedScoreUI()` also early-returns when
+`DEV_MODE` is off so `projectScore()` isn't run for a hidden chip, and
+`applyDevModeUI()` calls it once on toggle so flipping dev ON mid-hand shows the
+current value rather than a stale one. `projectScore()` itself is **not** gated —
+`js/sim/`, `agent/pf-harness.js` and the treat spot-rating paw tooltip all still use it.
 
 ## Treat System
 

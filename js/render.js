@@ -216,11 +216,15 @@ function renderTopbarModifier(){
 function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();updateProjectedScoreUI();}
 
 // ── Feature 2a: live projected score readout near the FIT button ──
-// Recomputed wherever renderAll() already runs (every placement/removal/
-// pickup-from-board already calls it) — no extra hooks needed.
+// DEV_MODE only (the chip itself is hidden by CSS off-dev; this skips the
+// projectScore() work too). Recomputed wherever renderAll() already runs
+// (every placement/removal/pickup-from-board already calls it), plus once
+// from applyDevModeUI() so flipping the toggle mid-hand shows a live value
+// rather than whatever was last computed.
 function updateProjectedScoreUI(){
   const el=g('fit-proj');
   if(!el)return;
+  if(typeof DEV_MODE!=='undefined'&&!DEV_MODE)return;
   if(typeof G==='undefined'||!G.board||!G.board.length){el.textContent='';return;}
   let proj;
   try{ proj=projectScore(null); }catch(e){ return; } // never let a preview crash the game
