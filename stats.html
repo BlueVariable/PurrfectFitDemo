@@ -181,6 +181,13 @@ a{color:#2a5fa8;}
         <button data-v="all">Include local</button>
       </div>
     </div>
+    <div class="fgroup">
+      <span class="flab">Your own plays</span>
+      <div class="seg" id="seg-dev">
+        <button data-v="hide" class="on">Hidden</button>
+        <button data-v="show">Shown</button>
+      </div>
+    </div>
     <div class="fgroup" style="margin-left:auto;">
       <span class="flab" id="rowcount"></span>
     </div>
@@ -190,7 +197,7 @@ a{color:#2a5fa8;}
 
   <div class="foot">
     Anonymous: no names, no logins, no IP addresses — <em>players</em> means <em>browsers</em>.
-    Reading the <code>Telemetry</code> tab through the published CSV, which trails live play by a few minutes.<br>
+    Read live from the <code>Telemetry</code> tab, falling back to the published feed if the collector is unreachable.<br>
     Setup and privacy notes: <code>docs/analytics.md</code>
   </div>
 </div>

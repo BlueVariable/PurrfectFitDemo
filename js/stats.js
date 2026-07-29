@@ -13,10 +13,22 @@
 //  where it was.
 // ══════════════════════════════════════════════════════
 
+// Primary read: the collector's own GET, which queries the live sheet.
+const PF_TELEMETRY_API =
+  'https://script.google.com/macros/s/AKfycby9YrCUTV3AlMsTwJ1XTOSomm1XKYEyONOkFp2BzbucGqo7zoVbeLyPcCAUApDQsTau/exec';
+// Fallback: the published CSV. Reachable even if the script is down or
+// redeployed, but eventually-consistent — its edge nodes hold different
+// snapshots, so for minutes after a write it can serve a stale, sometimes
+// EMPTY copy. That is why it is the fallback and why an empty result from it
+// is never treated as "there is no data".
 const PF_TELEMETRY_CSV =
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vRxHTMqf05UHp6un_D_4Xbfph4En2GWNLiM1P3yB_B0uC3IJIQMvr-__9HySc0Qorzw1p0T92X6oxTn/pub?gid=148446356&single=true&output=csv';
 
-const S = { rows:[], range:'30', env:'live', error:'', fetchedAt:0 };
+const PF_STATS_CACHE = 'purrfect_stats_cache_v1';
+const PF_CACHE_ROWS  = 1500;   // keep the cache well under the localStorage ceiling
+
+const S = { rows:[], range:'30', env:'live', dev:'hide', error:'', fetchedAt:0,
+            source:'', total:0, truncated:false, stale:false };
 
 // ── CSV → objects ─────────────────────────────────────
 // Full state machine: quoted fields can contain commas, newlines and ""
@@ -66,14 +78,40 @@ function median(a){
 }
 function g(id){ return document.getElementById(id); }
 
+// ── Dev traffic ───────────────────────────────────────
+// Browsers whose plays are yours, not a player's. Two sources:
+//   • this list — the automation browser that verified the pipeline;
+//   • whoever is looking at the dashboard, read from the game's own
+//     `purrfect_vid` key. stats.html is served from the same origin as the
+//     game, so the viewer's id is right there, and "hide my own plays" needs
+//     no hard-coding and survives a cleared id (the new one is picked up too).
+// Never silently dropped — the count shows in the filter row and the toggle
+// puts them back.
+const PF_EXCLUDE_VISITORS = [
+  'zpsxhnxspxnz',   // Defne's browser (the plays from setting this up)
+  'qxc5uy7hasds',   // verification pass on the live site
+  'zof9o8lg974s',   // verification pass on localhost
+];
+function pfExcluded(){
+  const set=new Set(PF_EXCLUDE_VISITORS);
+  try{ const mine=localStorage.getItem('purrfect_vid'); if(mine) set.add(mine); }catch(e){}
+  return set;
+}
+
 // ── the filtered slice everything renders against ─────
 function slice(){
   const now=Date.now();
   const cutoff=S.range==='all'?0:now-Number(S.range)*86400000;
+  const skip=S.dev==='show'?new Set():pfExcluded();
   return S.rows.filter(r=>
     (S.env==='all'||r.env==='live') &&
+    !skip.has(r.visitor) &&
     r.tsMs>=cutoff
   );
+}
+function pfExcludedCount(){
+  const skip=pfExcluded();
+  return S.rows.filter(r=>skip.has(r.visitor)).length;
 }
 
 // ── events → sessions ─────────────────────────────────
@@ -113,17 +151,31 @@ function sessionize(rows){
 // ── render ────────────────────────────────────────────
 function render(){
   const dash=g('dash');
-  if(S.error){ dash.innerHTML=cardError(S.error); return; }
-  if(!S.rows.length){ dash.innerHTML=cardEmpty(); g('rowcount').textContent=''; return; }
+  // A failed read only takes over the page when there is genuinely nothing to
+  // show. With rows in hand — live, cached, or held over from a stale feed —
+  // the numbers win and the stamp carries the warning.
+  if(!S.rows.length){
+    dash.innerHTML = S.error ? cardError(S.error) : cardEmpty();
+    g('rowcount').textContent='';
+    return;
+  }
 
   const rows=slice();
   const ses=sessionize(rows);
-  g('rowcount').textContent=rows.length.toLocaleString()+' events · '+ses.length.toLocaleString()+' sessions';
+  const hidden=S.dev==='hide'?pfExcludedCount():0;
+  g('rowcount').textContent=rows.length.toLocaleString()+' events · '+ses.length.toLocaleString()+' sessions'
+    +(hidden?' · '+hidden.toLocaleString()+' dev hidden':'');
 
   if(!ses.length){
+    // Name the filter that actually emptied it, rather than listing every knob.
+    const why = hidden
+      ? '<p>Every event in range — <b>'+hidden.toLocaleString()+'</b> of them — is from your own '
+        +'browser or the setup checks, and those are hidden. Flip <b>Your own plays</b> to '
+        +'<b>Shown</b> to see them.</p>'
+      : '<p>No play recorded in the selected range. Try <b>All time</b>, or switch Source to '
+        +'<b>Include local</b> if you were testing on your own machine.</p>';
     dash.innerHTML='<div class="card"><div class="empty"><div class="em">🐈</div>'
-      +'<h3>Nothing in this window</h3><p>No play recorded in the selected range. Try <b>All time</b>, '
-      +'or switch Source to <b>Include local</b> if you were testing on your own machine.</p></div></div>';
+      +'<h3>Nothing in this window</h3>'+why+'</div></div>';
     return;
   }
 
@@ -326,9 +378,9 @@ function cardEmpty(){
     +'<h3>Waiting for the first play</h3>'
     +'<p>The collector is live and the game is wired to it — the <code>Telemetry</code> tab '
     +'just has nothing in it yet. Play a round and a row lands within seconds.</p>'
-    +'<p>Two things worth knowing: this feed trails live play by a few minutes, so hit '
-    +'<b>Refresh</b> rather than expecting it instantly; and your own testing on '
-    +'<code>localhost</code> is tagged <b>local</b>, which the <b>Source</b> filter hides by default.</p>'
+    +'<p>Two things worth knowing: your own plays are hidden by default (the '
+    +'<b>Your own plays</b> toggle brings them back), and testing on <code>localhost</code> '
+    +'is tagged <b>local</b>, which the <b>Source</b> filter also hides.</p>'
     +'<p style="margin-top:12px;">Setup and privacy notes: <code>docs/analytics.md</code></p>'
     +'</div></div>';
 }
@@ -362,42 +414,102 @@ function cardError(msg){
   });
 })();
 
+// ── reading the log ───────────────────────────────────
+function normalize(rows){
+  return rows.map(r=>{ r.tsMs=Date.parse(r.ts); return r; }).filter(r=>isFinite(r.tsMs));
+}
+
+// The collector queries the live sheet, so this is always current — no publish
+// lag, no stale snapshot. Rows arrive as bare arrays against one header row.
+function readLive(){
+  if(!PF_TELEMETRY_API) return Promise.reject(new Error('no live endpoint'));
+  return fetch(PF_TELEMETRY_API+'?rows=1&_='+Date.now(),{cache:'no-store'})
+    .then(r=>r.ok?r.json():Promise.reject(new Error('live read HTTP '+r.status)))
+    .then(j=>{
+      if(!j||j.ok!==true||!Array.isArray(j.rows)||!Array.isArray(j.headers))
+        throw new Error('live read: unexpected response');
+      const head=j.headers.map(h=>String(h).trim());
+      const rows=j.rows.map(a=>{ const o={}; head.forEach((h,i)=>{o[h]=a[i]!==undefined?a[i]:'';}); return o; });
+      return {rows:normalize(rows), total:j.total||0, truncated:!!j.truncated, source:'live'};
+    });
+}
+
+function readFeed(){
+  return fetch(PF_TELEMETRY_CSV+'&_='+Date.now(),{cache:'no-store'})
+    .then(r=>r.ok?r.text():Promise.reject(new Error('feed HTTP '+r.status)))
+    .then(text=>{
+      const rows=normalize(parseCSV(text));
+      return {rows, total:rows.length, truncated:false, source:'feed'};
+    });
+}
+
+// Last good read, so a flaky network shows yesterday's numbers rather than a
+// blank page pretending nobody has ever played.
+function saveCache(){
+  try{ localStorage.setItem(PF_STATS_CACHE,
+    JSON.stringify({t:S.fetchedAt, rows:S.rows.slice(-PF_CACHE_ROWS)})); }catch(e){}
+}
+function loadCache(){
+  try{
+    const o=JSON.parse(localStorage.getItem(PF_STATS_CACHE)||'null');
+    return (o&&Array.isArray(o.rows))?o:null;
+  }catch(e){ return null; }
+}
+
 // ── load ──────────────────────────────────────────────
 function load(){
   const dash=g('dash'), btn=g('refresh');
   dash.classList.add('loading');              // hold the old render, no skeleton flash
   btn.disabled=true; btn.textContent='…';
-  // Google caches the published CSV for a few minutes; the buster at least
-  // avoids the browser's own copy on top of that.
-  fetch(PF_TELEMETRY_CSV+'&_='+Date.now(),{cache:'no-store'})
-    .then(r=>r.ok?r.text():Promise.reject(new Error('HTTP '+r.status)))
-    .then(text=>{
-      S.error='';
-      S.rows=parseCSV(text)
-        .map(r=>{ r.tsMs=Date.parse(r.ts); return r; })
-        .filter(r=>isFinite(r.tsMs));
+  readLive()
+    .catch(()=>readFeed())            // script down or redeploying: fall back
+    .then(res=>{
+      // An empty answer is only believed from the live read. The CSV feed
+      // serves stale snapshots, and believing an empty one is exactly what
+      // used to flash "waiting for the first play" over a log that had rows.
+      if(res.source==='feed' && !res.rows.length && S.rows.length){
+        S.error=''; S.stale=true; S.fetchedAt=Date.now();
+        return;
+      }
+      S.error=''; S.stale=false;
+      S.rows=res.rows; S.total=res.total; S.truncated=res.truncated; S.source=res.source;
       S.fetchedAt=Date.now();
+      saveCache();
     })
-    .catch(err=>{ S.error=String(err.message||err); })
+    .catch(err=>{ S.error=String(err.message||err); })   // both reads failed
     .then(()=>{
       dash.classList.remove('loading');
       btn.disabled=false; btn.textContent='↺ Refresh';
-      g('stamp').innerHTML='read '+new Date(S.fetchedAt||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
-        +'<br>feed lags live play a few min';
+      const when=new Date(S.fetchedAt||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      const note=S.stale ? 'feed served a stale copy — showing last good read'
+               : S.source==='live' ? 'read live from the sheet'
+               : S.source==='feed' ? 'via the published feed (trails a few min)'
+               : 'from this browser’s cache';
+      g('stamp').innerHTML='read '+when+'<br>'+note;
       render();
     });
 }
 
 function wireSeg(id,key){
-  g(id).addEventListener('click',e=>{
+  const el=g(id);
+  if(!el) return;
+  el.addEventListener('click',e=>{
     const b=e.target.closest('button');
     if(!b) return;
-    Array.from(g(id).children).forEach(c=>c.classList.toggle('on',c===b));
+    Array.from(el.children).forEach(c=>c.classList.toggle('on',c===b));
     S[key]=b.getAttribute('data-v');
     render();
   });
 }
 wireSeg('seg-range','range');
 wireSeg('seg-env','env');
+wireSeg('seg-dev','dev');
 g('refresh').addEventListener('click',load);
-load();
+
+// Seed from the last good read so a refresh shows the numbers immediately
+// instead of an empty frame while the network round-trips.
+(function boot(){
+  const c=loadCache();
+  if(c&&c.rows.length){ S.rows=c.rows; S.fetchedAt=c.t||0; S.source='cache'; render(); }
+  load();
+})();

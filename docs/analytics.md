@@ -103,11 +103,31 @@ dashboard filters to live by default so your dev sessions don't skew the numbers
 ## The dashboard
 
 `stats.html` — open it locally or at
-`https://bluevariable.github.io/PurrfectFitDemo/stats.html`. It reads the
-published CSV directly (no login), and shows visitors and sessions, active
-playtime, a country breakdown, how far people actually get before quitting or
-failing, arrival sources, and a recent-sessions table. The published feed lags
-a few minutes behind live play; the **Refresh** button re-fetches.
+`https://bluevariable.github.io/PurrfectFitDemo/stats.html`. No login. Shows
+visitors and sessions, active playtime, a country breakdown, how far people
+actually get before quitting or failing, arrival sources, and a recent-sessions
+table.
+
+**Where it reads from.** Primarily the collector's own `?rows=1` endpoint, which
+queries the live sheet — so what you see is what the sheet holds, with no lag.
+If the script is unreachable (redeploying, quota) it falls back to the published
+CSV, and if both fail it shows the last good read from this browser's cache
+rather than a blank page.
+
+That fallback order matters: the published CSV is **eventually consistent**. Its
+edge nodes hold different snapshots, so for minutes after a write it can serve a
+stale — sometimes empty — copy. An empty result is therefore only believed when
+it comes from the live read; an empty CSV never wipes the view. (This is what
+used to make a refresh occasionally flash "waiting for the first play" over a log
+that had rows in it.)
+
+**Your own plays are hidden by default.** Two sources feed the exclusion:
+`PF_EXCLUDE_VISITORS` in `js/stats.js` (browsers used to build and verify this),
+plus whoever is viewing the dashboard — stats.html shares an origin with the
+game, so it reads the viewer's own `purrfect_vid` and drops it. Nothing is
+silently discarded: the count shows in the filter row and the **Your own plays**
+toggle puts them back. To exclude another browser, add its `visitor` id to that
+list.
 
 ## Housekeeping
 

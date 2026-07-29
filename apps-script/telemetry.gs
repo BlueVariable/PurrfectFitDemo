@@ -13,6 +13,7 @@
 var PF_SHEET_ID = '1qEr42p9HsQFPrBip1TqYB2DBehKPgyT_e0CwmNP_Cd4';
 var PF_TAB      = 'Telemetry';
 var PF_MAX_BATCH = 200;   // per request, so one bad caller can't hog the quota
+var PF_MAX_ROWS  = 5000;  // most recent events handed to the dashboard in one read
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -48,14 +49,37 @@ function doPost(e) {
   }
 }
 
-/** Health check — opening the /exec URL in a browser should print this. */
-function doGet() {
+/**
+ * GET has two modes:
+ *   (no params)  health check — what you see opening the /exec URL in a browser.
+ *   ?rows=1      the log itself, for stats.html.
+ *
+ * The dashboard reads through here rather than through the published CSV
+ * because that feed is eventually-consistent: its edge nodes hold different
+ * snapshots, so refreshes can serve a stale — sometimes empty — copy for
+ * minutes after a write. This reads the live sheet, so what the dashboard shows
+ * is what the sheet holds.
+ */
+function doGet(e) {
   var sh = SpreadsheetApp.openById(PF_SHEET_ID).getSheetByName(PF_TAB);
-  return pfOut({
-    ok: true,
-    service: 'purrfect-fit telemetry',
-    rows: sh ? Math.max(0, sh.getLastRow() - 1) : 0
-  });
+  if (!sh) return pfOut({ ok: false, error: 'tab "' + PF_TAB + '" not found' });
+
+  var last = sh.getLastRow();
+  var total = Math.max(0, last - 1);
+  if (!e || !e.parameter || !e.parameter.rows) {
+    return pfOut({ ok: true, service: 'purrfect-fit telemetry', rows: total });
+  }
+
+  var cols = sh.getLastColumn();
+  var headers = sh.getRange(1, 1, 1, cols).getValues()[0];
+  if (!total) return pfOut({ ok: true, total: 0, truncated: false, headers: headers, rows: [] });
+
+  // Newest events matter most, so keep the tail when the log outgrows the cap.
+  // Rows go over the wire as bare arrays against one shared header row — the
+  // same data as objects-per-row costs several times the bytes.
+  var take = Math.min(total, PF_MAX_ROWS);
+  var values = sh.getRange(last - take + 1, 1, take, cols).getDisplayValues();
+  return pfOut({ ok: true, total: total, truncated: total > take, headers: headers, rows: values });
 }
 
 /** Grow the tab before writing past its last row. */
