@@ -628,8 +628,15 @@ body::before{display:none;}
   font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;
   transition:transform .09s ease-out, box-shadow .09s ease-out, background .12s;}
 /* lights up while a treat is in hand, so the drop target is obvious */
+.ps-sell #ps-sell-lbl{display:flex;align-items:center;gap:.3cqw;}
+.ps-sell img{height:2.6cqw;margin:-.6cqw 0;}
 .ps-sell.armed{background:#d2f886;transform:translateY(-0.25cqw);
   box-shadow:0 0 0 0.17cqw #fdfcff, 0 .95cqw 0 #262229;}
+/* hovering the plate with a treat in hand: the drop is live, say so loudly */
+.ps-sell.armed.over{background:#b6f24e;transform:translateY(-0.55cqw) scale(1.05);
+  box-shadow:0 0 0 0.3cqw #fdfcff, 0 1.25cqw 0 #262229;}
+.ps-sell.armed.over::after{content:'DROP TO SELL';position:absolute;left:0;right:0;bottom:-2.4cqw;
+  text-align:center;font-family:'Bobby Jones Soft',cursive;font-size:1.15cqw;color:#d2f886;}
 
 .ps-shelf-lbl{left:69%;top:10.5%;width:24%;text-align:center;
   font-family:'Bobby Jones Soft',cursive;font-size:1.5cqw;color:#f0eef4;}
@@ -659,7 +666,7 @@ body::before{display:none;}
   display:flex;align-items:center;justify-content:center;cursor:inherit;padding:1cqw;gap:.4cqw;
   transition:transform .1s ease-out;}
 .ps-stage .tc:hover{transform:translateY(-0.3cqw);}
-.ps-stage .tc-em{display:block;font-size:3.2cqw;line-height:1;margin-right:.6cqw;}
+.ps-stage .tc-em{display:none;}
 .ps-stage .tc-info{position:static;display:contents;}
 .ps-stage .tc-nm{position:absolute;left:.8cqw;top:-1.1cqw;background:#5b608c;
   border:0.17cqw solid #1b1a24;border-radius:.6cqw;padding:.1cqw .6cqw;
@@ -678,6 +685,16 @@ body::before{display:none;}
   font-family:'Lazydog',cursive;font-size:2cqw;color:#1b1a24;z-index:2;line-height:1;}
 .ps-stage .tc-price::after{content:'COST';font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;margin-top:.1cqw;}
 .ps-stage .tc-price.sold{background:#e3695e;}
+
+/* shop treat hover card — roughly double the board tooltip so the effect text
+   is readable at a glance while shopping */
+#board-tip.tip-lg{max-width:460px!important;padding:16px 20px!important;border-radius:16px!important;}
+#board-tip.tip-lg .tl-nm{font-family:'Lazydog',cursive;font-size:28px;line-height:1.1;margin-bottom:6px;}
+#board-tip.tip-lg .tl-ef{font-size:20px;line-height:1.35;opacity:.92;}
+#board-tip.tip-lg .tl-ae{font-size:19px;line-height:1.35;margin-top:5px;color:#c9b6ff;}
+#board-tip.tip-lg .tl-cur{color:#ffb0d8;}
+#board-tip.tip-lg .tl-rq{font-size:19px;line-height:1.35;margin-top:5px;color:#ffc96b;}
+#board-tip.tip-lg .tl-sp{font-size:18px;margin-top:9px;opacity:.72;}
 .ps-stage .tc-dis{opacity:.92;}
 /* ════════ MENU SCREEN (title) ════════
    The concrete floor, the torn note and the strewn cat toys are the Canva UI

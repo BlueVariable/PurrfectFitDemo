@@ -319,16 +319,17 @@ function shopTreatTip(e,id){
   const td=TDEFS.find(t=>t.id===id); if(!td) return;
   const tip=g('board-tip'); if(!tip) return;
   const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
-  tip.innerHTML=`<div style="font-family:'Lazydog',cursive;font-size:15px;">${td.em||''} ${td.nm}</div>`
-    +`<div style="font-size:11px;margin-top:3px;opacity:.85;">${td.ef||''}</div>`
-    +(td.addEf?`<div style="font-size:11px;margin-top:2px;color:#c9b6ff;">${td.addEf}${cur?` <span style="color:#ffb0d8">${cur}</span>`:''}</div>`:'')
-    +(td.req?`<div style="font-size:11px;margin-top:2px;color:#ffc96b;">${td.req}</div>`:'')
-    +`<div style="font-size:11px;margin-top:4px;opacity:.7;">Sells back for $${td.sp}</div>`;
+  tip.classList.add('tip-lg');
+  tip.innerHTML=`<div class="tl-nm">${td.nm}</div>`
+    +`<div class="tl-ef">${td.ef||''}</div>`
+    +(td.addEf?`<div class="tl-ae">${td.addEf}${cur?` <span class="tl-cur">${cur}</span>`:''}</div>`:'')
+    +(td.req?`<div class="tl-rq">${td.req}</div>`:'')
+    +`<div class="tl-sp">Sells back for $${td.sp}</div>`;
   tip.style.display='block';
   if(typeof moveTip==='function')moveTip(e);
 }
 function shopTreatTipMove(e){ if(typeof moveTip==='function')moveTip(e); }
-function shopTreatTipHide(){ const t=g('board-tip'); if(t)t.style.display='none'; }
+function shopTreatTipHide(){ const t=g('board-tip'); if(t){t.style.display='none';t.classList.remove('tip-lg');} }
 
 // Label the plate for whatever is (or is not) in hand.
 function shopSellLabel(){
@@ -337,8 +338,8 @@ function shopSellLabel(){
   const held=(H.kind==='treat'&&H.bpGid);
   if(held){
     const grp=G.bpGroups.find(x=>x.gid===H.bpGid);
-    el.textContent=grp?('SELL $'+grp.tdef.sp):'SELL BACK';
-  } else el.textContent='SELL BACK';
+    el.innerHTML=grp?('SELL FOR '+grp.tdef.sp+'<img src="assets/ui/coin.png" alt="">'):'SELL BACK';
+  } else el.innerHTML='SELL BACK';
   if(plate)plate.classList.toggle('armed',!!held);
 }
 function shopSellDrop(){
@@ -347,4 +348,10 @@ function shopSellDrop(){
   H=resetH(); updateGhost(); hideHUD();
   sellTreatFromShop(gid);
   shopSellLabel();
+}
+
+// Hover feedback on the sell plate — only meaningful while a treat is held.
+function shopSellOver(on){
+  const plate=g('ps-sell'); if(!plate) return;
+  plate.classList.toggle('over', !!on && H.kind==='treat' && !!H.bpGid);
 }
