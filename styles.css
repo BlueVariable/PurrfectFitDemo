@@ -157,10 +157,16 @@ body:has(#btn-dev-float.active) .fit-proj{display:block;}
 .btn-dev-float:hover{border-color:rgba(255,255,255,.55);color:rgba(255,255,255,.8);}
 .btn-dev-float.active{border-color:rgba(245,194,0,.65);color:rgba(245,194,0,.95);background:rgba(36,29,14,.65);}
 
-/* floating dev-mode Auto-fit button — sits above the pill, game screen only,
+/* floating Config Sheet shortcut — second slot of the bottom-right pill stack.
+   Always available (it only opens the sheet in a new tab, it changes nothing),
+   so config edits are one click away from HQ, schedule, shop and board alike. */
+.btn-cfg-float{bottom:48px;}
+.btn-cfg-float:hover{border-color:rgba(255,255,255,.55);color:rgba(255,255,255,.8);}
+
+/* floating dev-mode Auto-fit button — third slot, game screen only,
    DEV_MODE only */
 .btn-dev-autofit{
-  display:none;bottom:48px;
+  display:none;bottom:84px;
   border-color:rgba(245,194,0,.5);color:rgba(245,194,0,.85);background:rgba(36,29,14,.65);
 }
 .btn-dev-autofit:hover{border-color:rgba(245,194,0,.75);color:rgba(245,194,0,1);}
@@ -1054,8 +1060,10 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .tt-dev .btn-reload-cfg{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.6);}
 .tt-dev .btn-reload-cfg:hover{border-color:rgba(255,255,255,.55);color:#fff;}
 /* the global floating dev pill lands in this exact corner — the title screen
-   has its own labelled toggle, so suppress the duplicate here. */
-body:has(#s-menu.on) #btn-dev-float{display:none;}
+   has its own labelled toggle (and its own Config Sheet button inside the dev
+   panel), so suppress both duplicates here. */
+body:has(#s-menu.on) #btn-dev-float,
+body:has(#s-menu.on) #btn-cfg-float{display:none;}
 .btn-menu-settings{cursor:pointer;}
 
 /* ════════ BRANCHES — PF INC. HEADQUARTERS (deck page 4) ════════

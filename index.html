@@ -269,6 +269,10 @@
      (body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit) so no extra
      JS hook is needed to track screen changes. See js/devfit.js. -->
 <button id="btn-dev-autofit" class="btn-dev-float btn-dev-autofit" onclick="devAutoFit()">🐾 Auto-fit</button>
+<!-- Floating Config Sheet shortcut — same fixed corner stack as the Dev pill, so
+     the sheet is one click away from every screen. The title screen hides it;
+     .tt-dev's dev panel already carries the labelled version. -->
+<button id="btn-cfg-float" class="btn-dev-float btn-cfg-float" onclick="openConfigSheet()" title="Open the config Google Sheet">📋 Config Sheet</button>
 
 <script src="js/utils.js"></script>
 <script src="js/treat-effects.js"></script>
