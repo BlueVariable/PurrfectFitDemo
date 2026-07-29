@@ -614,7 +614,15 @@ body::before{display:none;}
 .ps-stage .sp-bpg{width:100%;height:100%;display:grid!important;gap:.6cqw;background:transparent;padding:0;
   grid-template-columns:repeat(var(--bpc,5),1fr)!important;place-content:center;justify-items:stretch;}
 .ps-stage .sp-bpc{width:auto!important;height:auto!important;aspect-ratio:1;min-width:0;min-height:0;
-  background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:.5cqw;}
+  background:rgba(255,255,255,.62);border:0.12cqw solid rgba(255,255,255,.85);border-radius:.5cqw;
+  transition:background .08s, border-color .08s;}
+.ps-stage .sp-bpc.ft{border-color:rgba(20,18,28,.28);}
+/* placement preview while a treat is in hand — these were lost when the old
+   shop CSS block was replaced, so the classes were being applied to nothing.
+   !important because the renderer writes an inline background on filled cells. */
+.ps-stage .sp-bpc.ok {background:rgba(122,196,96,.92)!important;border-color:#4f8f3f!important;}
+.ps-stage .sp-bpc.bad{background:rgba(216,104,100,.92)!important;border-color:#a8443f!important;}
+.ps-stage .sp-bpc.sel-t{outline:0.28cqw solid #f5c200;outline-offset:0.12cqw;}
 .ps-deck{left:50.2%;top:10.4%;display:flex;align-items:flex-end;gap:.2cqw;}
 .ps-deck img{height:3.4cqw;}
 .ps-deck-col{display:flex;flex-direction:column;align-items:center;margin-left:-1.2cqw;}
