@@ -133,97 +133,38 @@
   </div>
 </div>
 
-<!-- ROUNDS / SHOP (combined) -->
+<!-- PET SHOP / round prep (deck page 6) -->
 <div id="s-rounds" class="scr">
-  <div class="sp-topbar">
-    <button class="sp-back" onclick="backToCalendar()">← Week</button>
-    <div class="rds-title">PURRFECT FIT</div>
-    <div class="sp-mon">
-      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="shop-cash">0</span></span>
-    </div>
-  </div>
+  <div class="tt-stage ps-stage">
+    <div class="ps-branch" id="ps-branch">&nbsp;</div>
+    <div class="ps-day"><span class="ps-day-d" id="ps-day-name">MONDAY</span><span class="ps-day-n">#<span id="rds-play-num">1</span><small id="ps-day-of">/3</small></span></div>
+    <div class="ps-cash"><img src="assets/ui/coin.png" alt=""><span id="shop-cash">0</span></div>
 
-  <div class="sp-body">
-    <!-- LEFT: round info -->
-    <div class="sp-left">
-      <div class="rds-pip-row" id="rds-pips"></div>
-      <div class="rds-round-card">
-        <div class="rds-rc-label">ROUND</div>
-        <div class="rds-rc-num" id="rds-play-num">1</div>
-        <div class="rds-rc-stats">
-          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-tgt">180</div><div class="rds-rc-sl">Target</div></div>
-          <div class="rds-rc-div"></div>
-          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-earn">+$4</div><div class="rds-rc-sl">Earn</div></div>
-          <div class="rds-rc-div"></div>
-          <div class="rds-rc-stat"><div class="rds-rc-sv" id="rds-board">4×4</div><div class="rds-rc-sl">Board</div></div>
-        </div>
-        <div class="rds-purrfect" id="rds-purrfect" title="Bonus added per playable cell when you fill the whole board (purrfect fit). Steps up each work-week day (MON → FRI).">✨ DAY 1 · PURRFECT +5/cell</div>
-      </div>
-      <div class="rds-mod-card" id="rds-mod-card" style="display:none;">
-        <div class="rds-mod-em" id="rds-mod-em">⚠️</div>
-        <div class="rds-mod-body">
-          <div class="rds-mod-name" id="rds-mod-name"></div>
-          <div class="rds-mod-desc" id="rds-mod-desc"></div>
-        </div>
-      </div>
-      <div class="sp-quote" id="shop-sub">"stock up before the round!"</div>
-      <button class="rds-btn-play" onclick="startRound()">▶ PLAY ROUND</button>
-      <div class="cb-tip-wrap" id="cb-tip-wrap" style="display:none;">
-        <button class="rds-btn-cafe" id="btn-coffee-break" onclick="coffeeBreakClick()" aria-describedby="cb-tip">COFFEE BREAK ☕</button>
-        <div class="cb-tip" id="cb-tip" role="tooltip">
-          <div class="cb-tip-title">☕ Coffee Break — skip this round</div>
-          <div class="cb-tip-body">Draft <b>one free treat</b> (rare or better) from a blend of your choice.</div>
-          <div class="cb-tip-cost">In return you forfeit this round's earnings and your next shop stays closed — you can still sell. Boss rounds can't be skipped.</div>
-        </div>
-      </div>
-      <div class="rds-hint" id="rds-hint"></div>
-    </div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <div></div>
-    <!-- RIGHT: shop (backpack + treats) -->
-    <div class="sp-right">
-      <div class="sp-center">
-        <div class="sp-bp-card">
-          <div class="sp-bp-hdr">BACKPACK</div>
-          <div class="sp-bp-gw"><div class="sp-bpg" id="shop-bpg"></div></div>
-          <div class="sp-bp-cap">"bag full of purr-fection"</div>
-        </div>
-        <div class="sp-bp-inv">
-          <div class="sp-bp-inv-hdr">— IN BACKPACK —</div>
-          <div class="sp-inv-list" id="shop-bp-list"></div>
-        </div>
-      </div>
-      <div class="treat-section blue" id="treats-section">
-        <div class="treat-sec-hdr">
-          <span class="treat-sec-lbl">TREATS</span>
-          <button class="treat-reroll" id="treats-reroll" onclick="rerollTreats()">↺ REROLL <span id="reroll-cost">$1</span></button>
-        </div>
-        <div class="treat-sec-body">
-          <div class="treat-row" id="treats-row"></div>
-        </div>
-        <div class="treat-sec-flavor" id="treats-flavor"></div>
-      </div>
-    </div>
-  </div>
-</div>
+    <button class="ps-paw" onclick="backToCalendar()" aria-label="Back to the schedule"><img src="assets/ui/icon-paw.png" alt=""></button>
+    <i class="ps-plate"></i>
+    <div class="ps-plate-card">PET SHOP</div>
+    <div class="ps-plate-flav" id="shop-sub">&ldquo;stock up before the round&rdquo;</div>
 
-<!-- CAFÉ (Coffee Break — round skip reward draft, see js/cafe.js) -->
-<div id="s-cafe" class="scr">
-  <div class="sp-topbar">
-    <div class="rds-title" style="margin-left:8px;">COFFEE BREAK ☕</div>
-    <div class="sp-mon">
-      <span class="sp-mon-val"><span class="sp-coin">🪙</span><span id="cafe-cash">0</span></span>
+    <div class="ps-invtab">INVENTORY</div>
+    <div class="ps-inv"><div class="ps-invcard"><div class="sp-bpg" id="shop-bpg"></div></div></div>
+    <div class="ps-deck"><img src="assets/ui/icon-box.png" alt=""><div class="ps-deck-col"><span class="ps-deck-lbl">DECK</span><span class="ps-deck-n" id="ps-deck-n">24</span></div></div>
+    <button class="ps-sell" id="treats-reroll" onclick="rerollTreats()">SELL<span id="reroll-cost">$3</span></button>
+
+    <div class="ps-shelf-lbl">&ldquo;best treats in town&rdquo;</div>
+    <div class="ps-hidden" id="treats-flavor"></div>
+    <div class="ps-shelf" id="treats-row"></div>
+    <div id="treats-section" style="display:none;"></div>
+    <div class="ps-bplist" id="shop-bp-list"></div>
+
+    <button class="ps-work" onclick="startRound()"><span>WORK</span></button>
+    <button class="ps-restock" onclick="rerollTreats()">RESTOCK<span id="ps-restock-cost">3</span><img src="assets/ui/coin.png" alt=""></button>
+
+    <div class="ps-hidden">
+      <span id="rds-tgt">180</span><span id="rds-earn">+$4</span><span id="rds-board">4x4</span><span id="rds-purrfect"></span>
+      <div id="rds-pips"></div>
+      <div id="rds-mod-card"><span id="rds-mod-em"></span><span id="rds-mod-name"></span><span id="rds-mod-desc"></span></div>
+      <span id="rds-hint"></span>
     </div>
-  </div>
-  <div class="cafe-body">
-    <div class="cafe-hdr">
-      <div class="cafe-title" id="cafe-title">☕ Choose your blend</div>
-      <div class="cafe-sub" id="cafe-sub"></div>
-    </div>
-    <div class="cafe-grid" id="cafe-grid"></div>
-    <div class="cafe-foot" id="cafe-foot"></div>
   </div>
 </div>
 

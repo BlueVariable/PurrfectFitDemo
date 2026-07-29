@@ -553,164 +553,125 @@ body::before{display:none;}
   flex:0 0 auto;width:280px;display:flex;flex-direction:column;
   align-items:center;gap:14px;padding:10px 0;
 }
-.sp-topbar{display:flex;align-items:center;gap:10px;z-index:1;padding:14px 24px;justify-content:space-between;background:#59697d;}
-.sp-back{display:flex;align-items:center;gap:7px;background:#5ab855;color:#fff;
-  font-family:'Fredoka One',cursive;font-size:14px;border-radius:12px;padding:7px 16px;
-  border:3px solid #1a1a2a;cursor:pointer;box-shadow:0 4px 0 #3a8030;transition:all .12s;letter-spacing:.5px;}
-.sp-back:hover{transform:translateY(-2px);box-shadow:0 6px 0 #3a8030;}
-.sp-back:active{transform:translateY(2px);box-shadow:0 1px 0 #3a8030;}
-.sp-mon{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.15);
-  border-radius:50px;padding:6px 14px;border:2px solid rgba(0,0,0,.2);}
-.sp-mon-lbl{font-family:'Fredoka One',cursive;font-size:12px;color:rgba(255,255,255,.75);letter-spacing:1px;}
-.sp-mon-val{display:flex;align-items:center;gap:5px;font-family:'Fredoka One',cursive;font-size:18px;color:#fff;}
-.sp-coin{width:22px;height:22px;background:#f5a820;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;border:2px solid #1a1a2a;box-shadow:0 2px 0 #c07810;}
-.sp-quote{font-size:12px;color:rgba(255,255,255,.6);font-style:italic;z-index:1;}
-.sp-label{font-family:'Fredoka One',cursive;font-size:9px;color:#f5c200;letter-spacing:2px;text-transform:uppercase;z-index:1;}
-.sp-title{font-family:'Fredoka One',cursive;font-size:44px;color:#fff;line-height:1;
-  text-shadow:3px 4px 0 rgba(0,0,0,.3);z-index:1;margin-top:-4px;}
-.sp-mascot{flex:1;display:flex;align-items:flex-end;justify-content:center;z-index:1;padding-bottom:8px;}
-.sp-bag{font-size:100px;filter:drop-shadow(4px 6px 8px rgba(0,0,0,.35));line-height:1;}
 
-/* center panel */
-.sp-center{
-  display:flex;flex-direction:row;gap:12px;align-items:flex-start;
+/* ════════ PET SHOP / round prep (deck page 6) ════════
+   Same furniture as the board screen — branch tab, day tag, paw, navy plate —
+   with the inventory in the middle and the treat shelf down the right. The
+   treat cards, backpack grid and sell list are still rendered by js/shop.js
+   into #treats-row, #shop-bpg and #shop-bp-list. */
+#s-rounds{
+  flex-direction:row;align-items:center;justify-content:center;padding:0;
+  background:#53535f;overflow:hidden;
+  cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;
 }
-.sp-bp-card{
-  background:#fff;border-radius:14px;
-  border:3px solid #1a1a2a;overflow:hidden;
-  box-shadow:4px 4px 0 #1a1a2a;min-width:300px;
+#s-rounds::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:url('assets/ui/bg-floor.png') center/cover no-repeat;
 }
-.sp-bp-hdr{
-  background:#8090cc;border-radius:0;
-  margin:0;padding:8px 12px;text-align:center;
-  font-family:'Fredoka One',cursive;font-size:14px;color:#fff;letter-spacing:2px;
-  border-bottom:2.5px solid #1a1a2a;
-}
-.sp-bp-gw{padding:10px 10px 8px;}
-.sp-bpg{display:grid;gap:4px;background:rgba(0,0,0,.1);padding:6px;border-radius:8px;}
-.sp-bpc{background:rgba(255,255,255,.5);border-radius:5px;border:1px solid rgba(0,0,0,.1);
-  cursor:pointer;transition:all .09s;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.sp-bpc.ft{border-color:rgba(0,0,0,.18);}
-.sp-bpc.ok{background:rgba(90,184,85,.25)!important;border-color:#5ab855!important;}
-.sp-bpc.bad{background:rgba(208,69,69,.2)!important;border-color:#d04545!important;}
-.sp-bpc.sel-t{outline:2px solid #f5c200;outline-offset:1px;}
-.sp-bp-cap{font-size:12px;color:rgba(58,80,112,.5);font-style:italic;text-align:center;padding:4px 10px 10px;}
-.sp-bp-inv{margin-top:6px;max-width:500px;}
-.sp-bp-inv-hdr{font-family:'Fredoka One',cursive;font-size:10px;color:rgba(255,255,255,.7);letter-spacing:1px;margin-bottom:5px;text-align:center;}
-.sp-inv-list{display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;}
-.sp-inv-row{background:rgba(255,255,255,.12);border-radius:8px;padding:5px 8px;
-  display:flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.2);}
-.sp-inv-em{font-size:16px;}
-.sp-inv-nm{font-family:'Fredoka One',cursive;font-size:10px;color:#fff;flex:1;}
-.sp-inv-sell{padding:2px 8px;border:2px solid #1a1a2a;cursor:pointer;background:#c07810;color:#fff;
-  font-family:'Fredoka One',cursive;font-size:15px;border-radius:6px;box-shadow:0 2px 0 #805008;
-  white-space:nowrap;}
+.ps-stage>*{position:absolute;}
+.ps-hidden{display:none;}
 
-/* right panel */
-.sp-right{
-  flex:1;max-width:1200px;display:flex;flex-direction:column;overflow:auto;
-  padding:10px 0;gap:12px;align-items: center;
-}
-/* treat section */
-.treat-section{
-  border-radius:14px;overflow:hidden;
-  border:3px solid #1a1a2a;
-  box-shadow:4px 4px 0 #1a1a2a;
-}
-.treat-section.blue{background:#ccc;}
-.treat-sec-hdr{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 14px;background:#d04545;
-  border-bottom:2.5px solid #1a1a2a;
-}
-.treat-sec-lbl{
-  font-family:'Fredoka One',cursive;font-size:16px;color:#fff;letter-spacing:2px;flex:1;
-}
-.treat-reroll{
-  background:#1a1a2a;color:#fff;border:2.5px solid rgba(255,255,255,.3);cursor:pointer;
-  border-radius:8px;height:34px;padding:0 14px;display:flex;align-items:center;justify-content:center;gap:5px;
-  font-family:'Fredoka One',cursive;font-size:13px;box-shadow:0 3px 0 rgba(0,0,0,.3);
-  transition:all .12s;white-space:nowrap;
-}
-.treat-reroll:hover{transform:translateY(-2px);}
-.treat-reroll:disabled{opacity:.35;cursor:not-allowed;}
-.treat-sec-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:8px;background:#ccc;}
-.treat-row{display:flex;flex-direction:row;gap:8px;}
-/* individual treat card */
-.tc{
-  background:#fff;border-radius:10px;
-  padding:10px 8px 8px;cursor:pointer;border:2.5px solid transparent;
-  transition:all .12s;box-shadow:2px 2px 0 rgba(0,0,0,.18);
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  position:relative;min-width:200px;flex:1;text-align:center;
-}
-.tc:hover:not(.tc-dis){transform:translateY(-2px);border-color:#f5c200;box-shadow:0 4px 0 rgba(0,0,0,.2);}
-.tc.tc-dis{opacity:.42;cursor:not-allowed;}
-.tc-dis::after{content:"Can't afford";position:absolute;top:6px;right:6px;background:#d04545;color:#fff;font-size:8px;font-weight:800;border-radius:6px;padding:2px 6px;font-family:'Fredoka One',cursive;pointer-events:none;}
-.tc.tc-bought{opacity:.38;pointer-events:none;}
-.tc-em{font-size:28px;line-height:1;flex-shrink:0;}
-.tc-shape{display:flex;justify-content:center;flex-shrink:0;}
-.tc-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;align-items:center;}
-.tc-nm{font-family:'Fredoka One',cursive;font-size:12px;color:#1a1a2a;line-height:1.2;}
-.tc-ef{font-size:13px;color:#7a8090;line-height:1.4;font-weight:800;}
-.tc-right{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
-/* coin price badge */
-.tc-price{
-  display:flex;align-items:center;gap:4px;
-  background:#f5a820;color:#1a1a2a;border-radius:8px;
-  padding:3px 10px 3px 4px;border:2px solid #1a1a2a;box-shadow:0 2px 0 #c07810;
-  font-family:'Fredoka One',cursive;font-size:25px;
-}
-.tc-price-coin{width:20px;height:20px;background:#f8d040;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:12px;
-  border:1.5px solid #c07810;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);}
-.tc-price.sold{background:#aaa;box-shadow:0 2px 0 #888;}
-.treat-sec-flavor{font-size:9px;color:rgba(255,255,255,.55);font-style:italic;text-align:right;padding:0 10px 8px;background:#ccc;}
-/* floating dev button */
-.btn-dev-float{
-  position:fixed;bottom:12px;right:12px;z-index:10000;
-  padding:5px 12px;border:1px solid rgba(255,255,255,.2);cursor:pointer;
-  background:rgba(0,0,0,.25);color:rgba(255,255,255,.4);
-  font-family:'Fredoka One',cursive;font-size:11px;border-radius:50px;
-  transition:all .15s;letter-spacing:.5px;backdrop-filter:blur(4px);
-}
-.btn-dev-float:hover{border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.65);}
-.btn-dev-float.active{border-color:rgba(245,194,0,.6);color:rgba(245,194,0,.9);background:rgba(245,194,0,.12);}
+.ps-branch{left:4.1%;top:-1.4%;width:11.5%;height:5.6%;display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:.4cqw;background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:0 0 1cqw 1cqw;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.8cqw;color:#8f6d59;}
+.ps-day{left:14.9%;top:-2.2%;width:6.4%;height:9.6%;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;padding-bottom:.5cqw;gap:.1cqw;
+  background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:0 0 1cqw 1cqw;
+  font-family:'Bobby Jones Soft',cursive;color:#1b1a24;line-height:1;}
+.ps-day-d{font-size:1.05cqw;}
+.ps-day-n{font-family:'Lazydog',cursive;font-size:2.2cqw;}
+.ps-day-n small{font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;}
+.ps-cash{right:3.5%;top:3.2%;height:5.2%;display:flex;align-items:center;gap:.4cqw;padding:0 1.4cqw 0 .35cqw;
+  background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
+  font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;}
+.ps-cash img{height:150%;margin-left:-1.1cqw;}
 
-/* floating dev-mode Auto-fit button — game screen only, DEV_MODE only */
-.btn-dev-autofit{
-  display:none;bottom:48px;
-  border-color:rgba(245,194,0,.5);color:rgba(245,194,0,.85);background:rgba(245,194,0,.1);
-}
-.btn-dev-autofit:hover{border-color:rgba(245,194,0,.75);color:rgba(245,194,0,1);background:rgba(245,194,0,.18);}
-.btn-dev-autofit.devfit-err{border-color:rgba(208,69,69,.7);color:#ffb0b0;background:rgba(208,69,69,.18);}
-body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-flex;align-items:center;gap:4px;}
-
-/* ── TRASH CAN DROP ZONE ── */
-.trash-zone{position:relative;display:flex;align-items:center;justify-content:center;
-  width:52px;height:52px;border-radius:12px;
-  background:rgba(0,0,0,.18);border:2px dashed rgba(255,255,255,.3);
-  cursor:default;transition:all .18s;font-size:28px;flex-shrink:0;}
-.trash-zone.drag-active{background:rgba(208,69,69,.4);border-color:#d04545;border-style:solid;transform:scale(1.1);}
-.trash-zone.no-disc{opacity:.32;}
-.trash-badge{
-  position:absolute;top:-9px;right:-9px;
-  background:#d04545;color:#fff;
-  font-family:'Fredoka One',cursive;font-size:12px;
-  border-radius:50%;width:22px;height:22px;
+.ps-paw{left:2.4%;top:11.2%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
+  background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .6cqw 0 #262229;overflow:hidden;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;}
+.ps-paw:hover {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .8cqw 0 #262229;}
+.ps-paw:active{transform:translateY(0.4cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
+.ps-paw img{position:absolute;left:50%;top:48%;width:52%;transform:translate(-50%,-50%) rotate(-31.8deg);}
+.ps-plate{left:4.4%;top:13.5%;width:18.5%;height:22.5%;background:#404461;
+  border:0.17cqw solid #1b1a24;border-radius:1.4cqw;}
+.ps-plate-card{left:6.9%;top:12.0%;width:21.3%;height:13.7%;background:#fcfafa;
+  border:0.17cqw solid #1b1a24;border-radius:1.2cqw;box-shadow:0 0 0 0.17cqw #fdfcff;
   display:flex;align-items:center;justify-content:center;
-  border:2px solid rgba(255,255,255,.8);
-  box-shadow:0 2px 5px rgba(0,0,0,.35);}
+  font-family:'Bobby Jones Soft',cursive;font-size:3.4cqw;color:#1b1a24;}
+.ps-plate-flav{left:6.2%;top:31.0%;width:15.5%;line-height:1.15;
+  font-family:'Providence Sans',cursive;font-size:1.1cqw;color:rgba(255,255,255,.62);}
 
-/* ── INLINE WIN TRANSITION ── */
-.cc,.rc{transition:transform 0.5s ease-in-out,opacity 0.4s ease-in-out;}
-.cc.round-won,.rc.round-won{transform:translateX(120%);opacity:0;pointer-events:none;}
-.win-inline{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0;transform:scale(.92);transition:opacity .4s .35s ease-out,transform .4s .35s ease-out;}
-.win-inline.visible{opacity:1;transform:scale(1);pointer-events:auto;}
-.win-inline-card{background:#fff;border-radius:18px;padding:32px 40px;text-align:center;max-width:390px;width:90%;border:3px solid #1a1a2a;box-shadow:5px 5px 0 #1a1a2a;}
-.win-inline-card h1{font-family:'Fredoka One',cursive;font-size:34px;color:#1a1a2a;margin-bottom:4px;}
-.win-inline-card .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
+.ps-invtab{left:34.2%;top:12.45%;width:14.35%;height:5.37%;display:flex;align-items:center;justify-content:center;
+  background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.9cqw;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.5cqw;color:#1b1a24;letter-spacing:.03em;}
+.ps-inv{left:32.9%;top:13.43%;width:30.29%;height:63.49%;background:rgba(26,22,46,.15);
+  border:0.17cqw solid rgba(255,255,255,.20);border-radius:1.4cqw;}
+.ps-invcard{position:absolute;left:4.3%;top:7.7%;width:92.1%;height:64.3%;
+  background:#d1d0d8;border:0.17cqw solid rgba(255,255,255,.55);border-radius:1cqw;
+  display:flex;align-items:center;justify-content:center;padding:.55cqw;}
+.ps-stage .sp-bpg{width:100%;display:grid;gap:.5cqw;background:transparent;padding:0;align-content:center;}
+.ps-stage .sp-bpc{width:auto!important;height:auto!important;aspect-ratio:1;min-width:0;min-height:0;
+  background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:.5cqw;}
+.ps-deck{left:50.2%;top:10.4%;display:flex;align-items:flex-end;gap:.2cqw;}
+.ps-deck img{height:3.4cqw;}
+.ps-deck-col{display:flex;flex-direction:column;align-items:center;margin-left:-1.2cqw;}
+.ps-deck-lbl{font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;color:#f0eef4;}
+.ps-deck-n{padding:.1cqw 1.1cqw;background:#eeb84b;border:0.17cqw solid #1b1a24;
+  border-radius:.7cqw;font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;}
+.ps-sell{left:42.4%;top:66.5%;width:11.3%;height:5.4%;cursor:inherit;
+  display:flex;align-items:center;justify-content:center;gap:.5cqw;
+  background:#e3695e;border:0.17cqw solid #17151c;border-radius:.9cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .7cqw 0 #262229;
+  font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;}
+.ps-sell:active{transform:translateY(.5cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
 
+.ps-shelf-lbl{left:69%;top:10.5%;width:24%;text-align:center;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.5cqw;color:#f0eef4;}
+.ps-shelf{left:69%;top:17%;width:22%;height:64%;display:flex;flex-direction:column;gap:3.6cqw;}
+.ps-bplist{display:none;}
+
+.ps-work{left:6.6%;top:83.0%;width:10.4%;height:7.6%;cursor:inherit;padding:0;
+  background:#d2f886;border:0.17cqw solid #17151c;border-radius:1cqw;
+  box-shadow:0 0 0 0.17cqw #fdfcff, 0 .9cqw 0 #262229;
+  transition:transform .09s ease-out, box-shadow .09s ease-out;}
+.ps-work:hover {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 1.1cqw 0 #262229;}
+.ps-work:active{transform:translateY(0.7cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
+.ps-work span{font-family:'Lazydog',cursive;font-size:2.7cqw;color:#17151c;
+  -webkit-text-stroke:.1em #fdfcff;paint-order:stroke fill;
+  filter:drop-shadow(.05em .09em 0 rgba(20,18,28,.35));display:inline-block;}
+.ps-restock{left:78.2%;top:91.7%;height:4.3%;padding:0 .8cqw;cursor:inherit;
+  display:flex;align-items:center;gap:.4cqw;
+  background:#e3695e;border:0.17cqw solid #17151c;border-radius:.8cqw;box-shadow:0 .5cqw 0 #262229;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.4cqw;color:#1b1a24;}
+.ps-restock span{font-family:'Lazydog',cursive;font-size:1.8cqw;}
+.ps-restock img{height:2.4cqw;}
+.ps-restock:active{transform:translateY(.35cqw);box-shadow:0 .15cqw 0 #262229;}
+
+/* treat cards on the shelf — js/shop.js renders .tc cards into .ps-shelf */
+.ps-stage .tc{position:relative;width:100%;flex:1 1 0;min-height:0;background:#fcfafa;
+  border:0.17cqw solid #1b1a24;border-radius:1.1cqw;box-shadow:0 0 0 0.17cqw #fdfcff;
+  display:flex;align-items:center;justify-content:center;cursor:inherit;padding:1cqw;gap:0;}
+.ps-stage .tc-em{display:none;}
+.ps-stage .tc-info{position:static;display:contents;}
+.ps-stage .tc-nm{position:absolute;left:.8cqw;top:-1.1cqw;background:#5b608c;
+  border:0.17cqw solid #1b1a24;border-radius:.6cqw;padding:.1cqw .6cqw;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.15cqw;color:#fdfcff;white-space:nowrap;z-index:2;}
+/* the deck's card shows only the shape, a name tab and a cost tag */
+.ps-stage .tc-info>*{display:none;}
+.ps-stage .tc-info>.tc-nm{display:block;}
+.ps-stage .tc-shape{display:flex;align-items:center;justify-content:center;}
+.ps-stage .tc-shape>div{gap:.35cqw!important;padding:0!important;background:none!important;
+  grid-template-columns:repeat(var(--tcc,3),2.9cqw)!important;}
+.ps-stage .tc-shape>div>div{width:2.9cqw!important;height:2.9cqw!important;border-radius:.5cqw!important;}
+.ps-stage .tc-price{position:absolute;right:-2.4cqw;top:1.2cqw;min-width:4.4cqw;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#d2f886;border:0.17cqw solid #1b1a24;border-radius:.8cqw;padding:.25cqw .5cqw;
+  box-shadow:0 .45cqw 0 #262229;
+  font-family:'Lazydog',cursive;font-size:2cqw;color:#1b1a24;z-index:2;}
+.ps-stage .tc-price.sold{background:#e3695e;}
+.ps-stage .tc-dis{opacity:.92;}
 /* ════════ MENU SCREEN (title) ════════
    The concrete floor, the torn note and the strewn cat toys are the Canva UI
    deck's page 1, re-cut into layers. Every layer is positioned by its CENTRE

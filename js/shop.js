@@ -23,7 +23,7 @@ function generateShopPool(){
   const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
   const budget=G.cash+totalSellable;
   const affordable=available.filter(td=>td.pr<=budget);
-  const stockCount=CFG.shop_stock_count||5;
+  const stockCount=CFG.shop_stock_count||3;  // deck page 6 shows exactly three
   const pool=affordable.length>=stockCount?affordable:available;
   return weightedSample(pool,stockCount,td=>RARITY_WEIGHTS[td.rar]??1);
 }
@@ -40,6 +40,8 @@ function rerollTreats(){
 function renderShopFull(){
   const rcEl=g('reroll-cost');if(rcEl)rcEl.textContent='$'+getRerollCost();
   g('shop-cash').textContent=G.cash;
+  const dk=g('ps-deck-n'); if(dk)dk.textContent=(G.deck?G.deck.length:0);
+  const rs=g('ps-restock-cost'); if(rs)rs.textContent=getRerollCost();
   renderShopBPGrid();
   renderShopBPList();
   renderTreatsRow();
