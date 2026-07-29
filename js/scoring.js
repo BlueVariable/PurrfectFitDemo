@@ -846,6 +846,17 @@ function roundWin(){
   const bonus=G.hands*perHand;
   const total=G.earn+bonus;
   G.cash+=total;
+  // Telemetry (js/analytics.js) — the same funnel the calendar stamp uses, so a
+  // cleared round is recorded exactly once however it was won (including a
+  // soft_landing rescue).
+  if(typeof pfTrackRoundWin==='function'){
+    const _mx2=G.maxHands||G.hands;
+    pfTrackRoundWin({
+      round:G.round,hands_used:Math.max(0,_mx2-G.hands),score:G.score,target:G.tgt,
+      purrfects:G.purrfectsThisRound||0,cash:G.cash,branch:G.branchId||'',
+      modifier:G.roundModifier?(G.roundModifier.name||G.roundModifier.id||''):'',
+    });
+  }
   const cc=document.querySelector('.cc');
   const rc=document.querySelector('.rc');
   if(cc)cc.classList.add('round-won');
@@ -929,6 +940,11 @@ function goShop(){
   G.round++;
   if(G.round>RCFG.length){
     if(G.branchId)markBranchComplete(G.branchId);
+    // Telemetry: the whole week survived — the rarest and most interesting row.
+    if(typeof pfTrackRunComplete==='function')pfTrackRunComplete({
+      round:RCFG.length,cash:G.cash,branch:G.branchId||'',
+      detail:{roundLog:G.roundLog||{}},
+    });
     gameInProgress=false;
     menuUpdateContinue();
     showBranchWin();
@@ -950,6 +966,12 @@ function roundFail(){
   g('fv-sc').textContent=G.score.toLocaleString();
   g('fv-tg').textContent=G.tgt.toLocaleString();
   g('ov-fail').classList.remove('off');
+  // Telemetry: where the run died, and how short it fell.
+  if(typeof pfTrackRoundFail==='function')pfTrackRoundFail({
+    round:G.round,hands_used:G.maxHands||'',score:G.score,target:G.tgt,
+    purrfects:G.purrfectsThisRound||0,cash:G.cash,branch:G.branchId||'',
+    modifier:G.roundModifier?(G.roundModifier.name||G.roundModifier.id||''):'',
+  });
 }
 function restart(){g('ov-fail').classList.add('off');gameInProgress=false;menuUpdateContinue();goToBranches();}
 function closeBranchWin(){g('ov-branch-win').classList.add('off');goToBranches();}

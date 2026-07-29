@@ -283,6 +283,7 @@ function newGameFromBranch(branchId){
   applyModifiersOnce();
   applyModifiers();
   gameInProgress=true;
+  if(typeof pfTrackRunStart==='function')pfTrackRunStart(branchId,branch.deck);
   menuUpdateContinue();
 }
 
