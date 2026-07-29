@@ -45,15 +45,23 @@ Global game state lives in `G` (`js/state.js`). Held/dragged piece state lives i
 `doFit()` → `runScoreSequence()` animates phases → `endScoreSequence()` checks
 win/loss → `roundWin()` or next hand via `dealHand()`.
 
-### The scan is stepped by the player, not by a timer
+### The scan is stepped by the player, unless they hand it to Auto
 
 `runScoreSequence()` builds a `steps[]` array (one entry per cat, one per treat, plus
-a final board-bonus/total step) and then **waits for input between every step** — the
-`Next →` button (`.seq-step-btn`) or Space/Enter. There is no auto-advance path and no
-toggle: this was a `DEV_MODE`-only view and is now how scoring plays for everyone. A
-new step kind just pushes onto `steps[]`; don't reintroduce a timed fallback.
+a final board-bonus/total step) and by default **waits for input between every step** —
+the `Next →` button (`.seq-step-btn`) or Space/Enter. This was a `DEV_MODE`-only view
+and is now how scoring plays for everyone. A new step kind just pushes onto `steps[]`.
 
-`finishSeq()` is the only exit — it drops the keydown listener before calling
+Beside Next sits **`Auto`** (`.seq-auto-btn`), which plays the scan on a timer instead:
+750ms a cat, 550ms a treat, `endDelay` on the final step — the cadence the scan used
+before it was click-stepped. It is a **player preference, not a dev flag**: the button
+toggles `AUTO_SCORE` via `setAutoScore()` (`js/config.js`), which persists to
+`localStorage['purrfect_auto_score']`, so it holds across hands, rounds and reloads.
+Toggling mid-scan takes effect immediately in both directions, and `Next` still works
+while Auto runs — it just takes the step early. Every path that advances or ends the
+scan goes through `clearAutoTimer()`, so a pending tick can never double-fire a step.
+
+`finishSeq()` is the only exit — it clears the auto timer and drops the keydown listener before calling
 `endScoreSequence()`. **The headless sim replaces `runScoreSequence` wholesale**
 (`js/sim/engine.js` → straight to `endScoreSequence`), so it never waits on a click;
 keep that stub working or every sim batch hangs.

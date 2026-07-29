@@ -369,15 +369,24 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
 
   // The scan is stepped by the player, not by a timer — one cat or one treat per
   // click, so every piece is read before the next one fires. This used to be a
-  // DEV_MODE-only view; it is now how scoring plays for everyone.
+  // DEV_MODE-only view; it is now how scoring plays for everyone. A player who
+  // would rather watch than click flips Auto (below) and it stays flipped.
   const stepExplain=document.createElement('div');
   stepExplain.className='seq-step-explain';
   seq.appendChild(stepExplain);
 
+  const controls=document.createElement('div');
+  controls.className='seq-step-controls';
+  seq.appendChild(controls);
+
   const nextBtn=document.createElement('button');
   nextBtn.className='seq-step-btn';
   nextBtn.textContent='Next →';
-  seq.appendChild(nextBtn);
+  controls.appendChild(nextBtn);
+
+  const autoBtn=document.createElement('button');
+  autoBtn.className='seq-auto-btn';
+  controls.appendChild(autoBtn);
 
   // Anchor the step controls to the slot SHIP just vacated, under the board:
   // the scan's control sits exactly where the hand's control was, instead of
@@ -386,10 +395,17 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
   const shipRect=g('btn-fit')?.getBoundingClientRect();
   if(shipRect&&shipRect.width){
     const cx=shipRect.left+shipRect.width/2;
-    nextBtn.style.left=cx+'px';
-    nextBtn.style.top=(shipRect.top+shipRect.height/2)+'px';
+    controls.style.left=cx+'px';
+    controls.style.top=(shipRect.top+shipRect.height/2)+'px';
     stepExplain.style.left=cx+'px';
     stepExplain.style.bottom=(window.innerHeight-shipRect.top+10)+'px';
+    // The log gets the band from just under the controls down to the bottom
+    // edge, on the same centre line as the chip and the buttons. Measure the row
+    // itself rather than SHIP's box: on a short window the row is the taller of
+    // the two, and the log must clear the buttons, not the slot they sit in.
+    const cRect=controls.getBoundingClientRect();
+    logDiv.style.left=cx+'px';
+    logDiv.style.top=(Math.max(cRect.bottom,shipRect.bottom)+14)+'px';
   }
 
   const steps=[];
@@ -606,13 +622,42 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
     nextBtn.click();
   };
   document.addEventListener('keydown',onStepKey);
+
+  let autoTimer=null;
+  function clearAutoTimer(){if(autoTimer){clearTimeout(autoTimer);autoTimer=null;}}
   function finishSeq(){
+    clearAutoTimer();
     document.removeEventListener('keydown',onStepKey);
     endScoreSequence(total);
   }
 
+  // Auto's cadence is the timed one the scan used before it became click-stepped:
+  // treats read quicker than cats, and the last step keeps its own endDelay so the
+  // total banner gets its beat before the sequence closes.
+  function scheduleAuto(step){
+    if(!step)return;
+    const delay=step.isLast?(step.endDelay||2400):step.kind==='treat'?550:750;
+    autoTimer=setTimeout(step.isLast?finishSeq:runNextStep,delay);
+  }
+  function syncAutoBtn(){
+    autoBtn.classList.toggle('on',AUTO_SCORE);
+    autoBtn.textContent=AUTO_SCORE?'Auto ⏸':'Auto ▶';
+    autoBtn.title=AUTO_SCORE
+      ? 'Scoring is playing itself — click to step it yourself again'
+      : 'Let the scoring play itself';
+  }
+  autoBtn.onclick=()=>{
+    setAutoScore(!AUTO_SCORE);   // sticks across hands, rounds and runs
+    syncAutoBtn();
+    clearAutoTimer();
+    if(AUTO_SCORE)scheduleAuto(steps[stepIdx]);  // picks the cadence up mid-scan
+  };
+  syncAutoBtn();
+
   let stepIdx=-1;
   function runNextStep(){
+    // Next still works while Auto is running — it just takes the step early.
+    clearAutoTimer();
     stepIdx++;
     if(stepIdx>=steps.length){finishSeq();return;}
     const step=steps[stepIdx];
@@ -620,6 +665,7 @@ function runScoreSequence(scanResults,boardBonus,boardFull,total,catsSnapshot,ce
     setTimeout(()=>step.run(),120);
     nextBtn.textContent=step.isLast?'Finish ✓':'Next →';
     nextBtn.onclick=step.isLast?finishSeq:runNextStep;
+    if(AUTO_SCORE)scheduleAuto(step);
   }
   runNextStep();
 }
