@@ -1231,18 +1231,28 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   flex-direction:row;align-items:center;justify-content:center;padding:0;
   background:#53535f;overflow:hidden;
   cursor:url('assets/ui/cursor-arrow.svg') 2 2, auto;
+  --px:0px;--py:0px;   /* pointer drift, written by initParallax() */
 }
+/* floor bled 3% past every edge so the counter-drift can't uncover a corner */
 #s-calendar::before{
-  content:'';position:absolute;inset:0;z-index:0;
+  content:'';position:absolute;inset:-3%;z-index:0;
   background:url('assets/ui/bg-floor.png') center/cover no-repeat;
+  transform:translate(calc(var(--px) * -.3), calc(var(--py) * -.3));
 }
 .sc-stage>*{position:absolute;}
-.sc-decor{pointer-events:none;user-select:none;}
-.sc-parcels{left:-8.0%;top:46.4%;width:46.4%;}
+/* the desk props are the only things on this screen that drift with the
+   pointer — the schedule itself has no --d, so the cards you are reading and
+   the buttons you are aiming at stay exactly where they are. */
+.sc-decor{pointer-events:none;user-select:none;
+  transform:translate(calc(var(--px) * var(--d,1)), calc(var(--py) * var(--d,1)));}
+/* the parcels lie nearest the camera, bleeding off the bottom-left corner at
+   the deck's scale, so they track the pointer hardest */
+.sc-parcels{left:-26.3%;top:42.2%;width:70.25%;--d:1.1;}
 /* the tools art is a narrow vertical strip in a wide canvas; the deck also
    rotates it. Sized so the props read at the design's scale rather than
    reverse-engineering that rotation for a background prop. */
-.sc-tools  {left:22.1%;top:38.8%;width:78%;}
+.sc-tools  {left:22.1%;top:38.8%;width:78%;--d:.8;}
+@media (prefers-reduced-motion:reduce){#s-calendar{--px:0px !important;--py:0px !important;}}
 
 .sc-paw{left:2.4%;top:11.4%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1273,6 +1283,12 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:.9cqw .9cqw 0 0;
   font-family:'Bobby Jones Soft',cursive;font-size:1.6cqw;color:#1b1a24;}
 
+/* the slab the day's orders are laid out on. The branch tab, the day tab and
+   the grid sheet tuck in BEHIND its top edge (DOM order does the z-stacking),
+   and the cards themselves hang past its bottom — the deck's look of a folder
+   with paperwork spilling off it. */
+.sc-board{left:37%;top:21%;width:54.7%;height:33.9%;background:#575f7e;
+  border:0.17cqw solid #1b1a24;border-radius:1.4cqw;}
 .sc-cards{left:33.7%;top:22.0%;width:61.3%;height:47%;display:flex;align-items:flex-start;
   justify-content:center;gap:0;}
 .sc-card{position:relative;flex:0 0 auto;width:18.4cqw;margin:0 -0.3cqw;border-radius:1.2cqw;

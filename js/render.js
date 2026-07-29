@@ -91,7 +91,7 @@ function menuPlay(){introStep=0;introShow();}
 // styles.css move, so buttons, the title pill and the letter card stay put.
 // This publishes the eased pointer offset as --px/--py on whichever parallax
 // screen is currently visible; depths live entirely in CSS.
-const PARALLAX_SCREENS=['s-menu','s-intro','s-branches'];
+const PARALLAX_SCREENS=['s-menu','s-intro','s-branches','s-calendar'];
 function initParallax(){
   const scrs=PARALLAX_SCREENS.map(g).filter(Boolean);
   if(!scrs.length)return;
