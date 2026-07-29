@@ -45,6 +45,27 @@ Global game state lives in `G` (`js/state.js`). Held/dragged piece state lives i
 `doFit()` → `runScoreSequence()` animates phases → `endScoreSequence()` checks
 win/loss → `roundWin()` or next hand via `dealHand()`.
 
+### The scan is stepped by the player, not by a timer
+
+`runScoreSequence()` builds a `steps[]` array (one entry per cat, one per treat, plus
+a final board-bonus/total step) and then **waits for input between every step** — the
+`Next →` button (`.seq-step-btn`) or Space/Enter. There is no auto-advance path and no
+toggle: this was a `DEV_MODE`-only view and is now how scoring plays for everyone. A
+new step kind just pushes onto `steps[]`; don't reintroduce a timed fallback.
+
+`finishSeq()` is the only exit — it drops the keydown listener before calling
+`endScoreSequence()`. **The headless sim replaces `runScoreSequence` wholesale**
+(`js/sim/engine.js` → straight to `endScoreSequence`), so it never waits on a click;
+keep that stub working or every sim batch hangs.
+
+While the sequence runs, `setScoringChrome(true)` puts `gm-scoring` on the game stage,
+which fades out **SHIP, CLEAR and the `#fit-proj` chip** — they belong to the hand being
+packed, not the scan that follows it. `endScoreSequence()` is the single funnel that
+restores them, so every exit path (including the no-board early return) is covered.
+`runScoreSequence()` also anchors the step controls onto SHIP's vacated slot by
+measuring `#btn-fit`'s rect (`visibility:hidden` keeps its box in the layout); at a
+fixed viewport offset they land on top of the hand tray.
+
 Between rounds the player lands on the **work-week calendar** (`s-calendar`,
 `js/calendar.js`) — the run as 5 days × 3 rounds (2 regular + 1 boss "deadline" on
 rounds 3/6/9/12/15, per `General!modifier_rounds`), past rounds stamped by
