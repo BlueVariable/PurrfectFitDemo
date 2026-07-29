@@ -20,8 +20,7 @@ function pickupCat(idx){
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
      grabDr:_gDr,grabDc:_gDc,dragging:false};
   updateGhost();showHUD();renderHand();renderBP();
-  const _tb=g('trash-badge');if(_tb)_tb.textContent=G.disc;
-  const _te=g('trash-drop');if(_te)_te.classList.toggle('no-disc',G.disc<=0);
+  updateTrashZone();
 }
 
 function pickupCatWithGrab(idx,grabDr,grabDc){
@@ -34,8 +33,7 @@ function pickupCatWithGrab(idx,grabDr,grabDc){
      color:cat.col,em:cat.em,handIdx:idx,boardGid:null,bpGid:null,
      grabDr:cDr,grabDc:cDc,dragging:true};
   updateGhost();showHUD();renderHand();renderBP();
-  const _tb2=g('trash-badge');if(_tb2)_tb2.textContent=G.disc;
-  const _te2=g('trash-drop');if(_te2)_te2.classList.toggle('no-disc',G.disc<=0);
+  updateTrashZone();
 }
 
 function pickupCatFromBoard(r,c){
@@ -92,7 +90,8 @@ function dropHeld(){
   updateGhost();hideHUD();renderHand();renderBP();
   clrBoardPrev(); // also clears the Feature 2b paw tip / affected-cell pulse (e.g. ESC-cancel mid-hover)
   if(g('shop-bpg'))renderShopFull();
-  const _teDrop=g('trash-drop');if(_teDrop){_teDrop.classList.remove('drag-active');_teDrop._hover=false;}
+  const _teDrop=g('trash-drop');if(_teDrop)_teDrop._hover=false;
+  updateTrashZone();
 }
 
 function rotate(){
@@ -144,11 +143,11 @@ document.addEventListener('mouseup',e=>{
     if(trashEl&&G.disc>0){
       const tr=trashEl.getBoundingClientRect();
       if(e.clientX>=tr.left&&e.clientX<=tr.right&&e.clientY>=tr.top&&e.clientY<=tr.bottom){
-        trashEl._hover=false;trashEl.classList.remove('drag-active');
+        trashEl._hover=false;
         doDiscard();return;
       }
     }
-    trashEl&&(trashEl._hover=false,trashEl.classList.remove('drag-active'));
+    if(trashEl){trashEl._hover=false;updateTrashZone();}
   }
 
   // Game treat dragged from BP — drop on board cell under mouse
@@ -250,15 +249,20 @@ document.addEventListener('mousemove',e=>{
   gh.style.display='block';
   gh.style.left=e.clientX+'px';
   gh.style.top=e.clientY+'px';
-  // trash can hover highlight
-  const trashEl=g('trash-drop');
-  if(trashEl&&H.kind==='cat'&&G.disc>0){
-    const tr=trashEl.getBoundingClientRect();
-    const over=e.clientX>=tr.left&&e.clientX<=tr.right&&e.clientY>=tr.top&&e.clientY<=tr.bottom;
-    trashEl._hover=over;
-    trashEl.classList.toggle('drag-active',over);
-  }
+  // discard pill hover highlight
+  trashHoverAt(e.clientX,e.clientY);
 });
+
+// Keeps the discard pill's hover state in step with the pointer, mouse or touch.
+function trashHoverAt(cx,cy){
+  const trashEl=g('trash-drop');
+  if(!trashEl)return;
+  if(H.kind==='cat'&&G.disc>0){
+    const tr=trashEl.getBoundingClientRect();
+    trashEl._hover=cx>=tr.left&&cx<=tr.right&&cy>=tr.top&&cy<=tr.bottom;
+  } else trashEl._hover=false;
+  updateTrashZone();
+}
 
 // ghost follows touch + simulate hover over board/bp cells
 document.addEventListener('touchmove',e=>{
@@ -272,6 +276,7 @@ document.addEventListener('touchmove',e=>{
   gh.style.left=clientX+'px';
   gh.style.top=clientY+'px';
   simulateTouchHover(clientX,clientY);
+  trashHoverAt(clientX,clientY);
 },{passive:false});
 
 // Simulate mouseenter/leave on board and BP cells during touch drag
@@ -366,7 +371,7 @@ function handleTouchDrop(cx,cy){
     if(trashEl&&G.disc>0){
       const tr=trashEl.getBoundingClientRect();
       if(cx>=tr.left&&cx<=tr.right&&cy>=tr.top&&cy<=tr.bottom){
-        trashEl._hover=false;trashEl.classList.remove('drag-active');
+        trashEl._hover=false;
         doDiscard();return;
       }
     }
