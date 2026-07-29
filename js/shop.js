@@ -337,7 +337,7 @@ function shopDropOnBP(r,c){
 function shopTreatTip(e,id){
   if(H.kind) return;                       // never cover the thing being dragged
   const td=TDEFS.find(t=>t.id===id); if(!td) return;
-  tlShow(e,treatTipHTML(td,{sell:true}),true);   // the shelf reads at the larger scale
+  tlShow(e,treatTipHTML(td),true);   // the shelf reads at the larger scale
 }
 function shopTreatTipMove(e){ if(typeof moveTip==='function')moveTip(e); }
 function shopTreatTipHide(){ const t=g('board-tip'); if(t){t.style.display='none';t.classList.remove('tip-lg');} }
