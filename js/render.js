@@ -474,9 +474,19 @@ function renderBoard(){
       const catHasArt=bd.kind==='cat'&&typeof hasCatArt==='function'&&hasCatArt(bd.shape,bd.type);
       div.style.background=catHasArt?bd.col+'26':bd.col;
       div.style.borderColor=catHasArt?'rgba(255,255,255,.10)':'rgba(255,255,255,.18)';
-      div.title=bd.kind==='cat'?'Click to pick up':'Click to return to backpack';
+      div.title=bd.kind==='cat'?'Click or drag to pick up':'Click to return to backpack';
       if(bd.kind==='cat'){
         div.textContent='';
+        // Press-and-drag a placed cat straight off the board, the same gesture
+        // treats already answer to. The lift waits for the 5px threshold (the
+        // backpack's idiom) rather than firing on mousedown like the treat cell
+        // below: a cat cell's `click` still means "pick up", and lifting on the
+        // press would let that trailing click drop the cat right back down.
+        div.addEventListener('mousedown',(e)=>{
+          if(e.button!==0||H.kind)return;
+          e.stopPropagation();
+          startBoardCatDrag(e,r,c);
+        });
       } else {
         // Treat: the cell is only a spacer. The piece's own skin is painted
         // inside it and bleeds across the board gap into its other cells, so a
