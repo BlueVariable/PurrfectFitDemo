@@ -62,6 +62,67 @@ function pickupCatFromBoard(r,c){
   updateGhost();showHUD();renderAll();
 }
 
+// Press-and-drag a placed cat off the board with the mouse — the gesture treats
+// already answer to. Treats lift on the mousedown itself; a cat cannot, because
+// its cell's `click` also means "pick up" and would drop a press-lifted cat
+// straight back down. So the lift arms on the same 5px threshold the backpack
+// drag uses: under it the press stays a plain click and onBoardClick does the
+// lifting, over it the cat comes up mid-drag and rides the cursor.
+function startBoardCatDrag(e,r,c){
+  const startX=e.clientX,startY=e.clientY;
+  let lifted=false;
+  const stop=()=>{
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+  };
+  const onMove=(me)=>{
+    if(lifted)return;
+    if(Math.abs(me.clientX-startX)<=5&&Math.abs(me.clientY-startY)<=5)return;
+    lifted=true;
+    pickupCatFromBoard(r,c);
+    if(H.kind!=='cat'){stop();return;}
+    H.dragging=true;
+    // renderAll() has just rebuilt the cells under the cursor, so no mouseenter
+    // fires until the next move — seed the drop preview and the ghost here.
+    H._lastBoardR=r;H._lastBoardC=c;delete H._lastBpR;
+    onBoardEnter(r,c);
+    const gh=g('ghost');
+    gh.style.display='block';
+    gh.style.left=me.clientX+'px';
+    gh.style.top=me.clientY+'px';
+    trashHoverAt(me.clientX,me.clientY);
+  };
+  const onUp=(ue)=>{
+    stop();
+    // Not a drag, or the discard pill already claimed the cat on the global
+    // mouseup (registered at load, so it runs ahead of this one).
+    if(!lifted||H.kind!=='cat')return;
+    H.dragging=false;
+    dropDraggedCatAt(ue.clientX,ue.clientY);
+  };
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+// Where a dragged cat lands on release: a legal board spot takes it, anywhere
+// outside the board sends it back to the hand tray (pickupCatFromBoard already
+// put it there), and an illegal spot inside the board keeps it on the cursor so
+// the drop can be retried without losing the piece.
+function dropDraggedCatAt(cx,cy){
+  const boardEl=g('board');
+  if(boardEl){
+    const idx=cellAtPoint(boardEl.querySelectorAll('.cell'),cx,cy);
+    if(idx>=0){
+      const r=Math.floor(idx/G.bsc),c=idx%G.bsc;
+      if(boardCanPlace(H.cells,r-H.grabDr,c-H.grabDc))placeCatOnBoard(r,c);
+      return;
+    }
+    const br=boardEl.getBoundingClientRect();
+    if(cx>=br.left&&cx<=br.right&&cy>=br.top&&cy<=br.bottom)return; // released in a grid gap
+  }
+  dropHeld();
+}
+
 function pickupTreat(){
   // called from "Place on board" button in treat tooltip
   if(!G.selBpGid)return;
