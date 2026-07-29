@@ -380,38 +380,63 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   opacity:0;transition:opacity .3s;z-index:402;
 }
 .score-continue-btn.show{opacity:1;}
+/* The running log of what each piece did. It occupies the band between the step
+   controls and the bottom edge — runScoreSequence() sets `top` from the controls'
+   measured bottom — and the lines sit at the FOOT of that band, so a long line
+   wrapping to two rows eats space downwards-out rather than climbing over the
+   buttons. Sized to be read from across the desk, not squinted at. */
 .seq-log{
   position:fixed;left:50%;transform:translateX(-50%);bottom:16px;
-  display:flex;flex-direction:column;align-items:center;gap:4px;z-index:401;
-  max-width:320px;width:90%;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  gap:8px;z-index:401;
+  max-width:640px;width:90%;pointer-events:none;overflow:hidden;
 }
 .seq-log-line{
-  background:rgba(26,26,42,.9);color:#fff;border-radius:10px;
-  padding:5px 14px;font-family:'Fredoka One',cursive;font-size:12px;
+  background:rgba(26,26,42,.9);color:#fff;border-radius:18px;
+  padding:10px 28px;font-family:'Fredoka One',cursive;font-size:24px;
   opacity:0;transform:translateY(8px);transition:all .25s;text-align:center;
 }
 .seq-log-line.show{opacity:1;transform:translateY(0);}
 /* Oldest lines fade up and out so the log stays a compact bottom-margin strip. */
 .seq-log-line.seq-log-retire{opacity:0;transform:translateY(-6px);}
 /* ── Step-through scan: the player advances the scoring one piece at a time ──
-   runScoreSequence() re-anchors both of these onto SHIP's vacated slot under the
-   board; the values here are the fallback for a board it can't measure. */
+   runScoreSequence() re-anchors the explain chip, the control row and the log
+   onto SHIP's vacated slot under the board; the values here are the fallback for
+   a board it can't measure. */
 .seq-step-explain{
   position:fixed;bottom:calc(12% + 64px);left:50%;transform:translateX(-50%);
   z-index:403;max-width:340px;width:90%;text-align:center;
   background:rgba(26,26,42,.9);color:#fff;border-radius:14px;padding:9px 18px;
   font-family:'Fredoka One',cursive;font-size:14px;
 }
+/* Next and Auto ride together in SHIP's vacated slot, so the row is what gets
+   positioned and the buttons themselves lay out inside it. */
+.seq-step-controls{
+  position:fixed;left:50%;top:88%;transform:translate(-50%,-50%);
+  z-index:404;display:flex;align-items:center;gap:12px;
+}
 /* Carries SHIP's lime: it is the button standing in SHIP's place mid-scan. */
 .seq-step-btn{
-  position:fixed;left:50%;top:88%;transform:translate(-50%,-50%);
-  z-index:404;padding:11px 34px;cursor:pointer;white-space:nowrap;
+  padding:11px 34px;cursor:pointer;white-space:nowrap;
   background:#d2f886;color:#1a1a2a;font-family:'Fredoka One',cursive;font-size:17px;
   border-radius:14px;border:3px solid #1a1a2a;box-shadow:0 5px 0 #7fa844;
   transition:transform .09s ease-out,box-shadow .09s ease-out;
 }
-.seq-step-btn:hover {transform:translate(-50%,calc(-50% - 2px));box-shadow:0 7px 0 #7fa844;}
-.seq-step-btn:active{transform:translate(-50%,calc(-50% + 4px));box-shadow:0 1px 0 #7fa844;}
+.seq-step-btn:hover {transform:translateY(-2px);box-shadow:0 7px 0 #7fa844;}
+.seq-step-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #7fa844;}
+/* Auto sits beside Next in the overlay's slate, and lights up in the same gold
+   the multiplier badges use while it is the one driving the scan. */
+.seq-auto-btn{
+  padding:11px 22px;cursor:pointer;white-space:nowrap;
+  background:#3a4a68;color:#fff;font-family:'Fredoka One',cursive;font-size:17px;
+  border-radius:14px;border:3px solid #1a1a2a;box-shadow:0 5px 0 #1a2436;
+  transition:transform .09s ease-out,box-shadow .09s ease-out,background .12s,color .12s;
+}
+.seq-auto-btn:hover {transform:translateY(-2px);box-shadow:0 7px 0 #1a2436;}
+.seq-auto-btn:active{transform:translateY(4px);box-shadow:0 1px 0 #1a2436;}
+.seq-auto-btn.on{background:#f5c200;color:#1a1a2a;box-shadow:0 5px 0 #a08000;}
+.seq-auto-btn.on:hover {box-shadow:0 7px 0 #a08000;}
+.seq-auto-btn.on:active{box-shadow:0 1px 0 #a08000;}
 /* ── Feature 3: purrfect streak + near-miss callouts ── */
 @keyframes streak-callout-in{
   0%{opacity:0;transform:translateX(-50%) scale(.4) rotate(-6deg);}

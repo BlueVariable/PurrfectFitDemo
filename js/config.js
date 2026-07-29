@@ -40,6 +40,14 @@ let RARITY_WEIGHTS = {};
 let BRANCHES = [];
 let MODIFIERS = []; // per-round "boss round" modifiers — Modifiers sheet tab (failure-tolerant)
 let DEV_MODE = localStorage.getItem('purrfect_dev_mode') === '1';
+// Scan cadence, chosen by the player from the Auto button beside Next during a
+// scan and remembered from then on: OFF = they click through the scan one piece
+// at a time, ON = it plays itself on a timer. Read by runScoreSequence().
+let AUTO_SCORE = localStorage.getItem('purrfect_auto_score') === '1';
+function setAutoScore(on){
+  AUTO_SCORE=!!on;
+  try{localStorage.setItem('purrfect_auto_score',AUTO_SCORE?'1':'0');}catch(e){}
+}
 const DECK_META={};
 
 function rcfg(r){return RCFG[Math.min(r-1,RCFG.length-1)];}
