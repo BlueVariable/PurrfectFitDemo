@@ -114,13 +114,19 @@ body::before{display:none;}
 @keyframes scoreFlash{0%,100%{transform:scale(1)}40%{transform:scale(1.08);filter:brightness(1.3);}}
 .score-card-lit{animation:scoreFlash .4s ease;outline:3px solid #f5c200;outline-offset:2px;border-radius:12px;}
 .bbtns{display:flex;gap:8px;align-items:center;}
-/* ── Feature 2a: live projected score readout ── */
+/* ── Feature 2a: live projected score readout — DEV_MODE only ──
+   Hidden for normal play (the player reads the board, not a number) and
+   revealed by the dev toggle. Same CSS-only gate the Auto-fit pill uses:
+   applyDevModeUI() puts .active on #btn-dev-float, so no extra JS hook is
+   needed to keep this in sync with the toggle. */
 .fit-proj{
+  display:none;
   font-family:'Fredoka One',cursive;font-size:13px;color:#5a6472;
   background:rgba(255,255,255,.55);border:2px solid rgba(0,0,0,.15);
   border-radius:50px;padding:5px 12px;white-space:nowrap;
   transition:color .2s ease,background-color .2s ease,border-color .2s ease;
 }
+body:has(#btn-dev-float.active) .fit-proj{display:block;}
 .fit-proj.fit-proj-ready{color:#1a1a2a;background:#c0e8c0;border-color:#5ab855;}
 .board-treats{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center;}
 .bt-pill{display:flex;align-items:center;gap:3px;background:rgba(0,0,0,.15);border-radius:8px;padding:2px 8px 2px 4px;font-size:10px;font-weight:800;color:#fff;border:1.5px solid rgba(0,0,0,.2);cursor:default;position:relative;}

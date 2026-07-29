@@ -322,6 +322,10 @@ function applyDevModeUI(){
   const floatBtn=g('btn-dev-float');
   if(DEV_MODE){btn?.classList.add('active');panel?.classList.add('on');floatBtn?.classList.add('active');}
   else{btn?.classList.remove('active');panel?.classList.remove('on');floatBtn?.classList.remove('active');}
+  // The projected-score chip is dev-gated in CSS but only recomputed inside
+  // renderAll(); refresh it here so switching dev ON mid-hand reveals the
+  // CURRENT projection instead of a stale one.
+  if(DEV_MODE&&typeof updateProjectedScoreUI==='function')updateProjectedScoreUI();
 }
 function toggleDevMode(){
   DEV_MODE=!DEV_MODE;
