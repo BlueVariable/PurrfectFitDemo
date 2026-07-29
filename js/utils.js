@@ -42,10 +42,13 @@ function weightedSample(items,n,weightFn){
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function g(id){return document.getElementById(id);}
 function uid(){return Math.random().toString(36).slice(2,9);}
-// Board cell size and hand-tray thumbnails are both measured off live layout,
-// so both have to be redrawn when the stage changes size.
+// Board cell size, hand-tray thumbnails and both inventory grids are measured
+// off live layout, so all of them have to be redrawn when the stage resizes.
 window.addEventListener('resize',()=>{
-  if(typeof G==='undefined'||!G.board?.length)return;
-  renderBoard();
+  if(typeof G==='undefined')return;
+  if(G.board?.length)renderBoard();
   if(typeof renderHand==='function'&&G.hand)renderHand();
+  if(!G.bp)return;
+  if(typeof renderBP==='function'&&g('s-game').classList.contains('on'))renderBP();
+  if(typeof renderShopBPGrid==='function'&&g('s-rounds').classList.contains('on'))renderShopBPGrid();
 });

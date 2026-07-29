@@ -30,6 +30,28 @@ function onBPMouseUp(r,c){
 }
 function getBPCell(r,c){return g('bpg').querySelectorAll('.bpc')[r*getBPC()+c]||null;}
 
+// ── Inventory grid sizing (shared by the game scene and the pet shop) ──
+// Both grids sit inside a fixed card and must fill it exactly: square cells,
+// the card's real padding, the grid's real gap, no overflow on either axis.
+// Measured live rather than hardcoded, because the card is sized in cqw and
+// getBPC() moves with bottomless_tote. clientWidth/clientHeight and the
+// computed padding share a unit; getBoundingClientRect does not under page
+// zoom, so don't swap them in.
+const _bpCellCache={};
+function bpFitCellSize(gridEl,cardEl,cols,rows){
+  if(!gridEl||!cardEl||!cols||!rows)return 34;
+  const key=gridEl.id||'bp';
+  const cds=getComputedStyle(cardEl),gds=getComputedStyle(gridEl);
+  const innerW=cardEl.clientWidth -parseFloat(cds.paddingLeft)-parseFloat(cds.paddingRight);
+  const innerH=cardEl.clientHeight-parseFloat(cds.paddingTop) -parseFloat(cds.paddingBottom);
+  const gapX=parseFloat(gds.columnGap)||0, gapY=parseFloat(gds.rowGap)||0;
+  const cell=Math.min((innerW-gapX*(cols-1))/cols,(innerH-gapY*(rows-1))/rows);
+  // a grid built while its screen is display:none measures 0 — keep the last
+  // good size and let show() re-fit it once the screen is actually on
+  if(!(cell>1))return _bpCellCache[key]||34;
+  return (_bpCellCache[key]=Math.floor(cell*100)/100);
+}
+
 // ── Dynamic backpack width (bottomless_tote) ──
 // getBPC() (state.js) grows by one column while the tote is owned; these two
 // helpers keep the physical G.bp arrays in sync with that effective width.

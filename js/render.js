@@ -19,7 +19,15 @@ function openDeckPopup(){
 }
 function closeDeckPopup(){g('ov-deck').classList.add('off');}
 
-function show(id){document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');}
+function show(id){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');
+  // Both inventory grids are sized off their live card, and both can be built
+  // while their screen is still hidden (openRounds renders the shop before the
+  // calendar takes the screen). Re-fit whichever one just came on.
+  if(typeof G==='undefined'||!G.bp)return;
+  if(id==='s-game'  &&typeof renderBP==='function')renderBP();
+  if(id==='s-rounds'&&typeof renderShopBPGrid==='function')renderShopBPGrid();
+}
 function openDeckPreview(deckId){
   // Build a preview deck and show popup
   const cfg=DECKS[deckId];
@@ -551,19 +559,13 @@ function renderHand(){
 function renderBP(){
   const grid=g('bpg');
   const cols=getBPC(),rows=getBPR();
-  // Cell size must fit the backpack panel's OWN container width, not just
-  // mirror the board's cell size — the board is sized for G.bsc columns,
-  // which can differ from getBPC() (inventory_cols, from the General sheet
-  // tab). Reusing the board's size unmodified overflows the fixed-width
-  // .rc/.bpcard panel whenever cols*cellSize > the panel's inner width
-  // (e.g. inventory_cols=5 no longer fits the 4-column size the CSS was
-  // tuned for), pushing/clipping the panel instead of shrinking to fit.
-  const wrap=document.querySelector('.bpgw');
-  const wrapInnerW=wrap?wrap.clientWidth-10:299; // .bpgw padding:5px each side
-  const bpgPad=4,bpgGap=3; // must mirror .bpg's CSS padding/gap
-  const fitW=Math.floor((wrapInnerW-bpgPad*2-bpgGap*(cols-1))/cols);
-  const boardCs=window._boardCellSize||46;
-  const cs=Math.max(18,Math.min(fitW,boardCs,78));
+  // Cell size is measured off the inventory card (.bpgw) so the grid fills it
+  // exactly — same helper the pet shop's grid uses, so both screens render the
+  // inventory identically. It must NOT be capped to the board's cell size: the
+  // board is sized for G.bsc columns, which is unrelated to getBPC(), and that
+  // cap is what used to leave the game grid parked top-left in an oversized
+  // card while the shop's filled its own.
+  const cs=bpFitCellSize(grid,document.querySelector('.bpgw'),cols,rows);
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
