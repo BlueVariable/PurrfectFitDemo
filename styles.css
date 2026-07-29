@@ -817,7 +817,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   display:flex;align-items:center;padding:0 1.5cqw;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
   box-shadow:-0.3cqw 0.4cqw 0 rgba(20,18,28,.55);
-  font-family:'Providence Sans',cursive;font-size:2.1cqw;letter-spacing:.03em;color:#1b1a24;
+  font-family:'Bobby Jones Soft',cursive;font-size:2.1cqw;letter-spacing:.03em;color:#1b1a24;
   white-space:nowrap;
 }
 
@@ -830,7 +830,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .io-sheet{
   position:relative;width:100%;background:#fcfafa;
   border:0.17cqw solid #1b1a24;border-radius:1.1cqw;padding:1.4cqw 1.3cqw 3.4cqw;
-  font-family:'Providence Sans',cursive;font-size:1.55cqw;line-height:1.22;letter-spacing:.012em;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.55cqw;line-height:1.22;letter-spacing:.012em;
   color:#1b1a24;text-transform:uppercase;
 }
 .io-sheet p+p{margin-top:.7em;}
@@ -960,16 +960,16 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .hq-faces img{height:100%;width:auto;border-radius:.3cqw;}
 .hq-mod{position:absolute;right:-7cqw;top:1.4cqw;background:#eeb84b;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;box-shadow:0 0.45cqw 0 #262229;
-  font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#1b1a24;padding:.35cqw .8cqw;white-space:nowrap;}
-.hq-tag{position:absolute;font-family:'Providence Sans',cursive;font-size:1.15cqw;color:#1b1a24;
+  font-family:'Bobby Jones Soft',cursive;font-size:1.25cqw;color:#1b1a24;padding:.35cqw .8cqw;white-space:nowrap;}
+.hq-tag{position:absolute;font-family:'Bobby Jones Soft',cursive;font-size:1.15cqw;color:#1b1a24;
   background:#c9cde8;border:0.17cqw solid #1b1a24;border-radius:.55cqw;padding:.15cqw .6cqw;white-space:nowrap;}
 .hq-tag-prev{left:8%;top:-1.9cqw;}
 .hq-day{position:absolute;left:-5.4cqw;top:1.2cqw;background:#e8676a;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;text-align:center;
-  font-family:'Providence Sans',cursive;color:#1b1a24;line-height:1;}
+  font-family:'Bobby Jones Soft',cursive;color:#1b1a24;line-height:1;}
 .hq-day-d{font-size:1.1cqw;display:block;}
 .hq-day-n{font-size:2.2cqw;font-family:'Lazydog',cursive;}
-.hq-day-n small{font-size:1.1cqw;font-family:'Providence Sans',cursive;}
+.hq-day-n small{font-size:1.1cqw;font-family:'Bobby Jones Soft',cursive;}
 
 .hq-go{width:100%;margin-top:.55cqw;padding:.35cqw 0;cursor:inherit;
   border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1117,7 +1117,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   font-family:'Bobby Jones Soft',cursive;font-size:2.4cqw;color:#8f6d59;}
 .sc-daytab{left:47.0%;top:16.0%;height:4.6%;padding:0 1.2cqw;display:flex;align-items:center;
   background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:.9cqw .9cqw 0 0;
-  font-family:'Providence Sans',cursive;font-size:1.6cqw;color:#1b1a24;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.6cqw;color:#1b1a24;}
 
 .sc-cards{left:33.7%;top:22.0%;width:61.3%;height:47%;display:flex;align-items:flex-start;
   justify-content:center;gap:0;}
@@ -1129,10 +1129,10 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-tab{position:absolute;left:-.3cqw;top:-.9cqw;display:flex;align-items:center;gap:.5cqw;
   background:#5b608c;border:0.17cqw solid #1b1a24;border-radius:.8cqw;padding:.2cqw .8cqw;
   font-family:'Lazydog',cursive;font-size:2cqw;color:#fdfcff;white-space:nowrap;}
-.sc-tab span{font-family:'Providence Sans',cursive;font-size:1.1cqw;}
+.sc-tab span{font-family:'Bobby Jones Soft',cursive;font-size:1.1cqw;}
 .sc-tab-now{background:#fcfafa;color:#1b1a24;box-shadow:0 0 0 0.17cqw #fdfcff;}
 .sc-body{display:flex;flex-direction:column;align-items:center;gap:.25cqw;}
-.sc-sub{font-family:'Providence Sans',cursive;font-size:1.25cqw;letter-spacing:.02em;}
+.sc-sub{font-family:'Bobby Jones Soft',cursive;font-size:1.25cqw;letter-spacing:.02em;}
 .sc-target{font-family:'Lazydog',cursive;font-size:3.6cqw;line-height:1;}
 .sc-red{color:#e3695e;}
 .sc-verdict{font-family:'Bobby Jones Soft',cursive;font-size:2.6cqw;line-height:1.1;}
@@ -1140,7 +1140,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-score small{font-size:1.6cqw;opacity:.7;}
 .sc-mini{display:flex;gap:1cqw;margin-top:.4cqw;}
 .sc-mini div{display:flex;flex-direction:column;align-items:center;}
-.sc-mini span{font-family:'Providence Sans',cursive;font-size:.95cqw;}
+.sc-mini span{font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;}
 .sc-mini b{font-family:'Lazydog',cursive;font-size:1.6cqw;font-weight:400;}
 .sc-pills{display:flex;gap:.5cqw;margin-top:.5cqw;}
 .sc-pill{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1148,15 +1148,15 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-now .sc-pill{background:#e2e1ee;color:#1b1a24;}
 .sc-pill b{font-family:'Lazydog',cursive;font-size:1.7cqw;font-weight:400;line-height:1;display:flex;align-items:center;}
 .sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
-.sc-pill span{font-family:'Providence Sans',cursive;font-size:.8cqw;}
+.sc-pill span{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;}
 .sc-modtag{position:absolute;right:-0.6cqw;bottom:1cqw;z-index:3;background:#eeb84b;
   border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;max-width:9cqw;
-  font-family:'Providence Sans',cursive;font-size:1.05cqw;color:#1b1a24;line-height:1.15;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;color:#1b1a24;line-height:1.15;}
 .sc-modtag-now{position:static;margin-top:.5cqw;max-width:none;}
 
 .sc-fork{display:flex;gap:.9cqw;margin-top:.9cqw;align-items:flex-start;}
 .sc-fork-col{display:flex;flex-direction:column;align-items:center;gap:.25cqw;}
-.sc-fork-lbl{font-family:'Providence Sans',cursive;font-size:.95cqw;color:#4b4757;}
+.sc-fork-lbl{font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;color:#4b4757;}
 .sc-work,.sc-skip{cursor:inherit;padding:.25cqw 1.1cqw;border:0.17cqw solid #17151c;border-radius:.85cqw;
   box-shadow:0 0 0 0.17cqw #fdfcff, 0 .75cqw 0 #262229;
   font-family:'Lazydog',cursive;font-size:2.1cqw;color:#17151c;
@@ -1168,7 +1168,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-skip.armed{background:#e3695e;color:#fdfcff;}
 .sc-bonus{margin-top:.35cqw;background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.6cqw;
   padding:.25cqw .55cqw;max-width:8.5cqw;line-height:1.15;
-  font-family:'Providence Sans',cursive;font-size:.95cqw;color:#1b1a24;}
+  font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;color:#1b1a24;}
 /* ════════ GAME BOARD (deck page 5) ════════
    Chrome only — the board, hand and inventory grids are still rendered by
    board.js / backpack.js into #board, #hand and #bpg, so every id the game
@@ -1192,10 +1192,10 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-day{left:14.9%;top:-2.2%;width:6.4%;height:9.6%;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-end;padding-bottom:.5cqw;gap:.1cqw;
   background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:0 0 1cqw 1cqw;
-  font-family:'Providence Sans',cursive;color:#1b1a24;line-height:1;}
+  font-family:'Bobby Jones Soft',cursive;color:#1b1a24;line-height:1;}
 .gm-day-d{font-size:1.05cqw;}
 .gm-day-n{font-family:'Lazydog',cursive;font-size:2.2cqw;}
-.gm-day-n small{font-family:'Providence Sans',cursive;font-size:1.05cqw;}
+.gm-day-n small{font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;}
 
 .gm-paw{left:2.4%;top:12.8%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
@@ -1214,12 +1214,12 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1cqw;}
 .gm-card-reach{top:22.6%;height:13.1%;}
 .gm-card-so   {top:37.9%;height:14.4%;}
-.gm-card-lbl{font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#1b1a24;letter-spacing:.02em;}
+.gm-card-lbl{font-family:'Bobby Jones Soft',cursive;font-size:1.25cqw;color:#1b1a24;letter-spacing:.02em;}
 .gm-card-val{font-family:'Lazydog',cursive;font-size:3.4cqw;line-height:1;color:#1b1a24;}
 .gm-red{color:#e3695e;}
 .gm-hands{left:11.7%;top:50.3%;width:8.4%;height:4.9%;display:flex;align-items:center;gap:.4cqw;
   padding:0 .8cqw;background:#829af8;border:0.17cqw solid #1b1a24;border-radius:99px;
-  font-family:'Providence Sans',cursive;font-size:1.15cqw;color:#1b1a24;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.15cqw;color:#1b1a24;}
 .gm-hands b{font-family:'Lazydog',cursive;font-size:1.9cqw;font-weight:400;}
 
 /* board frame — .board itself keeps its grid rules from the game CSS */
@@ -1228,7 +1228,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-stage .board{background:transparent;border:0;box-shadow:none;padding:0;gap:.55cqw;}
 .gm-clear{left:37.3%;top:65.1%;width:4.7%;height:4.8%;cursor:inherit;
   background:#e3695e;border:0.17cqw solid #17151c;border-radius:.8cqw;
-  box-shadow:0 .5cqw 0 #262229;font-family:'Providence Sans',cursive;font-size:1.2cqw;color:#fdfcff;
+  box-shadow:0 .5cqw 0 #262229;font-family:'Bobby Jones Soft',cursive;font-size:1.2cqw;color:#fdfcff;
   transition:transform .09s ease-out, box-shadow .09s ease-out;}
 .gm-clear:active{transform:translateY(.35cqw);box-shadow:0 .15cqw 0 #262229;}
 .gm-ship{left:42.9%;top:64.5%;width:9.2%;height:8.5%;cursor:inherit;padding:0;
@@ -1242,11 +1242,11 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
   -webkit-text-stroke:.1em #fdfcff;paint-order:stroke fill;
   filter:drop-shadow(.05em .09em 0 rgba(20,18,28,.35));display:inline-block;}
 .gm-stage .fit-proj{left:42.9%;top:74.2%;width:9.2%;text-align:center;
-  font-family:'Providence Sans',cursive;font-size:1.3cqw;color:#f0eef4;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.3cqw;color:#f0eef4;}
 
 .gm-invtab{left:68.7%;top:12.2%;width:14.6%;height:4.6%;display:flex;align-items:center;justify-content:center;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.9cqw;
-  font-family:'Providence Sans',cursive;font-size:1.5cqw;color:#1b1a24;letter-spacing:.03em;}
+  font-family:'Bobby Jones Soft',cursive;font-size:1.5cqw;color:#1b1a24;letter-spacing:.03em;}
 .gm-inv{left:66.5%;top:15.6%;width:30.1%;height:48.8%;background:rgba(255,255,255,.13);
   border:0.17cqw solid rgba(255,255,255,.24);border-radius:1.4cqw;
   display:flex;align-items:center;justify-content:center;}
@@ -1255,7 +1255,7 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 
 .gm-disc{left:2.5%;top:69.6%;width:8.9%;display:flex;flex-direction:column;align-items:center;gap:.3cqw;}
 .gm-deck{left:89.0%;top:69.6%;width:8.9%;display:flex;flex-direction:column;align-items:center;gap:.3cqw;cursor:inherit;}
-.gm-pill-lbl{font-family:'Providence Sans',cursive;font-size:1.25cqw;color:#f0eef4;letter-spacing:.03em;}
+.gm-pill-lbl{font-family:'Bobby Jones Soft',cursive;font-size:1.25cqw;color:#f0eef4;letter-spacing:.03em;}
 .gm-deck-n{width:100%;height:3.1cqw;display:flex;align-items:center;justify-content:center;
   background:#eeb84b;border:0.17cqw solid #1b1a24;border-radius:.8cqw;box-shadow:0 .45cqw 0 #262229;
   font-family:'Lazydog',cursive;font-size:2.1cqw;color:#1b1a24;}
