@@ -1,5 +1,13 @@
 # Coffee Break ☕ — round skip
 
+> **Superseded — describes the legacy café flow.** The live skip is **SKIP** on
+> the schedule screen (`js/breaks.js`): it grants one bonus drawn from the
+> Breaks sheet, shown under the button before you commit, and the prep screen
+> that follows keeps its **shop open** — `G.shopClosed` is no longer set on the
+> skip path, because forfeiting the round is the whole price. Everything below
+> still describes `js/cafe.js`, which nothing reaches any more; the commit
+> order and round-advance semantics it documents are what `takeBreak()` mirrors.
+
 On the prep screen of a **non-boss** round the player may take a *coffee
 break*: skip the round entirely in exchange for a free, rarity-boosted treat
 draft. Implemented in `js/cafe.js`; the round-advance seam it shares with the

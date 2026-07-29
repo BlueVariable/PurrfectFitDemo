@@ -87,7 +87,11 @@ function takeBreak(){
   if(G.roundLog)G.roundLog[skipped]={skipped:true,boss:false};
   breakApply(offer);        // cash lands now; round-scoped bonuses queue for the next setup
   bpReconcileWidth();
-  G.shopClosed=true;
+  // The shop stays OPEN after a skip. SKIP's cost is the forfeited round (no
+  // earnings, no progress) and its price is already paid there — boarding the
+  // next prep's shelf up on top of that taxed the same choice twice and made
+  // the bonus you were shown a worse trade than it read. (G.shopClosed is left
+  // to the legacy café path in js/cafe.js, which nothing reaches any more.)
   G.round++;
   advanceRoundSetup();
   openCalendar();
