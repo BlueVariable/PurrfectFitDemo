@@ -290,6 +290,17 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .ob .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
 .ob .big{font-family:'Fredoka One',cursive;font-size:52px;line-height:1;color:#1a1a2a;}
 .ob .brk{font-size:10px;color:#7a8090;margin-top:7px;line-height:2.1;}
+/* ── INLINE WIN TRANSITION ──
+   #win-inline is a child of #s-game, so without these it falls back to
+   static/z-index:auto and the game's positioned layers paint straight over it —
+   the round is won but the only way out (Visit Pet Store) is invisible and
+   unclickable. Card styling deliberately mirrors .ob but skips its pIn
+   animation, which would fight the scale-in transition below. */
+.win-inline{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0;transform:scale(.92);transition:opacity .4s .35s ease-out,transform .4s .35s ease-out;}
+.win-inline.visible{opacity:1;transform:scale(1);pointer-events:auto;}
+.win-inline-card{background:#fff;border-radius:18px;padding:32px 40px;text-align:center;max-width:390px;width:90%;border:3px solid #1a1a2a;box-shadow:5px 5px 0 #1a1a2a;}
+.win-inline-card h1{font-family:'Fredoka One',cursive;font-size:34px;color:#1a1a2a;margin-bottom:4px;}
+.win-inline-card .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
 /* score sequence overlay */
 #ov-score-seq{position:fixed;inset:0;z-index:400;pointer-events:none;overflow:hidden;}
 #ov-score-seq.active{pointer-events:auto;}
