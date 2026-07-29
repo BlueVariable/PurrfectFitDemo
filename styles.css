@@ -134,6 +134,32 @@ body::before{display:none;}
 .btn-dev-toggle.active{border-color:rgba(245,194,0,.6);color:rgba(245,194,0,.9);background:rgba(245,194,0,.08);}
 .dev-panel{display:none;flex-direction:column;gap:6px;width:100%;padding:8px 0 0;border-top:1px solid rgba(255,255,255,.15);margin-top:4px;}
 .dev-panel.on{display:flex;}
+
+/* ── the global floating dev pill: fixed to the viewport, above everything, so
+   it rides along on every screen (loading, HQ, calendar, shop, game, café).
+   Keep it position:fixed — the screens are 100vh blocks in normal flow, so a
+   static pill scrolls straight out of an overflow:hidden body and vanishes.
+   The title screen is the one exception; it has its own labelled toggle in the
+   same corner (see body:has(#s-menu.on) further down). ── */
+.btn-dev-float{
+  position:fixed;bottom:12px;right:12px;z-index:10000;
+  padding:5px 12px;border:1px solid rgba(255,255,255,.28);cursor:pointer;
+  background:rgba(23,21,28,.55);color:rgba(255,255,255,.5);
+  font-family:'Fredoka One',cursive;font-size:11px;border-radius:50px;
+  transition:all .15s;letter-spacing:.5px;backdrop-filter:blur(4px);
+}
+.btn-dev-float:hover{border-color:rgba(255,255,255,.55);color:rgba(255,255,255,.8);}
+.btn-dev-float.active{border-color:rgba(245,194,0,.65);color:rgba(245,194,0,.95);background:rgba(36,29,14,.65);}
+
+/* floating dev-mode Auto-fit button — sits above the pill, game screen only,
+   DEV_MODE only */
+.btn-dev-autofit{
+  display:none;bottom:48px;
+  border-color:rgba(245,194,0,.5);color:rgba(245,194,0,.85);background:rgba(36,29,14,.65);
+}
+.btn-dev-autofit:hover{border-color:rgba(245,194,0,.75);color:rgba(245,194,0,1);}
+.btn-dev-autofit.devfit-err{border-color:rgba(208,69,69,.7);color:#ffb0b0;background:rgba(58,22,22,.75);}
+body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-flex;align-items:center;gap:4px;}
 .btn-menu-exit{padding:7px 14px;border:2px solid rgba(255,255,255,.3);cursor:pointer;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-family:'Fredoka One',cursive;font-size:12px;border-radius:50px;transition:all .12s;width:100%;margin-top:auto;}
 .btn-menu-exit:hover{background:rgba(255,255,255,.2);color:#fff;}
 .btn-clr{padding:8px 14px;border:3px solid #1a1a2a;cursor:pointer;background:#5ab855;color:#fff;font-family:'Fredoka One',cursive;font-size:13px;border-radius:14px;box-shadow:0 4px 0 #3a8030;transition:all .12s;}

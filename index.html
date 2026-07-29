@@ -260,11 +260,13 @@
 <!-- Score sequence overlay -->
 <div id="ov-score-seq"></div>
 
-<!-- Floating dev mode button (all pages) -->
+<!-- Floating dev mode button. It lives outside every #s-* screen and is
+     position:fixed, so it stays on-screen on all of them; the title screen
+     hides it because .tt-dev already offers the same toggle, labelled. -->
 <button id="btn-dev-float" class="btn-dev-float" onclick="toggleDevMode()">⚙ Dev</button>
 <!-- Floating dev-mode Auto-fit button — game screen only, shown via CSS
-     (body:has(#s-game.on) + #btn-dev-float.active) so no extra JS hook is
-     needed to track screen changes. See js/devfit.js. -->
+     (body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit) so no extra
+     JS hook is needed to track screen changes. See js/devfit.js. -->
 <button id="btn-dev-autofit" class="btn-dev-float btn-dev-autofit" onclick="devAutoFit()">🐾 Auto-fit</button>
 
 <script src="js/utils.js"></script>
