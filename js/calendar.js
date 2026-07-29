@@ -29,6 +29,42 @@ function calDayCount(){ return Math.ceil(RCFG.length / CAL_ROUNDS_PER_DAY); }
 function calDayName(dayIdx){ return CAL_DAY_NAMES[dayIdx] || ('DAY ' + (dayIdx + 1)); }
 function calDayIndexOf(round){ return Math.floor((round - 1) / CAL_ROUNDS_PER_DAY); }
 function calIsBoss(round){ return (typeof isModifierRound === 'function') && isModifierRound(round); }
+function calEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+
+// ── Deadline detail ────────────────────────────────────────────────────────
+// The schedule spells a deadline out instead of only labelling it. What is
+// knowable depends on when you look:
+//   • the round you are ON — G.roundModifier is already rolled, so the exact
+//     condition (emoji, name, description) is shown.
+//   • a round still ahead — its condition must NOT be rolled here
+//     (pickRoundModifier draws from the shared RNG and the headless sim
+//     depends on exactly one draw per round), so the card instead states what
+//     a deadline always costs and previews the pool it will draw from.
+function calDeadlinePool(){
+  return (typeof MODIFIERS !== 'undefined' ? MODIFIERS : []).filter(m => m.enabled);
+}
+function calModChips(){
+  const pool = calDeadlinePool();
+  if(!pool.length) return '';
+  return '<div class="sc-dl-chips">' + pool.map(m =>
+    '<span class="sc-dl-chip" title="' + calEsc(m.name) + ' — ' + calEsc(m.desc) + '">' +
+      calEsc(m.em || '⚠️') + '</span>').join('') + '</div>';
+}
+// Upcoming deadline: the rules of the day, plus every condition it can draw.
+function calDeadlinePreview(){
+  return '<div class="sc-dl"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
+    '<div class="sc-dl-note">No break — this one gets worked.</div>' +
+    '<div class="sc-dl-note">One of these lands on the day:</div>' +
+    calModChips() + '</div>';
+}
+// The deadline you are standing on: name it and say what it does.
+function calDeadlineNow(rm){
+  return '<div class="sc-dl sc-dl-now"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
+    '<div class="sc-dl-name">' + calEsc(rm.em || '⚠️') + ' ' +
+      calEsc(String(rm.name || rm.id || '').toUpperCase()) + '</div>' +
+    (rm.desc ? '<div class="sc-dl-desc">' + calEsc(rm.desc) + '</div>' : '') +
+    '</div>';
+}
 
 // ── Entry: run the existing round/shop setup, then show the calendar ──
 function openCalendar(){
@@ -64,52 +100,67 @@ function calStatPill(v, lbl, coin){
 function calDoneCard(r){
   const log = (G.roundLog && G.roundLog[r]) || {};
   const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
-  const tgt = (cfg ? cfg.tgt : 0) || 0;
+  // The target actually played (a deadline's target_mult is already in it);
+  // the raw sheet row is only the fallback for logs written before it was kept.
+  const tgt = log.tgt || (cfg ? cfg.tgt : 0) || 0;
   if(log.skipped){
     return '<div class="sc-card sc-past"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
       '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
       '<div class="sc-verdict">BREAK</div><div class="sc-sub">day off</div></div></div>';
   }
   const scored = log.score;
-  const hands  = log.hands, hmax = log.handsMax || CAL_ROUNDS_PER_DAY;
+  const hands  = log.hands, hmax = log.handsMax || log.max || CAL_ROUNDS_PER_DAY;
   const pf = log.purrfects, pfmax = log.purrfectsMax;
-  return '<div class="sc-card sc-past"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+  // A cleared deadline says so — the stamp is the record of the week.
+  const stamp = log.boss ? '<div class="sc-dl-done">⏰ DEADLINE MET' +
+    (log.modName ? '<small>' + calEsc(String(log.modName).toUpperCase()) + '</small>' : '') +
+    '</div>' : '';
+  return '<div class="sc-card sc-past' + (log.boss ? ' sc-boss' : '') + '"><div class="sc-tab">#' +
+    ((r-1)%CAL_ROUNDS_PER_DAY+1) +
     '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
     '<div class="sc-verdict">PURRFECT!</div>' +
     '<div class="sc-sub">SCORED</div><div class="sc-score">' + (scored!==undefined?scored:'—') +
       '<small>/' + tgt + '</small></div>' +
     '<div class="sc-mini"><div><span>HANDS</span><b>' + (hands!==undefined?hands:'—') + '/' + hmax + '</b></div>' +
       '<div><span>PURRFECT FITS</span><b>' + (pf!==undefined?pf:'—') + '/' + (pfmax||hmax) + '</b></div></div>' +
-    '</div></div>';
+    stamp + '</div></div>';
 }
 function calNextCard(r){
   const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
   // Never roll a future round's modifier here — pickRoundModifier() draws from
   // the shared RNG and the headless sim depends on exactly one draw per round.
   // A future deadline round only advertises that it IS one.
-  const tag = calIsBoss(r) ? '<div class="sc-modtag">DEADLINE ROUND</div>' : '';
-  return '<div class="sc-card sc-future"><div class="sc-tab">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
-    '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
+  const boss = calIsBoss(r);
+  return '<div class="sc-card sc-future' + (boss ? ' sc-boss' : '') + '"><div class="sc-tab">#' +
+    ((r-1)%CAL_ROUNDS_PER_DAY+1) + '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
     '<div class="sc-sub">REACH SCORE</div><div class="sc-target">' + (cfg ? cfg.tgt : '—') + '</div>' +
     '<div class="sc-pills">' + calStatPill(cfg ? (cfg.h || CFG.hand_count || 3) : '—', 'HANDS') +
-      calStatPill(CFG.discard_count || 3, 'DISCARDS') + '</div>' +
-    '</div>' + tag + '</div>';
+      calStatPill(CFG.discard_count || 3, 'DISCARDS') +
+      calStatPill(cfg ? cfg.earn : '—', 'EARN', true) + '</div>' +
+    (boss ? calDeadlinePreview() : '') +
+    '</div></div>';
 }
 function calActiveCard(r){
   const offer = (typeof breakOffer === 'function') ? breakOffer(r) : null;
   const armed = (typeof _breakArmed !== 'undefined') && _breakArmed;
+  const boss = calIsBoss(r);
   const skip = offer
     ? '<div class="sc-fork-col"><span class="sc-fork-lbl">TAKE A BREAK</span>' +
       '<button class="sc-skip' + (armed ? ' armed' : '') + '" id="cal-skip-btn" onclick="takeBreak()">' +
         (armed ? 'SURE?' : 'SKIP') + '</button>' +
       '<div class="sc-bonus">' + offer.label + '</div></div>'
-    : '';
-  return '<div class="sc-card sc-now"><div class="sc-tab sc-tab-now">#' + ((r-1)%CAL_ROUNDS_PER_DAY+1) +
+    : (boss
+      ? '<div class="sc-fork-col"><span class="sc-fork-lbl">TAKE A BREAK</span>' +
+        '<div class="sc-noskip">NO BREAKS</div>' +
+        '<div class="sc-bonus">a deadline gets worked</div></div>'
+      : '');
+  return '<div class="sc-card sc-now' + (boss ? ' sc-boss' : '') + '"><div class="sc-tab sc-tab-now">#' +
+    ((r-1)%CAL_ROUNDS_PER_DAY+1) +
     '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
     '<div class="sc-sub">TARGET SCORE</div><div class="sc-target sc-red">' + (G.tgt || 0) + '</div>' +
     '<div class="sc-pills">' + calStatPill(G.hands || 0, 'HANDS') +
       calStatPill(G.disc || 0, 'DISCARDS') + calStatPill(G.earn || 0, 'EARN', true) + '</div>' +
-    (G.roundModifier ? '<div class="sc-modtag sc-modtag-now">' + String(G.roundModifier.name || G.roundModifier.id || '').toUpperCase() + '</div>' : '') +
+    (G.roundModifier ? calDeadlineNow(G.roundModifier) : '') +
     '<div class="sc-fork">' +
       '<div class="sc-fork-col"><span class="sc-fork-lbl">CONTINUE TO SHOP</span>' +
         '<button class="sc-work" onclick="goToShopFromCalendar()">WORK</button></div>' +

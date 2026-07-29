@@ -1179,10 +1179,25 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .sc-pill b{font-family:'Lazydog',cursive;font-size:1.7cqw;font-weight:400;line-height:1;display:flex;align-items:center;}
 .sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
 .sc-pill span{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;}
-.sc-modtag{position:absolute;right:-1.4cqw;bottom:-1cqw;z-index:3;background:#eeb84b;
-  border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.3cqw .7cqw;max-width:9cqw;
-  font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;color:#1b1a24;line-height:1.15;}
-.sc-modtag-now{position:static;margin-top:.5cqw;max-width:none;}
+/* Deadline detail (js/calendar.js) — the schedule spells a deadline out rather
+   than only labelling it: the round you're on names its condition, a round
+   still ahead states the rules and previews the pool it draws from. */
+.sc-boss{border-color:#eeb84b;}
+.sc-dl{width:100%;margin-top:.55cqw;background:#eeb84b;border:0.17cqw solid #1b1a24;
+  border-radius:.7cqw;padding:.3cqw .5cqw .4cqw;color:#1b1a24;text-align:center;}
+.sc-dl-hd{font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;letter-spacing:.02em;line-height:1.1;}
+.sc-dl-name{font-family:'Lazydog',cursive;font-size:1.55cqw;line-height:1.1;margin-top:.1cqw;}
+.sc-dl-desc{font-family:'Bobby Jones Soft',cursive;font-size:.85cqw;line-height:1.2;margin-top:.15cqw;}
+.sc-dl-note{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;line-height:1.2;margin-top:.15cqw;}
+.sc-dl-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:.2cqw;margin-top:.3cqw;}
+.sc-dl-chip{width:1.6cqw;height:1.6cqw;display:flex;align-items:center;justify-content:center;
+  background:#fcfafa;border:0.14cqw solid #1b1a24;border-radius:.4cqw;font-size:.95cqw;}
+.sc-dl-done{margin-top:.5cqw;display:flex;flex-direction:column;align-items:center;
+  background:#eeb84b;border:0.17cqw solid #1b1a24;border-radius:.7cqw;padding:.2cqw .6cqw;
+  font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;color:#1b1a24;line-height:1.15;}
+.sc-dl-done small{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;opacity:.75;}
+.sc-noskip{padding:.55cqw 1cqw;border:0.17cqw dashed #a5a2b2;border-radius:.85cqw;
+  font-family:'Lazydog',cursive;font-size:1.5cqw;line-height:1;color:#8d8a99;white-space:nowrap;}
 
 .sc-fork{display:flex;gap:.9cqw;margin-top:.9cqw;align-items:flex-start;}
 .sc-fork-col{display:flex;flex-direction:column;align-items:center;gap:.25cqw;}

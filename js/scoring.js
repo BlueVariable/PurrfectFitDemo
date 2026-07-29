@@ -750,7 +750,17 @@ function roundWin(){
   // win funnel, while G.round still points at the just-won round.
   if(G.roundLog){
     const _mx=G.maxHands||G.hands;
-    G.roundLog[G.round]={hands:Math.max(0,_mx-G.hands),max:_mx,boss:!!G.roundModifier};
+    // Everything the schedule's finished card shows, captured here: hands used,
+    // final score against the target ACTUALLY played (target_mult modifiers
+    // already baked into G.tgt, so rcfg's raw row would understate it), the
+    // round's purrfect fits, and which deadline condition it was won under.
+    G.roundLog[G.round]={
+      hands:Math.max(0,_mx-G.hands),max:_mx,handsMax:_mx,
+      score:G.score,tgt:G.tgt,
+      purrfects:G.purrfectsThisRound||0,purrfectsMax:_mx,
+      boss:!!G.roundModifier,
+      modName:G.roundModifier?(G.roundModifier.name||G.roundModifier.id||''):'',
+    };
   }
   // base earn + configurable payout per unused hand remaining (General → unused_hand_bonus, default 1)
   const perHand=CFG.unused_hand_bonus!=null?Number(CFG.unused_hand_bonus):1;
