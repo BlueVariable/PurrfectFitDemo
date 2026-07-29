@@ -64,15 +64,15 @@ function renderShopFull(){
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
 function renderShopBPGrid(){
   const grid=g('shop-bpg');if(!grid)return;
-  const cs=window._boardCellSize||60;
-  // the pet shop sizes its own grid from CSS (--bpc); elsewhere keep the px columns
-  grid.style.setProperty('--bpc',getBPC());
+  // Same measured fit as the game scene's grid, so the two inventories are the
+  // same object on both screens (bpFitCellSize, js/backpack.js).
+  const cs=bpFitCellSize(grid,document.querySelector('.ps-invcard'),getBPC(),getBPR());
   grid.style.gridTemplateColumns=`repeat(${getBPC()},${cs}px)`;
   grid.innerHTML='';
   for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++){
     const div=document.createElement('div');
     div.className='sp-bpc';
-    if(!document.getElementById('s-rounds').classList.contains('on')){div.style.width=cs+'px';div.style.height=cs+'px';}
+    div.style.width=cs+'px';div.style.height=cs+'px';
     const bd=G.bp[r][c];
     if(bd.filled){
       div.classList.add('ft');
