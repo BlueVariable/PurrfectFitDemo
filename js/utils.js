@@ -42,4 +42,10 @@ function weightedSample(items,n,weightFn){
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function g(id){return document.getElementById(id);}
 function uid(){return Math.random().toString(36).slice(2,9);}
-window.addEventListener('resize',()=>{if(typeof G!=='undefined'&&G.board?.length)renderBoard();});
+// Board cell size and hand-tray thumbnails are both measured off live layout,
+// so both have to be redrawn when the stage changes size.
+window.addEventListener('resize',()=>{
+  if(typeof G==='undefined'||!G.board?.length)return;
+  renderBoard();
+  if(typeof renderHand==='function'&&G.hand)renderHand();
+});

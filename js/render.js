@@ -476,51 +476,77 @@ function renderBoard(){
   if(typeof renderCatArtLayer==='function')renderCatArtLayer();
 }
 
+// Hand-tray geometry. The tray is a fixed slice of the 16:9 stage, so the cats
+// inside it must be measured off the live tray instead of a hard-coded pixel
+// size — otherwise they read as tiny stickers next to a full-size board cell.
+// Returns the px-per-cell the thumbnails are drawn at plus the slot box.
+// HAND_SLOT_TALLEST = rows in the tallest base grid (L / J / cross are 3).
+const HAND_SLOT_TALLEST=3;
+function handSlotMetrics(){
+  const row=g('hand'), tray=row&&row.closest('.gm-tray');
+  const span=(typeof catArtMaxSpan==='function'&&catArtMaxSpan())||4;
+  let rowW=row?row.clientWidth:0, trayH=tray?tray.clientHeight:0;
+  if(!rowW||!trayH){
+    // Rendered while the screen is hidden, so nothing measures. Derive the same
+    // numbers the CSS would produce: a 16:9 stage fitted to the viewport, a tray
+    // 20% of its height and a hand row 86.5% of its width (.gm-tray/.hand).
+    const stageW=Math.min(innerWidth,innerHeight*16/9);
+    if(!stageW)return{cell:130/span,maxDim:130,slotW:150,slotH:150,span};
+    rowW=stageW*.865; trayH=stageW*9/16*.20;
+  }
+  const slots=Math.max(G.hand.length,CFG.hand_dealt_count||7,1);
+  const pitch=rowW/slots;
+  // Never larger than a board cell: a cat in hand should not out-size the cat
+  // it becomes once placed.
+  const cell=Math.min(pitch*.90/span,trayH*.74/HAND_SLOT_TALLEST,window._boardCellSize||78);
+  return{cell,maxDim:cell*span,slotW:Math.min(pitch*.94,cell*span*1.06),
+         slotH:Math.min(trayH*.86,cell*HAND_SLOT_TALLEST*1.15),span};
+}
+
 function renderHand(){
   const row=g('hand');row.innerHTML='';
+  const M=handSlotMetrics();
+  const sizeSlot=(el)=>{el.style.width=Math.round(M.slotW)+'px';el.style.height=Math.round(M.slotH)+'px';};
   G.hand.forEach((cat,i)=>{
     const isHeld=H.kind==='cat'&&H.handIdx===i;
     const d=document.createElement('div');
     d.className='cslot'+(isHeld?' held':'');
-    // 130 = the longest cat (straight, 4 cells) end-to-end; the 150px slot fits
-    // it, and every other cat scales off the same per-cell size.
-    const handArt=(typeof catArtHTML==='function')&&catArtHTML(cat.shape,cat.type,130);
+    sizeSlot(d);
+    // maxDim bounds the LONGEST cat (straight, 4 cells) end-to-end; every other
+    // cat is drawn at the same px-per-cell so the hand reads to one scale.
+    const handArt=(typeof catArtHTML==='function')&&catArtHTML(cat.shape,cat.type,M.maxDim);
     d.innerHTML=(handArt||shpHTML(cat.cells,cat.col,25))+`<div class="csn">${cat.em} ${cap(cat.type)}</div>`;
+    // Which cell of the piece the pointer grabbed, measured against the art as
+    // actually drawn (the wrap box is base-grid cols x rows, same orientation
+    // as cat.cells at rot 0), so the grab point survives any thumbnail size.
+    const grabAt=(clientX,clientY)=>{
+      const cells=rotC(cat.cells,H.kind==='cat'&&H.handIdx===i?H.rot:0);
+      const rows=cells.length, cols=cells[0].length;
+      const wrap=d.querySelector('.cat-art-wrap');
+      let box;
+      if(wrap){box=wrap.getBoundingClientRect();}
+      else{ // shpHTML fallback preview
+        const sz=9,gap=1,gridW=cols*(sz+gap),gridH=rows*(sz+gap),rect=d.getBoundingClientRect();
+        box={left:rect.left+rect.width/2-gridW/2,top:rect.top+rect.height/2-8-gridH/2,width:gridW,height:gridH};
+      }
+      const grabDc=Math.max(0,Math.min(cols-1,Math.floor((clientX-box.left)/(box.width/cols))));
+      const grabDr=Math.max(0,Math.min(rows-1,Math.floor((clientY-box.top)/(box.height/rows))));
+      pickupCatWithGrab(i,grabDr,grabDc);
+    };
     d.addEventListener('mousedown',(e)=>{
       if(e.button!==0)return;
-      // compute grab offset within the mini shape preview
-      const cells=rotC(cat.cells,H.kind==='cat'&&H.handIdx===i?H.rot:0);
-      const sz=9,gap=1;
-      const gridW=cells[0].length*(sz+gap);
-      const gridH=cells.length*(sz+gap);
-      const rect=d.getBoundingClientRect();
-      const slotCX=rect.left+rect.width/2, slotCY=rect.top+rect.height/2-8;
-      const relX=e.clientX-(slotCX-gridW/2);
-      const relY=e.clientY-(slotCY-gridH/2);
-      const grabDc=Math.max(0,Math.min(cells[0].length-1,Math.floor(relX/(sz+gap))));
-      const grabDr=Math.max(0,Math.min(cells.length-1,Math.floor(relY/(sz+gap))));
-      pickupCatWithGrab(i,grabDr,grabDc);
+      grabAt(e.clientX,e.clientY);
     });
     d.addEventListener('touchstart',(e)=>{
       e.preventDefault();
       _touchMovedWhileHeld=false;
       const t=e.touches[0];
-      const cells=rotC(cat.cells,H.kind==='cat'&&H.handIdx===i?H.rot:0);
-      const sz=9,gap=1;
-      const gridW=cells[0].length*(sz+gap);
-      const gridH=cells.length*(sz+gap);
-      const rect=d.getBoundingClientRect();
-      const slotCX=rect.left+rect.width/2, slotCY=rect.top+rect.height/2-8;
-      const relX=t.clientX-(slotCX-gridW/2);
-      const relY=t.clientY-(slotCY-gridH/2);
-      const grabDc=Math.max(0,Math.min(cells[0].length-1,Math.floor(relX/(sz+gap))));
-      const grabDr=Math.max(0,Math.min(cells.length-1,Math.floor(relY/(sz+gap))));
-      pickupCatWithGrab(i,grabDr,grabDc);
+      grabAt(t.clientX,t.clientY);
     },{passive:false});
     d.addEventListener('click',()=>{if(!H.dragging)pickupCat(i);});
     row.appendChild(d);
   });
-  for(let i=G.hand.length;i<(CFG.hand_dealt_count||7);i++){const e=document.createElement('div');e.className='eslot';row.appendChild(e);}
+  for(let i=G.hand.length;i<(CFG.hand_dealt_count||7);i++){const e=document.createElement('div');e.className='eslot';sizeSlot(e);row.appendChild(e);}
 }
 
 function renderBP(){

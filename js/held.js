@@ -370,8 +370,15 @@ function updateGhost(){
   if(!H.kind){g('ghost').style.display='none';return;}
   const cells=H.cells;
   const cols=cells[0].length;
-  const cs=H.kind==='cat'?38:26;
-  const gap=3;
+  // A carried cat is drawn at the board's own cell pitch, so what you hold is
+  // exactly the size of the hole it is about to fill — and it does not jump
+  // scale on the way out of the hand tray. Treats keep the compact ghost: they
+  // are dragged around the inventory grid as much as the board.
+  const isCat=H.kind==='cat';
+  const board=g('board');
+  const boardGap=board?parseFloat(getComputedStyle(board).columnGap):NaN;
+  const cs=isCat?(window._boardCellSize||38):26;
+  const gap=isCat?(isFinite(boardGap)?boardGap:3):3;
   const grid=g('gh-grid');
   grid.style.gridTemplateColumns=`repeat(${cols},${cs}px)`;
   grid.style.gap=gap+'px';

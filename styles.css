@@ -1284,7 +1284,12 @@ body:has(#s-menu.on) #btn-dev-float{display:none;}
 .gm-stage .bpc{background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.85);border-radius:.45cqw;}
 .gm-stage .bpc.ft{border-color:rgba(255,255,255,.95);}
 
-/* hand tray: pieces spread across the counter, no card chrome under them */
+/* hand tray: pieces spread across the counter, no card chrome under them.
+   Slot boxes are sized in JS (handSlotMetrics) off the live tray, so the cats
+   read at nearly board scale instead of a fixed 150px thumbnail. */
 .gm-tray .hand{width:86.5%;justify-content:space-between;align-items:center;gap:0;}
 .gm-stage .cslot{background:none;border:0;box-shadow:none;padding:0;min-width:0;}
 .gm-stage .cslot .csn{display:none;}
+/* a played slot leaves a faint outline on the counter, not a grey block */
+.gm-stage .eslot{background:none;border:.17cqw dashed rgba(27,26,36,.16);border-radius:1cqw;}
+.gm-stage .eslot::after{display:none;}
