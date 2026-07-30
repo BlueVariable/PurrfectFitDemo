@@ -317,6 +317,9 @@ function shopDropOnBP(r,c){
     G.purrfectRecordBuyFits=G.totalFits||0;
     G.purrfectRecordBuyPurrfects=G.totalPurrfects||0;
   }
+  if(td.id==='big_bite'&&G.bigBiteBuyCats===undefined){
+    G.bigBiteBuyCats=G.catsScoredRun||0;
+  }
   G.purchasedTreatIds.add(td.id);
   H=resetH();
   updateGhost();hideHUD();
