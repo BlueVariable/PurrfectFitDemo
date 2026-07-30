@@ -61,6 +61,7 @@ function scanCompare(a,b,mod){
 }
 
 function doFit(){
+  if(G.roundOver)return;   // round already won — the win panel owns the screen
   if(!G.cats.length)return;
 
   // Restore any requirements disabled by jumping_ball in the previous hand
@@ -293,6 +294,20 @@ function getMulFactorForCat(buf,cat){
 function setScoringChrome(on){
   const stage=document.querySelector('#s-game .gm-stage');
   if(stage)stage.classList.toggle('gm-scoring',!!on);
+}
+
+// Round-over lockout. The win panel sits over a still-live board: the scan has
+// already handed SHIP/CLEAR back (endScoreSequence → setScoringChrome(false)),
+// the shipped cats are still drawn, and a stray click behind the panel would
+// re-enter doFit() on a finished round. roundWin() is the single win funnel —
+// stepped scan AND the synchronous sim/harness path that calls
+// endScoreSequence() directly — so the lock is taken there and released only by
+// goShop(), the panel's own exit. G.roundOver is the source of truth (the flag
+// dies with G on newGame); updFit() (js/render.js) mirrors it onto the stage and
+// onto SHIP's disabled state on every render, so no later render can undo it.
+function setRoundOverLock(on){
+  G.roundOver=!!on;
+  updFit();
 }
 
 // ── Scan-order animation ──
@@ -861,6 +876,12 @@ function roundWin(){
   const rc=document.querySelector('.rc');
   if(cc)cc.classList.add('round-won');
   if(rc)rc.classList.add('round-won');
+  // The winning hand is already spent (endScoreSequence decremented G.hands
+  // before it got here) and the payout just landed — repaint the HUD so the
+  // hands pill and the cash chip behind the panel agree with what it prints.
+  renderStats();
+  // Nothing behind the panel may fire again — the panel's button is the way out.
+  setRoundOverLock(true);
   const wi=g('win-inline');
   g('wi-sc').textContent=G.score.toLocaleString();
   g('wi-ea').textContent=`+$${total} ($${G.earn} base + $${bonus} from ${G.hands} unused hand${G.hands===1?'':'s'})`;
@@ -894,6 +915,7 @@ function goShop(){
   const wi=g('win-inline');
   wi.classList.remove('visible');
   wi.style.display='none';
+  setRoundOverLock(false); // panel is down — the stage takes clicks again
   // Loss ceremony: every _expired treat in usedTreats is about to be dropped
   // for good (filtered out of the restore below) — record each one so the
   // toast layer can announce it. Pure state pushes; sim-safe. Covers every
