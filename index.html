@@ -10,11 +10,13 @@
 <body>
 
 <div id="ov-deck" class="ov off" onclick="closeDeckPopup()">
-  <div class="ob deck-ob" onclick="event.stopPropagation()" style="max-width:520px;max-height:80vh;overflow-y:auto;padding:24px 28px;">
-    <h1 style="font-size:22px;margin-bottom:4px;">📦 Remaining Deck</h1>
-    <div class="sub" id="deck-pop-sub">30 cards left</div>
-    <div id="deck-pop-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;margin-top:16px;"></div>
-    <button class="bok" onclick="closeDeckPopup()" style="margin-top:18px;">Close</button>
+  <div class="dk-pop" onclick="event.stopPropagation()">
+    <div class="dk-tab">📦 REMAINING DECK</div>
+    <div class="dk-sheet">
+      <div class="dk-sub" id="deck-pop-sub">30 cards left</div>
+      <div id="deck-pop-grid" class="dk-grid"></div>
+      <button class="dk-close" onclick="closeDeckPopup()">CLOSE</button>
+    </div>
   </div>
 </div>
 <div id="ghost"><div id="gh-grid" class="gh-grid"></div></div>
@@ -56,9 +58,11 @@
     <img class="tt-l tt-bell"    src="assets/ui/toy-bell.png" alt="">
 
     <button class="ttb ttb-play" onclick="menuPlay()"><span class="ttb-lbl"><i>P</i><i>L</i><i>A</i><i>Y</i><i>!</i></span></button>
-    <button class="ttb ttb-paw btn-menu-settings" onclick="void 0" aria-label="Settings">
+    <!-- the paw sticker beside PLAY is décor from the deck's page 1 — it opens
+         nothing, so it is not a button and never claims to be one -->
+    <div class="ttb ttb-paw" aria-hidden="true">
       <img src="assets/ui/icon-paw.png" alt="">
-    </button>
+    </div>
   </div>
   <div class="tt-dev">
     <button class="btn-dev-toggle" id="btn-dev-toggle" onclick="toggleDevMode()">⚙ Dev Mode</button>

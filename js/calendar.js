@@ -64,7 +64,9 @@ function calDeadlineCard(rm, now){
   return '<div class="sc-dl' + (now ? ' sc-dl-now' : '') + '"><div class="sc-dl-hd">⏰ DEADLINE</div>' +
     '<div class="sc-dl-name">' + calEsc(rm.em || '⚠️') + ' ' +
       calEsc(String(rm.name || rm.id || '').toUpperCase()) + '</div>' +
-    (rm.desc ? '<div class="sc-dl-desc">' + calEsc(rm.desc) + '</div>' : '') +
+    // .pf-figs: the condition is the one string on the card carrying figures
+    // ("TARGET SCORE 15% HIGHER"), and the marker face's % reads as ×.
+    (rm.desc ? '<div class="sc-dl-desc pf-figs">' + calEsc(rm.desc) + '</div>' : '') +
     '</div>';
 }
 

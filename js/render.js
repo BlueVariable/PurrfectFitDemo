@@ -2,19 +2,24 @@
 // ══════════════════════════════════════════════════════
 //  RENDER
 // ══════════════════════════════════════════════════════
+// One cat per tile — the same paper card for the live deck and the branch
+// preview. The cat's own colour underlines its card (.dk-card in styles.css).
+function deckPopTile(cat){
+  const d=document.createElement('div');
+  d.className='dk-card';
+  d.style.borderBottomColor=cat.col;
+  d.innerHTML=((typeof catArtHTML==='function'&&catArtHTML(cat.shape,cat.type,46))||shpHTML(cat.cells,cat.col,10))+
+    '<div class="dk-card-lbl">'+cat.em+' '+cap(cat.type)+'<br><span>'+cat.shape+'</span></div>';
+  return d;
+}
 function openDeckPopup(){
   const deck=G.deck;
   g('deck-pop-sub').textContent=deck.length+' card'+(deck.length!==1?'s':'')+' remaining';
   const grid=g('deck-pop-grid');
   grid.innerHTML='';
-  if(deck.length===0){grid.innerHTML='<div style="color:var(--mu);font-size:13px;grid-column:1/-1;text-align:center;padding:12px;">Deck is empty!</div>';g('ov-deck').classList.remove('off');return;}
+  if(deck.length===0){grid.innerHTML='<div class="dk-empty">Deck is empty!</div>';g('ov-deck').classList.remove('off');return;}
   const sorted=[...deck].sort((a,b)=>a.type<b.type?-1:a.type>b.type?1:0);
-  sorted.forEach(cat=>{
-    const d=document.createElement('div');
-    d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
-    d.innerHTML=((typeof catArtHTML==='function'&&catArtHTML(cat.shape,cat.type,46))||shpHTML(cat.cells,cat.col,10))+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
-    grid.appendChild(d);
-  });
+  sorted.forEach(cat=>grid.appendChild(deckPopTile(cat)));
   g('ov-deck').classList.remove('off');
 }
 function closeDeckPopup(){g('ov-deck').classList.add('off');}
@@ -42,12 +47,7 @@ function openDeckPreview(deckId){
   const grid=g('deck-pop-grid');
   if(!grid)return;
   grid.innerHTML='';
-  previewCards.forEach(cat=>{
-    const d=document.createElement('div');
-    d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--cbg);border-radius:10px;padding:8px 4px;border:2px solid '+cat.col+';';
-    d.innerHTML=((typeof catArtHTML==='function'&&catArtHTML(cat.shape,cat.type,46))||shpHTML(cat.cells,cat.col,10))+'<div style="font-size:9px;font-weight:800;color:var(--mu);text-align:center;line-height:1.2;">'+cat.em+' '+cap(cat.type)+'<br><span style=\'color:var(--tx);\'>'+cat.shape+'</span></div>';
-    grid.appendChild(d);
-  });
+  previewCards.forEach(cat=>grid.appendChild(deckPopTile(cat)));
   const deckName=(DECK_META[deckId]&&DECK_META[deckId].name)||deckId;
   g('deck-pop-sub').textContent=deckName+' — '+(CFG.deck_card_count||30)+' cards';
   g('ov-deck').classList.remove('off');
