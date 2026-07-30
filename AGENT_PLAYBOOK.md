@@ -130,11 +130,11 @@ A running total accumulates.
 **Positional consequences (this is the whole game):**
 
 - **Flat "+N" treats → top-left** (they scan first, then get multiplied by everything after).
-- **`big_bite` decays over the whole RUN, not the hand** — its payout is
-  `base − dec × (G.catsScoredRun + cats scanned before it this fit)`, and `G.catsScoredRun`
-  is cumulative across every fit of the run. It is an **early-run** treat that fades to +0;
-  buying it late is close to worthless. (Older notes here promised "+200 if placed top-left"
-  — that is only true on your first hands.)
+- **`big_bite` decays from PURCHASE, across the rest of the run** — its payout is
+  `base − dec × (cats scored since you bought it + cats scanned before it this fit)`;
+  `G.catsScoredRun` is measured against the buy-time snapshot `G.bigBiteBuyCats`, and the
+  decay persists across hands and rounds. Whenever you buy it, it opens at full value
+  (+200 live) and fades to +0 over the next ~20 scored cats — play it soon after buying.
 - **Multiplier treats (×N) → bottom-right.** They multiply everything already counted.
 - **`catnip`-style "+N per cat in ROW/COL" → a line you actually pack with cats** (in a
   treat-only row it pays +0).
