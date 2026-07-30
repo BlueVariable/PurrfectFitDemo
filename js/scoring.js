@@ -292,6 +292,10 @@ function getMulFactorForCat(buf,cat){
 // for the length of the sequence. endScoreSequence() is the single funnel back,
 // so every exit path (including the no-board early return) restores them.
 function setScoringChrome(on){
+  // A hover card belongs to the hand too: it describes a piece the scan is
+  // about to consume, and used to sit over the whole sequence (and the win
+  // panel behind it) because its cell never got a mouseleave.
+  if(on&&typeof hideAllTips==='function')hideAllTips();
   const stage=document.querySelector('#s-game .gm-stage');
   if(stage)stage.classList.toggle('gm-scoring',!!on);
 }

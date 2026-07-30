@@ -25,6 +25,9 @@ function openDeckPopup(){
 function closeDeckPopup(){g('ov-deck').classList.add('off');}
 
 function show(id){
+  // No card belongs to the screen you are leaving — and the element it was
+  // hovering is about to be hidden, so it can never hand back a mouseleave.
+  hideAllTips();
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));g(id).classList.add('on');
   // Both inventory grids are sized off their live card, and both can be built
   // while their screen is still hidden (openRounds renders the shop before the
@@ -430,6 +433,8 @@ function treatTipHTML(td,opts){
 // shelf can't follow the cursor onto a board or backpack card.
 function tlShow(e,html,big){
   const tip=g('board-tip');if(!tip)return;
+  if(tipsBlocked())return;  // the scan owns the stage for its whole length
+  if(!tipPointer(e))return; // nowhere believable to put it — don't strand it on screen
   tip.className=big?'tip-lg':'';
   tip.innerHTML=html;
   tip.style.display='block';
@@ -455,30 +460,87 @@ function showBoardTip(e,r,c){
 }
 function moveTip(e){
   const tip=g('board-tip');
-  if(tip.style.display==='none')return;
+  if(!tip||tip.style.display==='none')return;
+  const pt=tipPointer(e);
+  if(!pt)return; // leave the card where it is rather than fling it into a corner
   // The game draws its own marker arrow for a cursor, and at 72x102 it is big
   // enough to sit right on top of the card. So clear the whole arrow rather
   // than nudge past it — and when the screen edge runs out, flip the card to
   // the cursor's other side instead of sliding it back underneath.
   const w=tip.offsetWidth||240,h=tip.offsetHeight||80,GAP=78;
-  let x=e.clientX+GAP;
-  if(x+w>window.innerWidth-6)x=Math.max(4,e.clientX-w-18);
-  let y=e.clientY+10;
-  if(y+h>window.innerHeight-6)y=Math.max(4,e.clientY-h-10);
+  let x=pt.x+GAP;
+  if(x+w>window.innerWidth-6)x=Math.max(4,pt.x-w-18);
+  let y=pt.y+10;
+  if(y+h>window.innerHeight-6)y=Math.max(4,pt.y-h-10);
   tip.style.left=x+'px';
   tip.style.top=y+'px';
 }
 function moveBoardTip(e){moveTip(e);}
-function hideBoardTip(){g('board-tip').style.display='none';}
+function hideBoardTip(){hideHoverTips();}
 function showBPTip(e,r,c){
   if(H.kind)return;
   const bd=G.bp[r][c];if(!bd.filled||!bd.tdef)return;
   tlShow(e,treatTipHTML(bd.tdef,{reqFail:treatReqFails(bd.tdef)}));
 }
 function moveBPTip(e){moveTip(e);}
-function hideBPTip(){g('board-tip').style.display='none';}
+function hideBPTip(){hideHoverTips();}
+
+// ── tooltip lifecycle ──────────────────────────────────────────────────────
+// Every card in the game is ONE floating element that used to come down only
+// on its owner cell's `mouseleave` — so anything that took the owner away (a
+// sale, a drop, a re-render, a screen change) stranded the card on screen with
+// nothing left to leave. These are the two hides every such path calls.
+//
+// hideHoverTips() drops only the cursor-following cards, so it is safe to call
+// from a render: the next mouseenter puts one straight back.
+// The elements a hover card can belong to: board cell, game bag cell, shop bag
+// cell, shop shelf card. #board-tip itself is pointer-events:none, so it never
+// counts as its own owner.
+const TIP_OWNERS='.cell,.bpc,.sp-bpc,.tc';
+function hideHoverTips(){
+  const tip=g('board-tip');
+  if(tip){tip.style.display='none';tip.className='';}
+  hidePawTip();
+}
+// hideAllTips() also drops the click-selected treat card (#ttp). That one is
+// meant to outlive the pointer leaving it — its "Place on board" button has to
+// stay clickable — but not a drag, a scan or a screen change.
+function hideAllTips(){
+  hideHoverTips();
+  const ttp=g('ttp');
+  if(ttp)ttp.classList.remove('on');
+  if(typeof G!=='undefined'&&G)G.selBpGid=null;
+}
+// A board being scanned is not a board you can inspect: its cells are rebuilt
+// under the cursor as the scan runs, and each rebuild re-fires mouseenter, so
+// hiding the card once at the start is not enough — it has to stay shut until
+// the sequence hands the stage back (setScoringChrome, js/scoring.js).
+function tipsBlocked(){return!!document.querySelector('#s-game .gm-stage.gm-scoring');}
+// Where the cards are placed from. A cell rebuilt under a stationary cursor
+// re-fires mouseenter, and that re-fire can carry the origin rather than the
+// pointer's real position — which is what used to park a re-placed bag treat's
+// card in the top-left corner. So a card is placed from the event's own
+// coordinates only when they read as a real position, and otherwise from the
+// last one an actual mouse move reported.
+let TIP_PT=null;
+function tipPointer(e){
+  if(e&&isFinite(e.clientX)&&isFinite(e.clientY)&&(e.clientX||e.clientY))
+    TIP_PT={x:e.clientX,y:e.clientY};
+  return TIP_PT;
+}
+// Last net, in capture so nothing can swallow it: a card whose owner element is
+// already gone can never get a mouseleave, so any move of the mouse off the
+// owners takes it down. This is what makes "move the mouse away" work again.
+document.addEventListener('mousemove',(e)=>{
+  tipPointer(e);
+  const tip=g('board-tip');
+  if(!tip||tip.style.display==='none')return;
+  const t=e.target;
+  if(!t||typeof t.closest!=='function'||!t.closest(TIP_OWNERS))hideHoverTips();
+},true);
 
 function renderBoard(){
+  hideHoverTips(); // the cells a card could belong to are about to be replaced
   const el=g('board');
   const maxH=window.innerHeight-168,maxW=(document.querySelector('.cc')?.offsetWidth||440)-38;
   const cs=Math.min(Math.floor((maxH-14)/G.bsr)-3,Math.floor((maxW-14)/G.bsc)-3,78);
@@ -675,6 +737,7 @@ function renderHand(){
 }
 
 function renderBP(){
+  hideHoverTips(); // same as the board: this wipes every cell a card can own
   const grid=g('bpg');
   const cols=getBPC(),rows=getBPR();
   // Cell size is measured off the inventory card (.bpgw) so the grid fills it

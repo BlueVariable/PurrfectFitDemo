@@ -64,6 +64,7 @@ function renderShopFull(){
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
 function renderShopBPGrid(){
   const grid=g('shop-bpg');if(!grid)return;
+  hideHoverTips(); // a sold / re-placed treat's card must not outlive its cell
   // Same measured fit as the game scene's grid, so the two inventories are the
   // same object on both screens (bpFitCellSize, js/backpack.js).
   const cs=bpFitCellSize(grid,document.querySelector('.ps-invcard'),getBPC(),getBPR());
@@ -155,7 +156,7 @@ function showShopBPTip(e,r,c){
   tlShow(e,treatTipHTML(bd.tdef));
 }
 function moveShopBPTip(e){moveTip(e);}
-function hideShopBPTip(){g('board-tip').style.display='none';}
+function hideShopBPTip(){hideHoverTips();}
 
 // ── Backpack inventory list with sell buttons ──
 function renderShopBPList(){
@@ -197,6 +198,7 @@ const SHOP_SHAPE_CELL=2.9, SHOP_SHAPE_GAP=0.35;
 
 function renderTreatsRow(){
   const row=g('treats-row');if(!row)return;
+  hideHoverTips(); // a bought / rerolled card takes its hover card with it
   row.innerHTML='';
   // Coffee Break: the prep right after a skipped round has NO shop — cards
   // are boarded up behind a café "closed" sign. Buying and rerolling are
@@ -331,7 +333,7 @@ function shopTreatTip(e,id){
   tlShow(e,treatTipHTML(td),true);   // the shelf reads at the larger scale
 }
 function shopTreatTipMove(e){ if(typeof moveTip==='function')moveTip(e); }
-function shopTreatTipHide(){ const t=g('board-tip'); if(t){t.style.display='none';t.classList.remove('tip-lg');} }
+function shopTreatTipHide(){ hideHoverTips(); }
 
 // Label the plate for whatever is (or is not) in hand.
 function shopSellLabel(){
