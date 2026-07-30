@@ -350,9 +350,10 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
    the round is won but the only way out (Visit Pet Store) is invisible and
    unclickable. Card styling deliberately mirrors .ob but skips its pIn
    animation, which would fight the scale-in transition below. */
-.win-inline{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0;transform:scale(.92);transition:opacity .4s .35s ease-out,transform .4s .35s ease-out;}
-.win-inline.visible{opacity:1;transform:scale(1);pointer-events:auto;}
-.win-inline-card{background:#fff;border-radius:18px;padding:32px 40px;text-align:center;max-width:390px;width:90%;border:3px solid #1a1a2a;box-shadow:5px 5px 0 #1a1a2a;}
+.win-inline{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none;opacity:0;background:rgba(26,26,42,.78);backdrop-filter:blur(5px);transition:opacity .4s .35s ease-out;}
+.win-inline.visible{opacity:1;pointer-events:auto;}
+.win-inline-card{background:#fff;border-radius:18px;padding:32px 40px;text-align:center;max-width:390px;width:90%;border:3px solid #1a1a2a;box-shadow:5px 5px 0 #1a1a2a;transform:scale(.92);transition:transform .4s .35s ease-out;}
+.win-inline.visible .win-inline-card{transform:scale(1);}
 .win-inline-card h1{font-family:'Fredoka One',cursive;font-size:34px;color:#1a1a2a;margin-bottom:4px;}
 .win-inline-card .sub{color:#7a8090;margin-bottom:10px;font-size:12px;font-weight:700;}
 /* score sequence overlay */
