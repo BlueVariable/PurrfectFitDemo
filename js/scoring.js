@@ -162,8 +162,9 @@ function doFit(){
   const boardBonus=boardFull?boardFillBonus(playableCells,purrfectPerCell(G.round),G.roundModifier):0;
   G.totalFits=(G.totalFits||0)+1;
   // Run-level cumulative count of cats scored — persists across hands AND rounds
-  // (reset only by newGame). big_bite reads it so its decay carries over the whole
-  // run. Incremented here, in the real fit only; projectScore() has its own scan
+  // (reset only by newGame). big_bite reads it against its buy-time snapshot
+  // (G.bigBiteBuyCats) so its decay runs from purchase across the rest of the run.
+  // Incremented here, in the real fit only; projectScore() has its own scan
   // and never reaches this line, so projections don't advance the counter.
   G.catsScoredRun=(G.catsScoredRun||0)+scoredGids.size;
   if(boardFull){G.totalPurrfects=(G.totalPurrfects||0)+1;G.purrfectsThisRound=(G.purrfectsThisRound||0)+1;}
