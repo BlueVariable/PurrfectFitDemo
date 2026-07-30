@@ -1427,16 +1427,36 @@ body:has(#s-menu.on) #btn-cfg-float{display:none;}
 .gm-day-n{font-family:'Lazydog',cursive;font-size:2.2cqw;}
 .gm-day-n small{font-family:'Bobby Jones Soft',cursive;font-size:1.05cqw;}
 
-.gm-paw{left:2.4%;top:12.8%;width:4.1%;height:6.7%;padding:0;cursor:inherit;
+/* the deadline's condition, hung off the top edge beside the day tag in the
+   schedule's mustard, so a boss round never stops naming what it is doing to
+   you. It fills the gap between the day tag and the board, and is only in the
+   DOM flow while G.roundModifier is set — renderTopbarModifier() flips the
+   inline display, so a normal round shows nothing here at all. */
+.gm-mod{left:21.7%;top:-2.2%;width:12.9%;display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-end;gap:.08cqw;padding:1.55cqw .55cqw .5cqw;
+  background:#eeb84b;border:0.17cqw solid #1b1a24;border-radius:0 0 1cqw 1cqw;
+  color:#1b1a24;text-align:center;}
+.gm-mod-hd{font-family:'Bobby Jones Soft',cursive;font-size:.9cqw;letter-spacing:.06em;line-height:1;}
+.gm-mod-name{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.35cqw;
+  font-family:'Lazydog',cursive;font-size:1.35cqw;line-height:1.15;}
+.gm-mod-desc{font-family:'Bobby Jones Soft',cursive;font-size:.78cqw;line-height:1.2;color:rgba(27,26,36,.82);}
+
+/* paw + coin + cash, the schedule's motif. The score slab (.gm-panel) is
+   declared after them and shares their stacking level, so it used to paint
+   straight over the bottom of both — the cluster now sits clear of the slab's
+   top edge AND above it, so the whole pill reads. */
+.gm-paw{left:2.4%;top:10.4%;width:4.1%;height:6.7%;padding:0;cursor:inherit;z-index:2;
   background:#f6e379;border:0.17cqw solid #17151c;border-radius:.9cqw;
   box-shadow:0 0 0 0.17cqw #fdfcff, 0 .6cqw 0 #262229;overflow:hidden;
   transition:transform .09s ease-out, box-shadow .09s ease-out;}
 .gm-paw:hover {transform:translateY(-0.2cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .8cqw 0 #262229;}
 .gm-paw:active{transform:translateY(0.4cqw);box-shadow:0 0 0 0.17cqw #fdfcff, 0 .2cqw 0 #262229;}
 .gm-paw img{position:absolute;left:50%;top:48%;width:52%;transform:translate(-50%,-50%) rotate(-31.8deg);}
-.gm-cash{left:8.4%;top:13.7%;width:9.3%;height:4.9%;display:flex;align-items:center;justify-content:center;
+.gm-cash{left:8.0%;top:11.9%;height:5.2%;display:flex;align-items:center;gap:.4cqw;
+  padding:0 1.4cqw 0 .35cqw;z-index:2;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:99px;
   font-family:'Lazydog',cursive;font-size:1.9cqw;color:#1b1a24;}
+.gm-cash img{height:150%;margin-left:-1.1cqw;}
 
 .gm-panel{left:2.75%;top:18.1%;width:17.2%;height:38.7%;background:#323d62;
   border:0.17cqw solid #1b1a24;border-radius:1.4cqw;}
@@ -1444,6 +1464,13 @@ body:has(#s-menu.on) #btn-cfg-float{display:none;}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1cqw;}
 .gm-card-reach{top:22.6%;height:13.1%;}
 .gm-card-so   {top:37.9%;height:14.4%;}
+/* the day's purrfect rate, on the empty band the slab leaves above REACH
+   SCORE — the prize the fill is chasing, priced where the targets are read.
+   Written by renderStats() (js/render.js). */
+.gm-purrfect{left:4.5%;top:18.0%;width:13.9%;height:3.5%;
+  display:flex;align-items:center;justify-content:center;white-space:nowrap;
+  background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:99px;
+  font-family:'Bobby Jones Soft',cursive;font-size:1cqw;color:#1b1a24;letter-spacing:.02em;}
 .gm-card-lbl{font-family:'Bobby Jones Soft',cursive;font-size:1.25cqw;color:#1b1a24;letter-spacing:.02em;}
 .gm-card-val{font-family:'Lazydog',cursive;font-size:3.4cqw;line-height:1;color:#1b1a24;}
 .gm-red{color:#e3695e;}

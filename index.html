@@ -174,11 +174,19 @@
   <div class="tt-stage gm-stage">
     <div class="gm-branch" id="gm-branch">&nbsp;</div>
     <div class="gm-day"><span class="gm-day-d" id="gm-day-name">MONDAY</span><span class="gm-day-n">#<span id="g-round-top">1</span><small id="gm-day-of">/3</small></span></div>
+    <!-- the round's deadline condition, named on the board the way the schedule
+         names it. Hidden unless G.roundModifier is set (js/render.js). -->
+    <div class="gm-mod" id="g-topbar-mod" style="display:none;">
+      <span class="gm-mod-hd">DEADLINE</span>
+      <span class="gm-mod-name"><span id="g-topbar-mod-em"></span><span id="g-topbar-mod-name"></span></span>
+      <span class="gm-mod-desc" id="g-topbar-mod-desc"></span>
+    </div>
 
     <button class="gm-paw" onclick="exitToMenu()" aria-label="Back to menu"><img src="assets/ui/icon-paw.png" alt=""></button>
-    <div class="gm-cash" id="g-topbar-cash"><span>0</span></div>
+    <div class="gm-cash" id="g-topbar-cash"><img src="assets/ui/coin.png" alt=""><span>0</span></div>
 
     <i class="gm-panel"></i>
+    <div class="gm-purrfect" id="g-purrfect-rate"></div>
     <div class="gm-card gm-card-reach"><div class="gm-card-lbl">REACH SCORE</div><div class="gm-card-val gm-red" id="g-tgt">180</div></div>
     <div class="gm-card gm-card-so"><div class="gm-card-lbl">SCORED SO FAR</div><div class="gm-card-val" id="g-score">0</div></div>
     <div class="gm-hands"><b id="g-hands">4</b><span>HANDS LEFT</span></div>
@@ -207,8 +215,7 @@
     <!-- kept for JS that still writes to them; not part of the deck-page-5 layout -->
     <div class="gm-hidden">
       <span id="g-earn">3</span><span id="g-last">0</span><span id="g-bsize">4×4</span>
-      <span id="g-purrfect-rate"></span><span id="g-topbar-round"></span><span id="g-topbar-score"><span></span></span>
-      <span id="g-topbar-mod"><span id="g-topbar-mod-em"></span><span id="g-topbar-mod-name"></span></span>
+      <span id="g-topbar-round"></span><span id="g-topbar-score"><span></span></span>
     </div>
   </div>
   <div class="win-inline" id="win-inline" style="display:none;">

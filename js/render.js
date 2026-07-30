@@ -202,7 +202,8 @@ function renderRoundModifierCard(){
   const ds=g('rds-mod-desc');if(ds)ds.textContent=rm.desc;
 }
 
-// In-game topbar chip — mirrors the prep-screen card while G.roundModifier is active.
+// In-game deadline badge — mirrors the prep-screen card while G.roundModifier
+// is active, so the board never stops naming the condition it is playing under.
 function renderTopbarModifier(){
   const pill=g('g-topbar-mod');
   if(!pill)return;
@@ -212,6 +213,7 @@ function renderTopbarModifier(){
   pill.title=rm.desc;
   const em=g('g-topbar-mod-em');if(em)em.textContent=rm.em;
   const nm=g('g-topbar-mod-name');if(nm)nm.textContent=rm.name;
+  const ds=g('g-topbar-mod-desc');if(ds)ds.textContent=rm.desc;
 }
 function renderAll(){renderStats();renderBoard();renderHand();renderBP();updFit();updateProjectedScoreUI();}
 
