@@ -820,4 +820,14 @@ function showTTP(t){
   g('ttp').classList.add('on');
 }
 function hideTTP(){g('ttp').classList.remove('on');}
-function updFit(){g('btn-fit').disabled=G.cats.length===0&&!G.board.some(r=>r.some(c=>c.filled));}
+// SHIP's enabled state, plus the round-over lock it belongs to. While the win
+// panel is up (G.roundOver, set by roundWin() in js/scoring.js) SHIP stays dead
+// and `gm-roundover` stops the whole stage — CLEAR, the board, the tray —
+// from taking clicks behind the panel. Re-derived on every render, so the lock
+// can never outlive the flag (a new run gets a fresh G, hence a clean stage).
+function updFit(){
+  const over=!!G.roundOver;
+  const stage=document.querySelector('#s-game .gm-stage');
+  if(stage)stage.classList.toggle('gm-roundover',over);
+  g('btn-fit').disabled=over||(G.cats.length===0&&!G.board.some(r=>r.some(c=>c.filled)));
+}

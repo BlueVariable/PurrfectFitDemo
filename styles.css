@@ -1480,6 +1480,12 @@ body:has(#s-menu.on) #btn-cfg-float{display:none;}
 .gm-stage.gm-scoring .gm-ship,
 .gm-stage.gm-scoring .fit-proj{
   opacity:0;visibility:hidden;transition:opacity .18s ease-out,visibility 0s .18s;}
+/* Round won: the win panel (a sibling of the stage, so unaffected) is up and its
+   button is the only way out — the whole stage goes inert so a click behind the
+   card can't CLEAR, re-pack or re-SHIP a finished round. SHIP is also `disabled`
+   so it reads dead rather than lit. Class is toggled by updFit() in js/render.js
+   off G.roundOver. */
+.gm-stage.gm-roundover{pointer-events:none;}
 
 .gm-invtab{left:68.7%;top:12.2%;width:14.6%;height:4.6%;display:flex;align-items:center;justify-content:center;
   background:#fcfafa;border:0.17cqw solid #1b1a24;border-radius:.9cqw;
