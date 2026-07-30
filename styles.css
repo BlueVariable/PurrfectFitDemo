@@ -1363,6 +1363,15 @@ body:has(#s-menu.on) #btn-cfg-float{display:none;}
 .sc-pill b{font-family:'Lazydog',cursive;font-size:1.7cqw;font-weight:400;line-height:1;display:flex;align-items:center;}
 .sc-pill b img{height:2.2cqw;margin:-.6cqw -.9cqw -.6cqw .1cqw;}
 .sc-pill span{font-family:'Bobby Jones Soft',cursive;font-size:.8cqw;}
+/* Purrfect (board-fill) rate for the round being played (js/calendar.js) — what
+   a full box pays per cell, which steps up once per work-week day. Sunny yellow
+   rather than the deadline's mustard so a bonus never reads as a condition; the
+   pills' type, one line, tucked under them and clear of the WORK/SKIP fork. */
+.sc-purrfect{margin-top:.45cqw;display:inline-flex;align-items:baseline;gap:.25cqw;
+  background:#f6e379;border:0.17cqw solid #1b1a24;border-radius:.6cqw;padding:.1cqw .55cqw;
+  font-family:'Bobby Jones Soft',cursive;font-size:.85cqw;color:#1b1a24;
+  line-height:1.2;white-space:nowrap;}
+.sc-purrfect b{font-family:'Lazydog',cursive;font-size:1.3cqw;font-weight:400;}
 /* Deadline detail (js/calendar.js) — the schedule spells a deadline out rather
    than only labelling it: every deadline on the day, the one you're standing
    on and the ones still ahead, names the exact condition it lands with.

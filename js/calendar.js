@@ -99,6 +99,70 @@ function calStatPill(v, lbl, coin){
   return '<div class="sc-pill"><b>' + v + (coin ? '<img src="assets/ui/coin.png" alt="">' : '') +
          '</b><span>' + lbl + '</span></div>';
 }
+
+// ── What a round ahead will ACTUALLY deal ─────────────────────────────────
+// A preview card used to print the sheet's raw row, so a branch that grants
+// +1 hand showed 5 HANDS on the round being played and 4 on every round after
+// it — reading as if the perk were about to be taken away. These mirror what
+// the round's own setup will do to that row (applyModifiers() / dealHand() /
+// advanceRoundSetup()), so a preview card and the active card it becomes agree.
+// All of it is read off state drawn at run start — no Math.random, ever:
+// renderCalendar() must stay RNG-free for the headless sim.
+function calBranchMods(){
+  return (typeof G !== 'undefined' && G.modifiers)
+    ? G.modifiers.split('|').map(m => m.trim()).filter(Boolean) : [];
+}
+// A SKIP taken on the current round pays out to the NEXT one. advanceRoundSetup()
+// normally consumes the bonus before the calendar paints (so this is null), but
+// honour it when it hasn't been so the preview never lags the state.
+function calPendingFor(round){
+  return (round === G.round + 1 && G.breakPending) ? G.breakPending : null;
+}
+function calPreviewHands(round, cfg, rm){
+  let h = (cfg && cfg.h) || CFG.hand_count || 3;
+  calBranchMods().forEach(mod => {
+    if(mod === 'hands-1') h = Math.max(1, h - 1);
+    else if(mod.indexOf('hands+') === 0) h += (parseInt(mod.slice(6)) || 0);
+  });
+  if(typeof applyHandsDelta === 'function') h = applyHandsDelta(h, rm);
+  const p = calPendingFor(round);
+  if(p && p.hands) h = Math.max(1, h + p.hands);
+  return h;
+}
+function calPreviewDiscards(round, rm){
+  const mods = calBranchMods();
+  let d = mods.indexOf('no-discard') >= 0 ? 0
+        : (CFG.discard_count || 3) + mods.filter(m => m.indexOf('discards+') === 0)
+            .reduce((s, m) => s + (parseInt(m.slice(9)) || 0), 0);
+  if(typeof applyDiscardsZero === 'function') d = applyDiscardsZero(d, rm);
+  const p = calPendingFor(round);
+  if(p && p.discards) d = Math.max(0, d + p.discards);
+  return d;
+}
+function calPreviewTarget(round, cfg, rm){
+  let t = (cfg && cfg.tgt) || 0;
+  if(typeof applyTargetMult === 'function') t = applyTargetMult(t, rm);
+  const p = calPendingFor(round);
+  if(p && p.target) t = Math.max(1, Math.round(t * (1 + p.target / 100)));
+  return t;
+}
+function calPreviewEarn(cfg, rm){
+  const e = (cfg && cfg.earn) || 0;
+  return (typeof applyEarnMult === 'function') ? applyEarnMult(e, rm) : e;
+}
+
+// ── Purrfect rate ─────────────────────────────────────────────────────────
+// What a full box pays per cell, which steps up once per work-week day. The
+// prep and in-game chips that print it (#rds-purrfect / #g-purrfect-rate) both
+// sit in hidden kept-for-JS containers, so the schedule is the only place the
+// player is told. Active card only — it's the rate you're about to play for.
+// purrfectPerCell() is pure config maths, so this stays RNG-free.
+function calPurrfectChip(round){
+  if(typeof purrfectPerCell !== 'function') return '';
+  const per = purrfectPerCell(round);
+  if(!(per > 0)) return '';
+  return '<div class="sc-purrfect">✨ PURRFECT <b>+' + per + '</b>/CELL</div>';
+}
 function calDoneCard(r){
   const log = (G.roundLog && G.roundLog[r]) || {};
   const cfg = (typeof rcfg === 'function') ? rcfg(r) : null;
@@ -111,7 +175,11 @@ function calDoneCard(r){
       '<div class="sc-verdict">BREAK</div><div class="sc-sub">day off</div></div></div>';
   }
   const scored = log.score;
-  const hands  = log.hands, hmax = log.handsMax || log.max || CAL_ROUNDS_PER_DAY;
+  // Hands used out of the hands that round actually DEALT — roundWin() stamps
+  // both off G.maxHands, which every mid-setup grant (a SKIP bonus's +1 hand)
+  // keeps in step. The fallback is the used count itself, never a made-up
+  // ceiling: a log with no max is better read as "4/4" than as "4/3".
+  const hands  = log.hands, hmax = log.handsMax || log.max || log.hands || 0;
   const pf = log.purrfects, pfmax = log.purrfectsMax;
   // A cleared deadline says so — the stamp is the record of the week.
   const stamp = log.boss ? '<div class="sc-dl-done">⏰ DEADLINE MET' +
@@ -136,10 +204,11 @@ function calNextCard(r){
   const rm = boss ? calModFor(r) : null;
   return '<div class="sc-card sc-future' + (boss ? ' sc-boss' : '') + '"><div class="sc-tab">#' +
     ((r-1)%CAL_ROUNDS_PER_DAY+1) + '<span>ORDER OF THE DAY</span></div><div class="sc-body">' +
-    '<div class="sc-sub">REACH SCORE</div><div class="sc-target">' + (cfg ? cfg.tgt : '—') + '</div>' +
-    '<div class="sc-pills">' + calStatPill(cfg ? (cfg.h || CFG.hand_count || 3) : '—', 'HANDS') +
-      calStatPill(CFG.discard_count || 3, 'DISCARDS') +
-      calStatPill(cfg ? cfg.earn : '—', 'EARN', true) + '</div>' +
+    '<div class="sc-sub">REACH SCORE</div><div class="sc-target">' +
+      (cfg ? calPreviewTarget(r, cfg, rm) : '—') + '</div>' +
+    '<div class="sc-pills">' + calStatPill(cfg ? calPreviewHands(r, cfg, rm) : '—', 'HANDS') +
+      calStatPill(calPreviewDiscards(r, rm), 'DISCARDS') +
+      calStatPill(cfg ? calPreviewEarn(cfg, rm) : '—', 'EARN', true) + '</div>' +
     (rm ? calDeadlineCard(rm, false) : boss ? calDeadlinePreview() : '') +
     '</div></div>';
 }
@@ -151,7 +220,7 @@ function calActiveCard(r){
     ? '<div class="sc-fork-col"><span class="sc-fork-lbl">TAKE A BREAK</span>' +
       '<button class="sc-skip' + (armed ? ' armed' : '') + '" id="cal-skip-btn" onclick="takeBreak()">' +
         (armed ? 'SURE?' : 'SKIP') + '</button>' +
-      '<div class="sc-bonus">' + offer.label + '</div></div>'
+      '<div class="sc-bonus">' + ((typeof breakLabel === 'function') ? breakLabel(offer) : offer.label) + '</div></div>'
     : (boss
       ? '<div class="sc-fork-col"><span class="sc-fork-lbl">TAKE A BREAK</span>' +
         '<div class="sc-noskip">NO BREAKS</div>' +
@@ -163,6 +232,7 @@ function calActiveCard(r){
     '<div class="sc-sub">TARGET SCORE</div><div class="sc-target sc-red">' + (G.tgt || 0) + '</div>' +
     '<div class="sc-pills">' + calStatPill(G.hands || 0, 'HANDS') +
       calStatPill(G.disc || 0, 'DISCARDS') + calStatPill(G.earn || 0, 'EARN', true) + '</div>' +
+    calPurrfectChip(r) +
     (calModFor(r) ? calDeadlineCard(calModFor(r), true) : '') +
     '<div class="sc-fork">' +
       '<div class="sc-fork-col"><span class="sc-fork-lbl">CONTINUE TO SHOP</span>' +

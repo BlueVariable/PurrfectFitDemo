@@ -843,7 +843,11 @@ function roundWin(){
   // hands it took to clear (fewer = cleared faster). Recorded here, the single
   // win funnel, while G.round still points at the just-won round.
   if(G.roundLog){
-    const _mx=G.maxHands||G.hands;
+    // Hands this round ACTUALLY had: G.maxHands, which round setup fixes and
+    // every mid-setup grant keeps in step (a SKIP bonus's +1 hand — see
+    // breakConsumePending in js/breaks.js). Floored by the hands still in
+    // hand so the stamp can never claim fewer were dealt than are left over.
+    const _mx=Math.max(G.maxHands||0,G.hands||0)||G.hands;
     // Everything the schedule's finished card shows, captured here: hands used,
     // final score against the target ACTUALLY played (target_mult modifiers
     // already baked into G.tgt, so rcfg's raw row would understate it), the
