@@ -34,6 +34,17 @@ function breakOffer(round){
 }
 function breakAvailable(round){ return !!breakOffer(round); }
 
+// The Breaks sheet writes its labels in the plural ("+1 HANDS NEXT ROUND"), so
+// make the counted noun agree with the number in front of it before the chip
+// goes on screen. Casing follows the label's own (HANDS/hands), and a label
+// with nothing to agree comes back untouched.
+function breakLabel(b){
+  return String((b && b.label) || '').replace(/(\d+)(\s*)(HANDS?|DISCARDS?)\b/gi, (m, n, sp, w) => {
+    const stem = w.replace(/s$/i, '');
+    return n + sp + (Number(n) === 1 ? stem : stem + (w === w.toUpperCase() ? 'S' : 's'));
+  });
+}
+
 // Effects are "<what><+/-><amount>": hands+N, discards+N, cash+N, target-N (percent).
 // Round-scoped ones are stashed on G.breakPending and consumed by the next
 // round's setup in goShop(); cash lands immediately.
@@ -51,7 +62,16 @@ function breakApply(b){
 // Called from the next round's setup once the new values are in place.
 function breakConsumePending(){
   const p = G.breakPending; if(!p) return;
-  if(p.hands)    G.hands = Math.max(1, (G.hands||0) + p.hands);
+  if(p.hands){
+    const before = G.hands||0;
+    G.hands = Math.max(1, before + p.hands);
+    // G.maxHands is "hands this round was dealt", and applyModifiers() set it
+    // just before this ran — so it has to move with the grant. Without the bump
+    // a round dealt 6 hands (5 + this bonus) and cleared in 4 gets stamped
+    // "HANDS 3/5" on the schedule, and 'FIRST HAND only' treats never see a
+    // first hand (G.hands would start one above G.maxHands, never equal to it).
+    G.maxHands = Math.max(1, (G.maxHands||before) + (G.hands - before));
+  }
   if(p.discards) G.disc  = Math.max(0, (G.disc||0)  + p.discards);
   if(p.target)   G.tgt   = Math.max(1, Math.round((G.tgt||0) * (1 + p.target/100)));
   G.breakPending = null;
