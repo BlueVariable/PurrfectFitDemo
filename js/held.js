@@ -565,5 +565,9 @@ function updateGhost(){
   g('ghost').style.transform=`translate(${-offX}px,${-offY}px)`;
 }
 
-function showHUD(){g('ihud').classList.add('on');}
+// Every pickup — cat or treat, hand, board, bag or shop shelf — raises the HUD,
+// so this is the one seam a drag can be caught at: whatever card was open
+// described the thing now riding the cursor, and the cell it belonged to is
+// about to be re-rendered out from under it (js/render.js hideAllTips).
+function showHUD(){hideAllTips();g('ihud').classList.add('on');}
 function hideHUD(){g('ihud').classList.remove('on');}
