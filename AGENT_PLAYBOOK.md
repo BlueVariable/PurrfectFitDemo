@@ -41,8 +41,8 @@ clears the run.
   known bonus ("+1 hand next round", "−20% target next round", …) for forfeiting the
   round. Two-click confirm: SKIP → SURE?, and the armed state **disarms after 4 s** —
   shorter than an agent round-trip, so send both clicks in ONE batch. The shop stays
-  open after a skip. The win panel's "Visit Pet Store 🏪" button lands on the Schedule,
-  not the shop.
+  open after a skip. The win panel's "Back to the Schedule 🗓️" button does what it says;
+  while that panel is up the whole stage behind it is inert (SHIP disabled, `G.roundOver`).
 
 ## 2. Drive the game with the harness — don't re-derive a solver
 
@@ -224,13 +224,10 @@ table is the current curve.)*
   `PF.plan`'s `bias` instead.
 - After any win screen, `#win-inline` stays visible until `goShop()` runs. **`G.score >= G.tgt` is
   the only ground truth** for win detection.
-- **The day-scaled purrfect rate and the boss modifier are INVISIBLE in-game** since the
-  deck-page redesign (`#g-purrfect-rate`, `#rds-purrfect`, `#g-topbar-mod` all sit in
-  hidden kept-for-JS containers). Read `purrfectPerCell(G.round)` / `G.roundModifier`
-  directly — only the calendar's deadline card names the condition.
-- Treat hover tooltips leak: after a drag, sell or scan the last tooltip can stay on
-  screen (it survives even screen changes) until another hover replaces it. Cosmetic —
-  don't let it confuse screenshot reads.
+- The purrfect rate and the boss modifier are back on screen (fixed 2026-07-30): the
+  active calendar card and the board screen both carry a "✨ PURRFECT +N/CELL" pill, and
+  deadline rounds hang a mustard DEADLINE badge (name + description) off the board
+  screen's top edge. `purrfectPerCell(G.round)` / `G.roundModifier` remain the ground truth.
 - Boss modifiers are drawn in the round advance — read `G.roundModifier` after advancing. Live
   pool (Modifiers tab): NO SECONDS (0 discards), ROCKSLIDE (2× blocked cells), SLIM PICKINGS
   (−1 card/hand), TIGHT SQUEEZE (−3 board cells), PICKY JUDGE (+15% target), TAX SEASON (−$1 per
@@ -282,9 +279,12 @@ from the config of their day and are superseded by the table in §4.**
   drag to place/remove cats and treats, drag-to-buy/sell with SOLD stamps, bag rotate +
   rearrange, discard-by-drag (replacement card dealt), stepped scan + Auto in both
   directions, SKIP with its known bonus, named deadline cards, win panel, Config Sheet
-  float, stats.html live page. Bugs reported to the owner: SHIP stays enabled behind the
-  win panel; stale hover tooltips; future calendar cards omit the branch's +1 hand;
-  round-log hands stamp ignores skip-bonus hands; title-screen paw button is a dead stub.
+  float, stats.html live page. Bugs found — and fixed the same day by a 5-agent pass,
+  verified in a second live run: SHIP now locks behind the win panel (`G.roundOver`);
+  tooltips die on drag/sell/scan/screen change; calendar previews apply branch mods;
+  `maxHands` follows skip bonuses (also un-breaking FIRST-HAND treat reqs on bonus
+  rounds); shop shelf order is stable; the title paw is decorative; the deck popup and
+  the % glyph match the house style.
 - **Fixed, so stop repeating them:** `encore` / `treat_encore` DO propagate Type B results
   (`scoreBonus` / `scoreMultiplier`) — the old "they do nothing" note is wrong. `rainbow_row` was
   redesigned (+N per row with 2+ types) and now pays. Failed REAPPEAR flips never destroyed
