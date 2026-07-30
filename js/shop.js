@@ -211,22 +211,13 @@ function renderTreatsRow(){
     if(flavorEl)flavorEl.textContent='"back next round — the espresso machine won\'t clean itself"';
     return;
   }
-  // Bought treats keep their card (stamped SOLD) — only what is still for sale
-  // sorts, affordable first, into the slots the sold cards left free. A purchase
-  // therefore never makes the shelf jump around.
-  const totalSellable=G.bpGroups.reduce((s,grp)=>s+grp.tdef.sp,0);
-  const forSale=shopPool.filter(td=>!shopBoughtIds.has(td.id)).sort((a,b)=>{
-    const canA=G.cash>=a.pr;
-    const canB=G.cash>=b.pr;
-    const canSellA=G.cash+totalSellable>=a.pr;
-    const canSellB=G.cash+totalSellable>=b.pr;
-    if(canA!==canB) return canA?-1:1;
-    if(canSellA!==canSellB) return canSellA?-1:1;
-    return 0;
-  });
-  let nextForSale=0;
-  const shelf=shopPool.map(td=>shopBoughtIds.has(td.id)?td:forSale[nextForSale++]);
-  const flavors=forSale.filter(t=>t.fl).map(t=>t.fl);
+  // The shelf IS the pool, in the order it was drawn — a card never changes slot
+  // once stock is up, and a bought one just stays put stamped SOLD. The unsold
+  // cards used to be re-seated by an affordability sort on every render, and
+  // since buying changes what you can afford, a purchase could swap two cards
+  // under the player's cursor. Restocking is the only thing that moves a card.
+  const shelf=shopPool;
+  const flavors=shopPool.filter(t=>!shopBoughtIds.has(t.id)&&t.fl).map(t=>t.fl);
   const flavorEl=g('treats-flavor');
   if(flavorEl) flavorEl.textContent=flavors[0]||'';
   shelf.forEach(td=>{
