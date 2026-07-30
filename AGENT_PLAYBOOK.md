@@ -32,11 +32,17 @@ clears the run.
 - Flow: **PLAY → World Map → pick an HQ → WORK**. All HQs are unlocked
   (`isBranchUnlocked()` returns true). London (`eu_1`) = wild deck, **+1 Hand**;
   other branches trade that for +1 discard or +$10 start.
-- After every branch select / round win / café exit the visible screen is the
+- After every branch select / round win / skip the visible screen is the
   **work-week calendar** (`s-calendar`) — 5 days × 3 rounds, boss "deadline" on rounds
   3/6/9/12/15. It's screen-only for scripted play: state (shop pool, round setup,
   `G.roundModifier`) is already fully set up by `openCalendar()` → `openRounds()`, so
   `startRound()` / `PF.playRound()` and the shop fns work directly.
+- **SKIP (js/breaks.js) replaced the café**: each non-deadline round's card offers a
+  known bonus ("+1 hand next round", "−20% target next round", …) for forfeiting the
+  round. Two-click confirm: SKIP → SURE?, and the armed state **disarms after 4 s** —
+  shorter than an agent round-trip, so send both clicks in ONE batch. The shop stays
+  open after a skip. The win panel's "Visit Pet Store 🏪" button lands on the Schedule,
+  not the shop.
 
 ## 2. Drive the game with the harness — don't re-derive a solver
 
@@ -74,6 +80,10 @@ Rules baked into it — do not "improve" them away:
   FIRST-HAND-only. `bell` requires NO OTHER TREAT.
 - `projectScore(null).total` **equals** the next `doFit` total exactly — the cheap way to
   compare candidate plans without committing.
+- The scoring scan is **click-stepped for everyone** now: `Next →` / `Auto ▶` replace
+  SHIP while it runs (Auto persists via `localStorage['purrfect_auto_score']`, toggles
+  live mid-scan). `PF.fit()`'s ~8 s wait covers an Auto-run scan; `PF.fitFast()`
+  bypasses it as before.
 
 ### If you need to go under the harness
 
@@ -214,6 +224,13 @@ table is the current curve.)*
   `PF.plan`'s `bias` instead.
 - After any win screen, `#win-inline` stays visible until `goShop()` runs. **`G.score >= G.tgt` is
   the only ground truth** for win detection.
+- **The day-scaled purrfect rate and the boss modifier are INVISIBLE in-game** since the
+  deck-page redesign (`#g-purrfect-rate`, `#rds-purrfect`, `#g-topbar-mod` all sit in
+  hidden kept-for-JS containers). Read `purrfectPerCell(G.round)` / `G.roundModifier`
+  directly — only the calendar's deadline card names the condition.
+- Treat hover tooltips leak: after a drag, sell or scan the last tooltip can stay on
+  screen (it survives even screen changes) until another hover replaces it. Cosmetic —
+  don't let it confuse screenshot reads.
 - Boss modifiers are drawn in the round advance — read `G.roundModifier` after advancing. Live
   pool (Modifiers tab): NO SECONDS (0 discards), ROCKSLIDE (2× blocked cells), SLIM PICKINGS
   (−1 card/hand), TIGHT SQUEEZE (−3 board cells), PICKY JUDGE (+15% target), TAX SEASON (−$1 per
@@ -261,6 +278,13 @@ from the config of their day and are superseded by the table in §4.**
   cleared R1-R14 under the old targets, with the fill bonus contributing **40-51%** of late-round
   scores. Under the new curve four purrfect fills cover at most ~87% of a target, so that exploit is
   dead and the treat engine is mandatory again.
+- **2026-07-30 — QA playthrough of the deck-page UI (rounds 1-6, London).** Verified working:
+  drag to place/remove cats and treats, drag-to-buy/sell with SOLD stamps, bag rotate +
+  rearrange, discard-by-drag (replacement card dealt), stepped scan + Auto in both
+  directions, SKIP with its known bonus, named deadline cards, win panel, Config Sheet
+  float, stats.html live page. Bugs reported to the owner: SHIP stays enabled behind the
+  win panel; stale hover tooltips; future calendar cards omit the branch's +1 hand;
+  round-log hands stamp ignores skip-bonus hands; title-screen paw button is a dead stub.
 - **Fixed, so stop repeating them:** `encore` / `treat_encore` DO propagate Type B results
   (`scoreBonus` / `scoreMultiplier`) — the old "they do nothing" note is wrong. `rainbow_row` was
   redesigned (+N per row with 2+ types) and now pays. Failed REAPPEAR flips never destroyed
