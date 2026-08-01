@@ -315,15 +315,18 @@ from the config of their day and are superseded by the table in §4.**
 
 - **2026-08-01 — Paris (eu_2) run, rounds 1–12 won, lost R13 2861/3000.** First full run on the
   played-by-hand curve since the 07-13 retune: solver-grade play + a flats×muls engine
-  (poker_face / biscuit×2 / deep_deck×2 / bench_warmer + morning_stretch / cuddle_puddle×2)
+  (poker_face / biscuit×2 / deep_deck×2 / bench_warmer + morning_stretch / cuddle_puddle×2 —
+  cuddle_puddle was still a ×1.4 multiplier at the time this run was played; see the fix below)
   cleared every round in ≤2 hands through R11 (R3, R5, R11 in ONE hand), needed 3 on the R12
   SLIM PICKINGS boss (won 2402/2400), and died at R13 to treat exhaustion + a blocked-cell
   island that made the purrfect impossible — exactly where the sim's solver dies, so the
   late-week wall is real for engine builds too. Fixed `PF.playRound()` (button is WORK now),
   documented the calendar `goShop()` trap and the `plan()` dup-id proj bug above. Balance
   notes handed to the design owner: poker_face overtuned (its discard tension resets every
-  hand), cuddle_puddle dominates purchasable multipliers, requirement text (nine_lives LAST
-  HAND, standing_ovation 3-charge) missing from shop cards, midweek rounds fall in one hand.
+  hand), cuddle_puddle dominates purchasable multipliers **(fixed 2026-08-01: converted from
+  ×1.4 to a flat +150 add, same "ALL cells SURROUNDING are FILLED" condition —
+  `js/treats/cuddle_puddle.js`)**, requirement text (nine_lives LAST HAND, standing_ovation
+  3-charge) missing from shop cards, midweek rounds fall in one hand.
 
 ---
 
