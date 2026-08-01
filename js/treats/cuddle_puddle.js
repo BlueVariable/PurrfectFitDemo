@@ -1,13 +1,13 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  TREAT: cuddle_puddle
-//  ×N — requires ALL cells surrounding this treat to be filled.
-//  Inline requirement check (mirrors wild_dice's miss precedent):
-//  always fires, pays m=1 when the condition isn't met.
+//  +N — requires ALL cells surrounding this treat to be filled.
+//  Inline requirement check (mirrors frenzy/copycat's miss precedent):
+//  returns {} (no bonus) when the condition isn't met.
 // ══════════════════════════════════════════════════════
 TREAT_REGISTRY['cuddle_puddle'] = {
   buildFn(ef, phase) {
-    const m = extractMul(ef);
+    const amt = extractNum(ef);
     return (b, cats, ts, p, cs) => {
       const allTCells = Array.isArray(p[0]) ? p : [p];
       const inP = new Set(allTCells.map(([r, c]) => `${r},${c}`));
@@ -25,8 +25,8 @@ TREAT_REGISTRY['cuddle_puddle'] = {
           if (!cell.filled) allFilled = false;
         }
       });
-      if (sawNeighbour && allFilled) return { scoreMultiplier: true, m };
-      return { scoreMultiplier: true, m: 1 };
+      if (sawNeighbour && allFilled) return { scoreBonus: amt };
+      return {};
     };
   },
 };
