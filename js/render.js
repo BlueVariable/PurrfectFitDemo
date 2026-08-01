@@ -130,7 +130,7 @@ function exitToMenu(){
 }
 function openRounds(){
   rerollExtraCost=0;   // shopBoughtIds is cleared by restockShopPool() below
-  g('shop-sub').textContent=G.shopClosed?'"the shopkeeper took a coffee break too!"':G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
+  g('shop-sub').textContent=G.visitedShop?'"back for more treats!"':'"stock up before the round!"';
   G.visitedShop=true;
   gmHeader('ps');
   restockShopPool();
@@ -188,9 +188,6 @@ function renderRoundsTrack(){
     rp.textContent=`✨ DAY ${_day} · PURRFECT +${purrfectPerCell(G.round)}/cell`;
   }
   renderRoundModifierCard();
-  // Coffee Break button visibility + confirm-state reset (js/cafe.js).
-  // typeof-guarded: render.js loads before cafe.js in index.html.
-  if(typeof updateCoffeeBreakButton==='function')updateCoffeeBreakButton();
 }
 
 // Prep-screen "boss round" card — shown only when the upcoming round has a modifier.

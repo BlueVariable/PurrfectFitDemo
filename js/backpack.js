@@ -278,9 +278,8 @@ function bpCanAt(cells,r,c){
 }
 function bpCanFit(shape){for(let r=0;r<getBPR();r++) for(let c=0;c<getBPC();c++) if(bpCanAt(shape,r,c))return true;return false;}
 // Rotation-aware "would it fit anywhere" check — mirrors bpAutoPlaceRot's
-// search without placing anything. Used by the Coffee Break café draft
-// cards' "no room" state (js/cafe.js) so a card is only selectable when the
-// grant is guaranteed to succeed.
+// search without placing anything. Used by the shop cards' "no room" state
+// (js/shop.js) so a card is only buyable when the treat is guaranteed to land.
 function bpCanFitRot(shape){for(let rot=0;rot<4;rot++)if(bpCanFit(rotC(shape,rot)))return true;return false;}
 // `rot` (0-3, optional) records which rotation of tdef.bpS `cells` is, so a
 // later pickup can resume the rotate cycle from the saved orientation.

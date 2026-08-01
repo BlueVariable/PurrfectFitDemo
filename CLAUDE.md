@@ -39,7 +39,7 @@ reproduce their previous seeded outcomes.
 `index.html` (markup + inline styles) + JS under `js/`. Script load order in
 `index.html` matters: utils → treat-effects → registry → requirements → treat files
 → config → catart → branches → state → treat-loss → board → backpack → held →
-devfit → render → scoring → projection → shop → cafe → calendar.
+devfit → render → scoring → projection → shop → calendar.
 
 Global game state lives in `G` (`js/state.js`). Held/dragged piece state lives in `H`.
 
@@ -82,11 +82,13 @@ Between rounds the player lands on the **work-week calendar** (`s-calendar`,
 rounds 3/6/9/12/15, per `General!modifier_rounds`), past rounds stamped by
 hands-to-clear (`G.roundLog`; `☕` for a skipped round). It is the fork point:
 🏪 **WORK** (→ shop/prep screen, then Play) or **SKIP** (`js/breaks.js` — forfeit the
-round for a known bonus). **The Coffee Break café (`js/cafe.js`) is DEPRECATED** —
-SKIP replaced it; cafe.js is still loaded but has no live entry point, and the
-Treats sheet's Archetype column (which fed its blend pools) is now taxonomy only.
+round for a known bonus). The Coffee Break café was **removed entirely on
+2026-08-02**; SKIP (`js/breaks.js`) is the between-rounds mechanic. The Treats
+sheet's **Archetype** column lost its café consumer but remains the live
+design-family axis — treat it as load-bearing design data with new mechanical /
+organizational roles ahead, not as dead taxonomy.
 `openCalendar()` delegates to `openRounds()` for all state setup, so
-`goShop()` / `selectBranch()` / `cafeFinish()` / `menuContinue()` route through it
+`goShop()` / `selectBranch()` / `menuContinue()` route through it
 without changing shop-pool generation or the RNG draw order the headless sim
 depends on.
 
@@ -171,8 +173,8 @@ Two variations, both verified in `doFit()`:
   and is restored at round end. The only thing forfeited is mid-round reuse.
 - **Self-expiry**: treats that set `tdef._expired` are filtered out of the round-end
   restore and are gone for good. The real list (grep `_expired` in `js/treats/`):
-  **`final_feast`, `hiss_and_miss`, `second_breakfast`, `treat_encore`** — plus
-  `soft_landing`, which burns itself in `endScoreSequence()` to convert a fail into a win.
+  **`second_breakfast`, `treat_encore`** — plus `soft_landing`, which burns itself in
+  `endScoreSequence()` to convert a fail into a win.
 
 The only other permanent loss is **`catnado`**, which removes a random inventory treat
 outright.
@@ -203,6 +205,23 @@ back to generic pattern matching only for treats without an entry (with a consol
 The Treats tab in the Google Sheet is the source of truth for the treat list — do not
 maintain one here. Inspect it with `mcp__google-sheets__sheets_get_values` against
 `Treats!A:P`.
+
+**`js/treats/` must not drift from the sheet.** A file registering an id no sheet row
+references is an orphan: it costs a script tag, and the day someone adds that id to the
+sheet the treat goes live unimplemented-but-not-really. 42 such orphans were deleted on
+2026-08-02 — resurrect from git rather than rewriting. The inverse (a sheet id with no
+file) is the known-unimplemented list; those rows are disabled and `buildTreatFn` warns.
+
+### Requirement strings
+
+`js/treats/requirements.js` maps a sheet Requirement string → a predicate in
+`REQUIREMENT_FNS`. **An unknown string fails silently** — `requirementFails()` returns
+`false`, so the treat fires unconditionally and its ⚠ warning never lights. A few treats
+check their own req inside their `buildFn` and whiff to `{}` instead (`frenzy`, `copycat`,
+`cuddle_puddle`, `wild_dice`); their strings live in the `INLINE_REQS` allowlist. Anything
+in neither set is reported by `auditReqStrings()` (`js/config.js`), which runs once per
+config load and `console.warn`s the treat id and the unmatched string. Reword a req in the
+sheet → update the key here, or the audit will tell you.
 
 ## Backpack (player-managed — never reshuffle, never destroy)
 
