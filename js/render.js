@@ -362,6 +362,19 @@ function treatReqFails(td){
   return requirementFails(td.req);
 }
 
+// A "NOW" readout only makes sense for a treat that actually GROWS (or decays)
+// as it triggers. Two sources, in order: the treat's own currentValue() hook,
+// then an Additional Effect that literally spells out a per-trigger delta —
+// "+0.2 each time TRIGGERED", "+0.1 per ROUND it TRIGGERS", "-10 per cat".
+//
+// That second path used to fire on ANY digit anywhere in addEf, and that is
+// where the nonsense "Now: +7" on STANDING OVATION came from: its charge
+// counter "TRIGGERS after 3 use" handed over an increment of 3, the "1" of
+// "…1 random TREAT from INVENTORY" a base of 1, and two plays printed 1+2×3.
+// A charge counter is not a scaling delta, and neither is "1 in 2 chance
+// REAPPEAR…" or "DESTROY 1 random treat". The delta must now carry a SIGN and
+// a per-trigger phrase before a single number is computed.
+const TREAT_SCALE_RE=/([+\-−])\s*\$?(\d+(?:\.\d+)?)\s*(?:each time|every time|per\b)/i;
 function treatCurrentEf(td){
   // Per-treat hook wins — treats that compute a live value (e.g. big_bite,
   // crowd_pleaser, purrfect_record) provide their own currentValue() method.
@@ -370,20 +383,39 @@ function treatCurrentEf(td){
     try{const v=reg.currentValue();if(v)return v;}catch(e){}
   }
   if(!td.addEf)return null;
-  const incM=td.addEf.match(/([\d.]+)/);
+  const incM=TREAT_SCALE_RE.exec(td.addEf);
   if(!incM)return null;
   const plays=(G.treatPlayCounts&&G.treatPlayCounts[td.id])||0;
   if(plays===0)return null;
-  const inc=parseFloat(incM[1]);
+  const inc=parseFloat(incM[2]);
+  if(!isFinite(inc)||inc===0)return null;
   const isMul=/[×x]/.test(td.ef);
   const baseM=td.ef.match(/([\d.]+)/);
   if(!baseM)return null;
   const base=parseFloat(baseM[1]);
-  const isDecreasing=reg?.isDecreasing;
+  // a signed "-" delta decays even when the registry never flagged isDecreasing
+  const isDecreasing=(reg&&reg.isDecreasing)||incM[1]==='-'||incM[1]==='−';
   const cur=isDecreasing
     ?Math.max(0,Math.round((base-plays*inc)*100)/100)
     :Math.round((base+plays*inc)*100)/100;
   return isMul?`Now: ×${cur}`:`Now: +${cur}`;
+}
+
+// "TRIGGERS after N use" (the sheet's own wording) is a charge counter, not a
+// bonus: the treat does nothing on the plays in between, which is exactly what
+// the shelf card never said out loud. Read N out of the Additional Effect and
+// pair it with the play count the treat already keeps, so every surface can say
+// how close it is. NO new state — G.treatPlayCounts[id] is the same counter
+// js/treats/standing_ovation.js increments, and the modulo is its own `% 3`.
+const TREAT_CHARGE_RE=/TRIGGERS?\s+after\s+(\d+)\s*uses?/i;
+function treatChargeText(td){
+  if(!td||!td.addEf)return null;
+  const m=TREAT_CHARGE_RE.exec(td.addEf);
+  if(!m)return null;
+  const need=parseInt(m[1],10);
+  if(!need||need<2)return null;
+  const plays=(typeof G!=='undefined'&&G.treatPlayCounts&&G.treatPlayCounts[td.id])||0;
+  return `${plays%need}/${need}`;
 }
 
 // ── hover card (#board-tip) ────────────────────────────────────────────────
@@ -415,17 +447,23 @@ function tlOps(s){
   }
   return out+tlEsc(raw.slice(last));
 }
-// opts: {reqFail} paints the requirement chip red
+// opts: {reqFail} paints the requirement chip red.
+// The two chips are NOT the same thing and no longer look it: `req` is a gate
+// the fit has to clear (warning chip, ⚠ — ✗ once the board can't clear it),
+// `addEf` is a mechanic footnote (neutral chip). A charging treat also prints
+// its banked plays, so STANDING OVATION never reads as a plain duplicator.
 function treatTipHTML(td,opts){
   opts=opts||{};
   const cur=(typeof treatCurrentEf==='function')?treatCurrentEf(td):'';
+  const chg=(typeof treatChargeText==='function')?treatChargeText(td):null;
   const tags=[];
-  if(td.req)tags.push(`<div class="tl-tag${opts.reqFail?' bad':''}">${tlOps(td.req)}</div>`);
-  if(td.addEf)tags.push(`<div class="tl-tag">${tlOps(td.addEf)}</div>`);
+  if(td.req)tags.push(`<div class="tl-tag req${opts.reqFail?' bad':''}">${tlOps(td.req)}</div>`);
+  if(td.addEf)tags.push(`<div class="tl-tag note">${tlOps(td.addEf)}</div>`);
   return `<div class="tl-nm">${tlEsc(td.nm)}</div>`
     +`<div class="tl-body${tags.length?' has-tags':''}">`   // deepens the pill so the chips overlap it
     +`<div class="tl-ef">${tlOps(td.ef||'')}</div>`
     +(cur?`<div class="tl-now"><b>NOW</b>${tlOps(String(cur).replace(/^Now:\s*/,''))}</div>`:'')
+    +(chg?`<div class="tl-now"><b>CHARGES</b>${tlEsc(chg)}</div>`:'')
     +`</div>`
     +(tags.length?`<div class="tl-tags">${tags.join('')}</div>`:'');
 }
@@ -875,12 +913,14 @@ function showTTP(t){
   const ttae=g('ttae');
   if(t.addEf){
     const cur=treatCurrentEf(t);
-    ttae.innerHTML=t.addEf+(cur?` <span>${cur}</span>`:'');
+    const chg=treatChargeText(t);   // a charge-up treat says how many plays are banked
+    ttae.innerHTML=tlEsc(t.addEf)+(cur?` <span>${tlEsc(cur)}</span>`:'')
+      +(chg?` <span>charges: ${tlEsc(chg)}</span>`:'');
     ttae.style.display='block';
   } else {
     ttae.style.display='none';
   }
-  const ttr=g('ttr');if(t.req){ttr.textContent=t.req;ttr.style.display='block';}else ttr.style.display='none';
+  const ttr=g('ttr');if(t.req){ttr.textContent='⚠ '+t.req;ttr.style.display='block';}else ttr.style.display='none';
   g('ttf').textContent=t.fl||'';
   g('ttp').classList.add('on');
 }

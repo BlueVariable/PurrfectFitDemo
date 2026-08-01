@@ -158,6 +158,25 @@ function showShopBPTip(e,r,c){
 function moveShopBPTip(e){moveTip(e);}
 function hideShopBPTip(){hideHoverTips();}
 
+// The fine print an OWNED treat carries, for the surfaces that list a treat as
+// a row rather than a card. Same split as everywhere else: the requirement is a
+// ⚠ warning, the additional effect a muted footnote — except for a charge-up
+// treat, where the live count is the useful thing to say. The count is read
+// straight off G.treatPlayCounts (treatChargeText, js/render.js); nothing new
+// is stored and nothing is computed that the treat doesn't already track.
+function shopInvNoteHTML(t){
+  if(!t)return '';
+  const esc=(typeof tlEsc==='function')?tlEsc:(s=>String(s==null?'':s));
+  const bits=[];
+  if(t.req)bits.push(`<span style="color:#eeb84b;">⚠ ${esc(t.req)}</span>`);
+  const chg=(typeof treatChargeText==='function')?treatChargeText(t):null;
+  if(chg)bits.push(`<span style="color:#9fd8ff;">charges: ${esc(chg)}</span>`);
+  else if(t.addEf)bits.push(`<span style="color:rgba(255,255,255,.45);">${esc(t.addEf)}</span>`);
+  if(!bits.length)return '';
+  return `<span style="display:block;font-family:'Fredoka One',cursive;font-size:10px;`
+    +`line-height:1.35;white-space:normal;">${bits.join(' · ')}</span>`;
+}
+
 // ── Backpack inventory list with sell buttons ──
 function renderShopBPList(){
   const el=g('shop-bp-list');if(!el)return;
@@ -172,7 +191,7 @@ function renderShopBPList(){
     const d=document.createElement('div');
     d.className='sp-inv-row';
     d.innerHTML=`<span class="sp-inv-em">${t.em}</span>
-      <span class="sp-inv-nm">${t.nm}</span>
+      <span class="sp-inv-nm">${t.nm}${shopInvNoteHTML(t)}</span>
       <button class="sp-inv-sell" onclick="sellTreatFromShop('${grp.gid}')">Sell $${t.sp}</button>`;
     el.appendChild(d);
   });
@@ -183,7 +202,7 @@ function renderShopBPList(){
     d.className='sp-inv-row';
     d.style.opacity='.55';
     d.innerHTML=`<span class="sp-inv-em">${t.em}</span>
-      <span class="sp-inv-nm">${t.nm}</span>
+      <span class="sp-inv-nm">${t.nm}${shopInvNoteHTML(t)}</span>
       <span style="font-family:'Fredoka One',cursive;font-size:10px;color:#ffd27a;font-style:italic;white-space:nowrap;">no room — make space</span>`;
     el.appendChild(d);
   });
@@ -241,6 +260,21 @@ function renderTreatsRow(){
 
     const shapeHtml='<div class="tc-shape"></div>';
 
+    // The shelf card is a shape, a name tab and a price — every word of the
+    // fine print used to live in the hover card only, so a REQUIREMENT ("LAST
+    // HAND only") or a charge-up ("TRIGGERS after 3 use") could be bought
+    // blind. Both now hang off the card's bottom edge in the hover card's own
+    // chip language: the requirement as a ⚠ warning, the additional effect as a
+    // neutral footnote. tlOps() colours the operators the same way the hover
+    // card does (× orange, +/- blue), so nothing is authored twice. The strip
+    // is one nowrap row that ellipses — it can never grow back over the shape
+    // art, and the untruncated text is always a hover away. A treat with
+    // neither field gets no element at all, so its card is untouched.
+    const tags=[];
+    if(td.req)tags.push(`<div class="tc-tag req">${tlOps(td.req)}</div>`);
+    if(td.addEf)tags.push(`<div class="tc-tag note">${tlOps(td.addEf)}</div>`);
+    const tagsHtml=tags.length?`<div class="tc-tags">${tags.join('')}</div>`:'';
+
     const priceClass=dis?'tc-price sold':'tc-price';
     card.innerHTML=`
       <div class="tc-em">${td.em}</div>
@@ -248,10 +282,9 @@ function renderTreatsRow(){
       <div class="tc-info">
         <div class="tc-nm">${td.nm}</div>
         <div class="tc-ef">${td.ef}</div>
-        ${td.addEf?`<div style="font-size:12px;color:#9a7ed7;font-weight:800;margin-top:1px;">${td.addEf}</div>`:''}
-        ${td.req?`<div style="font-size:12px;color:var(--or);font-weight:800;margin-top:1px;">${td.req}</div>`:''}
         ${noSpc&&!broke?'<div style="font-size:7px;color:var(--re);">Bag full!</div>':''}
       </div>
+      ${tagsHtml}
       <div class="tc-right">
         <div class="${priceClass}"><div class="tc-price-coin">🪙</div>${td.pr}</div>
       </div>

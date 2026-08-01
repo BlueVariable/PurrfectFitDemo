@@ -862,6 +862,38 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .ps-stage .tc-price::after{content:'COST';font-family:'Bobby Jones Soft',cursive;font-size:.95cqw;margin-top:.1cqw;}
 .ps-stage .tc-price.sold{background:#e3695e;}
 
+/* the shelf card's fine print — js/shop.js hangs this strip off the bottom edge
+   whenever the sheet gives a treat a Requirement or an Additional Effect. It is
+   the hover card's chip language shrunk to the shelf: amber + ⚠ for the gate
+   the fit has to clear (LAST HAND only, PURRFECT FIT!), pale grey for the
+   mechanic footnote (TRIGGERS after 3 use, 1 in 2 chance REAPPEAR).
+
+   Deliberately ONE nowrap row. There is no room inside the card — a 3-cell
+   shape already fills it top to bottom — so the strip lives in the shelf's
+   3.6cqw gap, and a second row would reach the next card's name tab. Space is
+   rationed the way the words matter: the REQUIREMENT never gives up a pixel
+   (flex-shrink:0, capped at the strip width so it ellipses instead of
+   overflowing), and the footnote shrinks — to nothing if it has to — out of
+   the way. Both read in full in the hover card either way. A treat with
+   neither field gets no element at all, so its card is untouched. */
+.ps-stage .tc-tags{
+  position:absolute;left:.7cqw;right:.7cqw;bottom:-1.05cqw;z-index:2;
+  display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;
+  gap:.35cqw;overflow:hidden;pointer-events:none;}
+.ps-stage .tc-tag{
+  min-width:0;padding:.05cqw .5cqw .2cqw;
+  background:#eeb84b;border:0.17cqw solid #1b1a24;border-radius:.6cqw;
+  box-shadow:0 .3cqw 0 #262229;
+  font-family:'Bobby Jones Soft',cursive;font-size:.9cqw;line-height:1.35;
+  letter-spacing:.02em;text-transform:uppercase;color:#1b1a24;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ps-stage .tc-tag.req{flex:0 0 auto;max-width:100%;}
+.ps-stage .tc-tag.req::before{content:'⚠ ';}
+.ps-stage .tc-tag.note{flex:0 1 auto;background:#efedf3;color:#57525f;
+  border-color:rgba(27,26,36,.6);text-transform:none;}
+.ps-stage .tc-tag .tl-mul{color:#8f3c02;}
+.ps-stage .tc-tag .tl-add{color:#1e357a;}
+
 /* ── hover card (#board-tip) ────────────────────────────────────────────
    The deck's own card language shrunk to something that follows the cursor:
    a periwinkle name tab tucked behind a white effect pill, with the yellow
@@ -934,6 +966,14 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
   font-family:'Bobby Jones Soft',cursive;font-size:calc(11.5px * var(--tls));
   line-height:1.2;letter-spacing:.02em;text-transform:uppercase;color:#1b1a24;
 }
+/* The two chips are not the same kind of thing, so they no longer look alike.
+   `.req` is a GATE — a condition the fit has to meet or the treat pays nothing;
+   it keeps the loud amber and gets a ⚠. `.note` is a mechanic footnote (a
+   REAPPEAR flip, a charge-up, a decay) — same chip, drained of colour, so the
+   eye lands on the requirement first. Order matters below: .bad's ✗ has the
+   same specificity as .req's ⚠ and has to come after it to win. */
+.tl-tag.req::before{content:'⚠ ';}
+.tl-tag.note{background:#efedf3;color:#57525f;text-transform:none;}
 /* a requirement the board can't currently satisfy */
 .tl-tag.bad{background:#e3695e;color:#fdfcff;}
 .tl-tag.bad::before{content:'✗ ';}
@@ -952,6 +992,7 @@ body:has(#s-game.on) #btn-dev-float.active ~ #btn-dev-autofit{display:inline-fle
 .ps-stage .tc-bought:hover{transform:none;}
 .ps-stage .tc-bought .tc-shape,
 .ps-stage .tc-bought .tc-nm,
+.ps-stage .tc-bought .tc-tags,
 .ps-stage .tc-bought .tc-price{filter:grayscale(1);opacity:.42;}
 .ps-stage .tc-stamp{position:absolute;left:50%;top:50%;z-index:3;pointer-events:none;
   transform:translate(-50%,-50%) rotate(-11deg);padding:.1cqw 1.4cqw .35cqw;
