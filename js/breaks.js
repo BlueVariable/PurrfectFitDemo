@@ -2,9 +2,9 @@
 // ══════════════════════════════════════════════════════
 //  BREAKS — the SKIP bonus pool (Breaks sheet tab)
 // ══════════════════════════════════════════════════════
-// SKIP replaces the old coffee break: instead of a screen of its own, the
-// schedule offers WORK or SKIP side by side, and SKIP forfeits the round in
-// exchange for one bonus drawn from the pool. The bonus is rolled *before* the
+// SKIP is the between-rounds fork: the schedule offers WORK or SKIP side by
+// side, and SKIP forfeits the round in exchange for one bonus drawn from the
+// pool. The bonus is rolled *before* the
 // choice and shown under the button — the player is picking a known trade, not
 // gambling. It is rolled deterministically from the round number so re-renders
 // (and the headless sim) always see the same offer for the same round.
@@ -78,9 +78,8 @@ function breakConsumePending(){
 }
 
 // ── Taking the break ────────────────────────────────────────────────────────
-// Mirrors the old openCafe() commit order exactly (drop held → log the skip →
-// width reconcile → close next shop → advance round → shared setup), minus the
-// café screen. The round is forfeited the moment this runs.
+// Commit order: drop held → log the skip → width reconcile → advance round →
+// shared setup. The round is forfeited the moment this runs.
 let _breakArmed = false, _breakTimer = null;
 function breakDisarm(){
   _breakArmed = false;
@@ -89,7 +88,7 @@ function breakDisarm(){
 function takeBreak(){
   const offer = breakOffer(G.round);
   if(!offer) return;
-  // two-click confirm, same idiom the coffee-break card used
+  // two-click confirm
   if(!_breakArmed){
     _breakArmed = true;
     const btn = g('cal-skip-btn'); if(btn) btn.classList.add('armed');
@@ -110,8 +109,7 @@ function takeBreak(){
   // The shop stays OPEN after a skip. SKIP's cost is the forfeited round (no
   // earnings, no progress) and its price is already paid there — boarding the
   // next prep's shelf up on top of that taxed the same choice twice and made
-  // the bonus you were shown a worse trade than it read. (G.shopClosed is left
-  // to the legacy café path in js/cafe.js, which nothing reaches any more.)
+  // the bonus you were shown a worse trade than it read.
   G.round++;
   advanceRoundSetup();
   openCalendar();

@@ -36,7 +36,6 @@ function generateShopPool(){
 function restockShopPool(){shopPool=generateShopPool();shopBoughtIds=new Set();}
 
 function rerollTreats(){
-  if(G.shopClosed)return; // Coffee Break: shop is closed this prep — no rerolling
   if(G.cash<getRerollCost())return;
   G.cash-=getRerollCost();
   rerollExtraCost++;
@@ -53,12 +52,9 @@ function renderShopFull(){
   renderShopBPList();
   renderTreatsRow();
   if(typeof shopSellLabel==='function')shopSellLabel();
-  // Coffee Break: café-flavored boarded-up styling while the shop is closed
-  const sec=g('treats-section');
-  if(sec)sec.classList.toggle('shop-closed-sec',!!G.shopClosed);
-  // reroll button disabled if broke (or the shop is closed after a skip)
+  // reroll button disabled if broke
   const rr=g('treats-reroll');
-  if(rr){rr.disabled=!!G.shopClosed||G.cash<getRerollCost();const rc=g('reroll-cost');if(rc)rc.textContent='$'+getRerollCost();}
+  if(rr){rr.disabled=G.cash<getRerollCost();const rc=g('reroll-cost');if(rc)rc.textContent='$'+getRerollCost();}
 }
 
 // ── Backpack grid (mirror of game BP, shown in shop center) ──
@@ -219,19 +215,6 @@ function renderTreatsRow(){
   const row=g('treats-row');if(!row)return;
   hideHoverTips(); // a bought / rerolled card takes its hover card with it
   row.innerHTML='';
-  // Coffee Break: the prep right after a skipped round has NO shop — cards
-  // are boarded up behind a café "closed" sign. Buying and rerolling are
-  // disabled; SELLING from the backpack (renderShopBPList) stays open.
-  if(G.shopClosed){
-    row.innerHTML=`<div class="shop-closed-sign">
-      <div class="scs-em">☕🪧</div>
-      <div class="scs-title">GONE FOR COFFEE</div>
-      <div class="scs-desc">You took a round off — so did the shopkeeper. No buying or rerolls this visit. Selling from your backpack is still open.</div>
-    </div>`;
-    const flavorEl=g('treats-flavor');
-    if(flavorEl)flavorEl.textContent='"back next round — the espresso machine won\'t clean itself"';
-    return;
-  }
   // The shelf IS the pool, in the order it was drawn — a card never changes slot
   // once stock is up, and a bought one just stays put stamped SOLD. The unsold
   // cards used to be re-seated by an affordability sort on every render, and
@@ -311,7 +294,6 @@ function renderTreatsRow(){
 
 function shopPickupTreat(td){
   // Pick up a treat from shop to drag into backpack
-  if(G.shopClosed)return; // Coffee Break: unreachable via UI (no cards render) — defensive
   if(G.cash<td.pr)return;
   dropHeld();
   H={kind:'shop-treat',source:'shop',data:td,cells:td.bpS,rot:0,

@@ -2,15 +2,15 @@
 // ══════════════════════════════════════════════════════
 //  THE WORK WEEK ☕📅 — calendar hub between rounds
 //
-//  The landing screen after every round win, at run start, and after a café
-//  visit. It lays the whole run out as a work week: days of 3 rounds each
-//  (2 regular "fits" + 1 boss "deadline" — bosses land on General!modifier_
-//  rounds, kept in sync at 3,6,9,12,15). Past rounds are stamped with the
-//  number of hands they took (fewer = faster), a coffee-break'd round gets a
-//  ☕ stamp, the current round is highlighted, future rounds are locked.
+//  The landing screen after every round win, at run start, and after a
+//  skipped round. It lays the whole run out as a work week: days of 3 rounds
+//  each (2 regular "fits" + 1 boss "deadline" — bosses land on General!
+//  modifier_rounds, kept in sync at 3,6,9,12,15). Past rounds are stamped
+//  with the number of hands they took (fewer = faster), a skipped round gets
+//  a ☕ stamp, the current round is highlighted, future rounds are locked.
 //  From here the player forks:
-//    🏪 Go to Shop   → the existing shop/prep screen, then Play Round
-//    ☕ Coffee Break → skip the round & draft a free treat (js/cafe.js)
+//    🏪 WORK → the existing shop/prep screen, then Play Round
+//    ⏭ SKIP → forfeit the round for a known bonus (js/breaks.js)
 //
 //  SIM-SAFETY: openCalendar() delegates to openRounds() for ALL state setup
 //  (shop pool, rounds track, modifier card) exactly as before, then reveals

@@ -17,26 +17,6 @@ function _isPurrfect() {
 const REQUIREMENT_FNS = {
   'PURRFECT FIT!': () => !_isPurrfect(),
   'NO OTHER TREAT': () => G.treats.length > 1,
-  'NO SAME TYPE ADJACENT': () => {
-    for (const cat of G.cats) {
-      for (const other of G.cats) {
-        if (cat.gid === other.gid || cat.type !== other.type) continue;
-        const adj = cat.cells.some(([r, c]) =>
-          other.cells.some(([r2, c2]) => Math.abs(r - r2) <= 1 && Math.abs(c - c2) <= 1)
-        );
-        if (adj) return true;
-      }
-    }
-    return false;
-  },
-  'NEEDS ORANGE':   () => !G.cats.some(c => c.type === 'orange'),
-  'ALL SAME TYPE':  () => {
-    const types = [...new Set(G.cats.map(c => c.type))];
-    return types.length > 1;
-  },
-  'BOARD FULL': () => !_isPurrfect(),
-  'LAST HAND':            () => G.hands > 1,
-  'NO DISCARDS REMAINING': () => G.disc > 0,
   "SAME TYPE cats can't be adjacent to each other": () => {
     for (const cat of G.cats) {
       for (const other of G.cats) {
@@ -69,7 +49,6 @@ const REQUIREMENT_FNS = {
     }
     return false;
   },
-  'All BOARD cells are FULL': () => !_isPurrfect(),
   'LAST HAND only': () => G.hands > 1,
   'FIRST HAND only': () => G.hands !== G.maxHands,
   '3+ cats must SHARE a SHAPE': () => _lacksTripleShape(),
@@ -82,6 +61,30 @@ function _lacksTripleShape() {
   const counts = {};
   for (const cat of G.cats) counts[cat.shape] = (counts[cat.shape] || 0) + 1;
   return !Object.values(counts).some(n => n >= 3);
+}
+
+// ── Deliberately UNCENTRALIZED requirements ───────────────────────────────
+// A handful of treats check their own Requirement string inside their buildFn
+// and simply return {} (no bonus) when it isn't met, rather than being gated
+// by requirementFails(). That is a real design choice — those treats "whiff"
+// silently instead of showing a pre-placement warning — so their req strings
+// must NOT get a REQUIREMENT_FNS entry, and the load-time audit below must not
+// flag them. Every entry here is verified against the treat file that owns it.
+const INLINE_REQS = new Set([
+  'All SURROUNDING cats must be of the SAME TYPE',   // frenzy        (js/treats/frenzy.js)
+  'All SURROUNDING cats must be of the SAME SHAPE',  // copycat       (js/treats/copycat.js)
+  'ALL cells SURROUNDING this treat are FILLED',     // cuddle_puddle (js/treats/cuddle_puddle.js)
+  '1 in 3 trigger CHANCE',                           // wild_dice     (js/treats/wild_dice.js)
+]);
+
+// True when `req` has no handler anywhere: no central REQUIREMENT_FNS entry and
+// not on the inline allowlist. requirementFails() answers `false` for such a
+// string — i.e. the treat fires UNCONDITIONALLY — which is why auditReqStrings()
+// (js/config.js) warns about it once at config load.
+function requirementUnhandled(req) {
+  const s = String(req || '').trim();
+  if (!s) return false;
+  return !REQUIREMENT_FNS[s] && !INLINE_REQS.has(s);
 }
 
 function requirementFails(req) {

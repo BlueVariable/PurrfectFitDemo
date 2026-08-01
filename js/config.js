@@ -61,6 +61,26 @@ function buildTreatFn(id, ef, phase, addEf){
 function extractNum(ef){const m=ef.match(/[+](\d+)/);return m?parseInt(m[1]):0;}
 function extractMul(ef){const m=ef.match(/[×x]([\d.]+)/);return m?parseFloat(m[1]):2;}
 
+// ── Requirement-string audit (runs ONCE per config load, right after TDEFS) ──
+// An unknown Requirement string fails SILENTLY: requirementFails() returns false
+// for anything it has no entry for, so the treat fires UNCONDITIONALLY and the
+// card's ⚠ warning never lights up. That has shipped as a live bug more than
+// once (a sheet-side rewording of a req string is enough to cause it), so every
+// ENABLED treat with a non-empty req is checked against both the central
+// REQUIREMENT_FNS table and the INLINE_REQS allowlist of deliberately
+// self-checking treats (js/treats/requirements.js). One warn per offending
+// treat, at load — never inside a scan.
+function auditReqStrings(){
+  if(typeof requirementUnhandled!=='function')return;   // requirements.js not loaded (sim/unit contexts)
+  const bad=TDEFS.filter(td=>td.enabled&&td.req&&requirementUnhandled(td.req));
+  bad.forEach(td=>console.warn(
+    `[Config] Treat "${td.id}" has an unhandled Requirement: "${td.req}" — `+
+    `no REQUIREMENT_FNS entry and not on INLINE_REQS, so it will fire unconditionally. `+
+    `Add a handler in js/treats/requirements.js, or list the string in INLINE_REQS if the treat checks it itself.`
+  ));
+  if(bad.length)console.warn(`[Config] ${bad.length} treat(s) with unhandled requirements.`);
+}
+
 // ── BP shape parser: "1×2" → [[1,1]], "2×1" → [[1],[1]], "2×2" → [[1,1],[1,1]] ──
 function parseBpShape(s){
   const clean=String(s).replace(/\*/g,'').trim();
@@ -172,7 +192,7 @@ function applyConfigFromRaw(raw){
     const addEf=String(r['Additional Effects']||'').trim();
     return{
       id, nm:String(r['Name']||id), em:String(r['Emoji']||'❓'), rar, col:rarCol(rar), phase,
-      arch:String(r['Archetype']||'').trim(), // treat family — drives the Coffee Break café blend pools (js/cafe.js)
+      arch:String(r['Archetype']||'').trim(), // treat family — the design-family axis (no runtime consumer today)
       bpS, ef, addEf, req:String(r['Requirement']||r['Req']||'').trim(),
       pr:buyPr, sp:sellPr,
       enabled:String(r['Enabled']||'true').trim().toLowerCase()!=='false',
@@ -181,6 +201,7 @@ function applyConfigFromRaw(raw){
       onPlace:TREAT_REGISTRY[id]&&TREAT_REGISTRY[id].onPlace||null,
     };
   });
+  auditReqStrings();
 
   if(raw['Rarity']){
     RARITY_WEIGHTS={};

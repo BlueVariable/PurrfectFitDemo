@@ -905,9 +905,9 @@ function roundWin(){
   wi.classList.add('visible');
 }
 // Round-advance seam shared by the normal round-win path (goShop) and the
-// Coffee Break skip path (cafeFinish in js/cafe.js). Assumes G.round has
-// already been advanced to the incoming round and is <= RCFG.length: rolls
-// that round's modifier, board layout, stats, deck and first hand.
+// SKIP path (takeBreak in js/breaks.js). Assumes G.round has already been
+// advanced to the incoming round and is <= RCFG.length: rolls that round's
+// modifier, board layout, stats, deck and first hand.
 function advanceRoundSetup(){
   // Pick this round's modifier (if any) BEFORE board layout / dealHand so
   // board_size_delta, blocked_mult, hand_size_delta etc. are already in
@@ -976,9 +976,6 @@ function goShop(){
   // toasts on whatever screen comes next (calendar). Fixed-position stack,
   // so it survives the screen switch; drained here, shown exactly once.
   if(typeof treatLossFlush==='function')treatLossFlush();
-  // Coffee Break's shop closure lasts exactly one prep screen — a round
-  // actually played and won always reopens the shop.
-  G.shopClosed=false;
   G.round++;
   if(G.round>RCFG.length){
     if(G.branchId)markBranchComplete(G.branchId);

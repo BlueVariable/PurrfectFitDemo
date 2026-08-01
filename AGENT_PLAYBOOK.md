@@ -46,7 +46,8 @@ clears the run.
   "Back to the Schedule 🗓️" button runs, and if that panel/button isn't in the DOM
   (state can land on the calendar with `G.roundOver` still true), calling `goShop()`
   directly then is the right move.
-- **SKIP (js/breaks.js) replaced the café**: each non-deadline round's card offers a
+- **SKIP (`js/breaks.js`) is the between-rounds mechanic** (the Coffee Break café was
+  removed entirely on 2026-08-02): each non-deadline round's card offers a
   known bonus ("+1 hand next round", "−20% target next round", …) for forfeiting the
   round. Two-click confirm: SKIP → SURE?, and the armed state **disarms after 4 s** —
   shorter than an agent round-trip, so send both clicks in ONE batch. The shop stays
@@ -194,8 +195,8 @@ table is the current curve.)*
   takes the normal used-treat path and is **restored at round end**. (Older notes in this file
   claimed these flips "killed" treats — they never did.)
 - **Only two things permanently remove a treat:** `catnado` (destroys a random *inventory*
-  treat when it fires) and self-expiry — `final_feast`, `hiss_and_miss`, `second_breakfast`,
-  `treat_encore` (the last two: 1-in-2 per use), plus `soft_landing`, which burns itself to
+  treat when it fires) and self-expiry — `second_breakfast` and
+  `treat_encore` — plus `soft_landing`, which burns itself to
   convert a failed round into a win. Each of these pops a **toast** (the "loss ceremony",
   `js/treat-loss.js`) so you can see exactly what left the bag and why.
 - **Treats carry over between rounds** — your arsenal compounds. Don't re-buy duplicates
