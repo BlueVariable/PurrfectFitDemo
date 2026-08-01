@@ -816,6 +816,11 @@ function endScoreSequence(total){
   if(scoreEl)scoreEl.textContent=G.score.toLocaleString();
   _syncTbScore(G.score.toLocaleString());
   G.hands--;
+  // Run-level count of hands shipped, stamped only here — after the scan, so a
+  // treat scaling off it (frequent_flyer) sees the same value during the scan
+  // that projectScore() showed before SHIP. Shared funnel: the headless sim
+  // skips runScoreSequence but still lands here.
+  G.handsWonRun=(G.handsWonRun||0)+1;
   // bottomless_tote: a mid-scan ownership change (catnado destroying the tote
   // in the inventory) shifts getBPC() — resync the physical bag, reflowing
   // anything stranded in the doomed column, before the next hand renders or

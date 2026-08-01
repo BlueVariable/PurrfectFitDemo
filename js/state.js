@@ -262,7 +262,7 @@ function newGame(deckId){
     bpGroups:[],
     board:[],cats:[],treats:[],usedTreats:[],bpPending:[],bpHomes:[],bpSnapshot:null,treatLossEvents:[],treatPlayCounts:{},
     lastScore:0,selBpGid:null,visitedShop:false,shopClosed:false,newCardIndices:new Set(),purchasedTreatIds:new Set(),
-    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,
+    branchId:null,modifiers:'',_bpOverrideR:0,_bpOverrideC:0,_bpGraceC:0,discUsedRound:0,discUsedHand:0,purrfectsThisRound:0,catsScoredRun:0,handsWonRun:0,
     roundModifier:null,roundLog:{},modSchedule:{},
   };
   // Draw the week's deadline conditions up front so the calendar can name them
