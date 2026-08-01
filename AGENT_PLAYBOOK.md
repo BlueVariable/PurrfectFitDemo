@@ -343,6 +343,19 @@ from the config of their day and are superseded by the table in §4.**
   with clean_plate/frenzy)**, requirement text (nine_lives LAST HAND, standing_ovation
   3-charge) missing from shop cards, midweek rounds fall in one hand.
 
+- **2026-08-02 — FIRST FULL WEEK COMPLETED (run 5 of 5, London, 15/15).** Five-run session on the
+  post-cleanup build: London died R14 (2957/3200, max-hand loss), Rome died R9 (economy thesis
+  failed — +$10 principal beats nothing but London's +1 hand is worth ~a day of survival), Paris
+  died R5 (compressed one-plan-per-hand protocol = casual-speed play, dies exactly in the sim's
+  greedy window R4-7), then London again WON with: seniority bought R1 (+30→+240), triple
+  red_carpet + head_scritches/show_cat pamper stack, biscuit, alley_gang, morning_stretch, and
+  the run-maker — DOUBLE frequent_flyer (Type B dups both fire and both grow per hand won;
+  ×1.55² by R12). Late hands: 6330 (R13), 6996 (R14), 6503 (R15) — targets doubled on hand 1.
+  Lessons now standing: burst-search (3-5 plans) every critical hand; check `reqNotes` BEFORE
+  fitFast when pinning req treats; never run a one_shot constrained hand without a treat flood;
+  the bag cap (20 cells) blocks tier-1 buys from ~R8 in every run (bottomless_tote remains the
+  #1 missing valve); stacked Type B muls have no soft cap — the 6k hands are the balance frontier.
+
 ---
 
 *Maintained by Claude. If you discover new treats, board behaviours, or better strategies while
