@@ -57,6 +57,18 @@ const REQUIREMENT_FNS = {
     const shapes = [...new Set(G.cats.map(c => c.shape))];
     return shapes.length > 1;
   },
+  // Every board row that has at least one PLAYABLE cell must hold at least
+  // one cat cell. Rows that are entirely off-shape/blocked are exempt —
+  // the silhouette can't demand a cat where no cat can go.
+  'EVERY ROW must contain a CAT': () => {
+    const catRows = new Set();
+    G.cats.forEach(cat => cat.cells.forEach(([r]) => catRows.add(r)));
+    for (let r = 0; r < G.bsr; r++) {
+      const playable = G.board[r].some(c => !c.blocked && !c.offShape);
+      if (playable && !catRows.has(r)) return true;
+    }
+    return false;
+  },
   'All BOARD cells are FULL': () => !_isPurrfect(),
   'LAST HAND only': () => G.hands > 1,
   'FIRST HAND only': () => G.hands !== G.maxHands,
