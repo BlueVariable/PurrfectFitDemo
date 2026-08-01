@@ -18,8 +18,14 @@
   function setStatus(msg){ q('sim-status').textContent = msg; }
   function setProgress(text){ q('sim-progress').textContent = text; }
 
+  // Profile run order. `engine` is deliberately LAST: the game's TDEFS objects
+  // are shared across every game in a page session and a self-expiring treat
+  // leaves `td._expired` set on one (nothing clears it on newGame), so a
+  // profile's games can very slightly colour the games that run AFTER them.
+  // Keeping the original three first — in their original order — guarantees a
+  // batch reproduces their previous seeded outcomes exactly.
   function collectProfiles(){
-    return ['solver', 'greedy', 'casual'].filter(p => q('chk-' + p).checked);
+    return ['solver', 'greedy', 'casual', 'engine'].filter(p => q('chk-' + p).checked);
   }
 
   function populateBranchSelect(bridge){

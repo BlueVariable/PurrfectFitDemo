@@ -55,10 +55,23 @@ function simAggregate(results, maxRound){
     // this treat (at least once, any round) vs games that didn't. Only
     // failRound/stuck/crashed games have a meaningful "how far did it get"
     // number; 'won' games are excluded from that average (they didn't fail).
+    //
+    // treatsPlayed / treatsWhiffed are optional per-round fields (only the
+    // `engine` profile records them — see js/sim/bots-engine.js): how many
+    // times the treat was actually DEPLOYED on a board, and how many of those
+    // deployments landed on a layout where its requirement failed, i.e. burned
+    // its once-per-round trigger for nothing. Absent ⇒ the columns read '—'.
     const treatIds = new Set();
+    let hasDeployData = false;
     games.forEach(g => g.rounds.forEach(r => {
       r.treatsBought.forEach(id => treatIds.add(id));
+      if (Array.isArray(r.treatsPlayed)){
+        hasDeployData = true;
+        r.treatsPlayed.forEach(id => treatIds.add(id));
+      }
     }));
+    const countIn = (key, id) => games.reduce((s, g) => s + g.rounds.reduce(
+      (t, r) => t + (Array.isArray(r[key]) ? r[key].filter(x => x === id).length : 0), 0), 0);
     const nonWinGames = games.filter(g => g.result !== 'won' && g.failRound != null);
     const treats = {};
     [...treatIds].sort().forEach(id => {
@@ -70,14 +83,16 @@ function simAggregate(results, maxRound){
         pickRate: n ? (boughtGames.length / n) * 100 : null,
         boughtGames: boughtGames.length,
         avgFailRoundBought: simMean(boughtFailRounds),
-        avgFailRoundNotBought: simMean(notBoughtFailRounds)
+        avgFailRoundNotBought: simMean(notBoughtFailRounds),
+        timesPlayed: countIn('treatsPlayed', id),
+        timesWhiffed: countIn('treatsWhiffed', id)
       };
     });
 
     byProfile[profile] = {
       profile, n, wins, failCount, stuckCount, crashedCount,
       winRate: n ? (wins / n) * 100 : null,
-      clearRateByRound, handsUsedByRound, cashByRound, purrfectRateByRound, treats
+      clearRateByRound, handsUsedByRound, cashByRound, purrfectRateByRound, treats, hasDeployData
     };
   });
 
@@ -135,10 +150,13 @@ function simRenderTreatTables(agg){
     }
     ids.sort((a, b) => (p.treats[b].pickRate || 0) - (p.treats[a].pickRate || 0));
     html += '<table class="sim-table"><thead><tr><th>Treat</th><th>Pick rate</th><th>Games bought</th>' +
+      '<th>Times played</th><th>Whiffed (req unmet)</th>' +
       '<th>Avg fail/crash round (bought)</th><th>Avg fail/crash round (not bought)</th></tr></thead><tbody>';
     ids.forEach(id => {
       const t = p.treats[id];
       html += '<tr><td>' + simEsc(id) + '</td><td>' + simBarHtml(t.pickRate) + '</td><td>' + t.boughtGames + '</td>' +
+        '<td>' + (p.hasDeployData ? t.timesPlayed : '—') + '</td>' +
+        '<td>' + (p.hasDeployData ? t.timesWhiffed : '—') + '</td>' +
         '<td>' + (t.avgFailRoundBought == null ? '—' : simRound1(t.avgFailRoundBought)) + '</td>' +
         '<td>' + (t.avgFailRoundNotBought == null ? '—' : simRound1(t.avgFailRoundNotBought)) + '</td></tr>';
     });

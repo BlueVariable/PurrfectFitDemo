@@ -45,10 +45,17 @@ const SIM_SOLVER_MAX_TREAT_PIECES = 4;
 
 // Group identical-rotation-set hand cats into one piece + a pool of ids
 // (kills duplicate-permutation branching — playbook §12 change #1).
-function simGroupHandPieces(win, hand){
+// allowIds (optional Set of hand cat ids): restrict the cat pool. This is the
+// sim's port of agent/pf-harness.js solveCats(allowIds) — "constrained
+// placement" for treats whose requirement is universal over the PLACED cats
+// ("All cats must be of the SAME SHAPE/TYPE"): max-placement can never satisfy
+// them, but placing only one shape/type group can. Omitted ⇒ whole hand, i.e.
+// byte-for-byte the pre-existing behaviour every other profile relies on.
+function simGroupHandPieces(win, hand, allowIds){
   const byKey = new Map();
   const order = [];
   hand.forEach(cat => {
+    if (allowIds && !allowIds.has(cat.id)) return;
     const rots = simRotationsFor(win, cat.cells);
     const key = JSON.stringify(rots);
     if (!byKey.has(key)){
@@ -90,24 +97,47 @@ function simBuildTreatPiece(win, grp, bucket){
 // Solve the current hand + board for maximum coverage. Returns
 // { filled, total, placements } where placements is an ordered list of
 // { kind:'cat', id, abs } | { kind:'treat', gid, abs }.
-function simSolveHand(win, bridge){
+//
+// opts (all optional — every default reproduces the original behaviour
+// exactly, so solver/greedy/casual are untouched by their existence):
+//   allowIds       Set of hand cat ids the solve may use (see
+//                  simGroupHandPieces). Omitted ⇒ the whole hand.
+//   maxTreatPieces how many backpack treats to offer as optional pieces;
+//                  0 disables treats entirely (the engine bot deploys its
+//                  own treats explicitly before calling this, so the solve
+//                  only has to pack cats around them).
+//   nodeCap / timeBudgetMs   per-solve search caps.
+//
+// Cells that are already `filled` (a treat the caller deployed before
+// solving) are excluded from the playable set and from canPlace, so a solve
+// against a partially-occupied board is correct. On the empty board every
+// bot other than `engine` solves from, this is a no-op.
+function simSolveHand(win, bridge, opts){
+  opts = opts || {};
+  const allowIds = opts.allowIds || null;
+  const maxTreatPieces = opts.maxTreatPieces != null ? opts.maxTreatPieces : SIM_SOLVER_MAX_TREAT_PIECES;
+  const nodeCap = opts.nodeCap != null ? opts.nodeCap : SIM_SOLVER_NODE_CAP;
+  const budgetMs = opts.timeBudgetMs != null ? opts.timeBudgetMs : SIM_SOLVER_TIME_BUDGET_MS;
+
   const G = bridge.getG();
   const R = G.bsr, C = G.bsc;
   const playable = [];
   for (let r = 0; r < R; r++) for (let c = 0; c < C; c++){
     const b = G.board[r][c];
-    if (!b.blocked && !b.offShape) playable.push([r, c]);
+    if (!b.blocked && !b.offShape && !b.filled) playable.push([r, c]);
   }
   const total = playable.length;
   const occ = {};
   playable.forEach(([r, c]) => { occ[r + ',' + c] = false; });
 
-  const catPieces = simGroupHandPieces(win, G.hand);
+  const catPieces = simGroupHandPieces(win, G.hand, allowIds);
   // Cap the optional-treat set per solve (largest first) so the search
   // space stays bounded no matter how big the carried-over backpack gets.
-  const eligible = simEligibleTreats(bridge)
-    .sort((a, b) => simCellCount(b.tdef.bpS) - simCellCount(a.tdef.bpS))
-    .slice(0, SIM_SOLVER_MAX_TREAT_PIECES);
+  const eligible = maxTreatPieces > 0
+    ? simEligibleTreats(bridge)
+        .sort((a, b) => simCellCount(b.tdef.bpS) - simCellCount(a.tdef.bpS))
+        .slice(0, maxTreatPieces)
+    : [];
   const earlyTreats = eligible.filter(g => g.tdef.phase !== 'mul').map(g => simBuildTreatPiece(win, g, 'early'));
   const lateTreats = eligible.filter(g => g.tdef.phase === 'mul').map(g => simBuildTreatPiece(win, g, 'late'));
 
@@ -128,7 +158,7 @@ function simSolveHand(win, bridge){
   }
   function canPlace(abs){
     return abs.every(([r, c]) => r >= 0 && c >= 0 && r < R && c < C &&
-      !G.board[r][c].blocked && !G.board[r][c].offShape && !occ[r + ',' + c]);
+      !G.board[r][c].blocked && !G.board[r][c].offShape && !G.board[r][c].filled && !occ[r + ',' + c]);
   }
   function snapshot(){
     return cur.map(p => ({ kind: p.kind, id: p.id, gid: p.gid, abs: p.abs.slice() }));
@@ -136,8 +166,8 @@ function simSolveHand(win, bridge){
 
   function dfs(){
     nodeCount++;
-    if (nodeCount > SIM_SOLVER_NODE_CAP){ stop = true; return; }
-    if ((nodeCount & 2047) === 0 && Date.now() - tSolve0 > SIM_SOLVER_TIME_BUDGET_MS){ stop = true; return; }
+    if (nodeCount > nodeCap){ stop = true; return; }
+    if ((nodeCount & 2047) === 0 && Date.now() - tSolve0 > budgetMs){ stop = true; return; }
     if (filled > best.filled) best = { filled, placements: snapshot() };
     if (filled === total){ stop = true; return; } // perfect fill — stop the whole search
     // Bound: even filling every still-open cell can't beat the current best.

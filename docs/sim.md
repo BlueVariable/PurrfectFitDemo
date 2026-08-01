@@ -1,7 +1,7 @@
 # Balance simulator (`sim.html`)
 
 A zero-dependency batch simulator that plays *the real game* headlessly, many
-times, with three scripted bot profiles, and reports clear-rate / scoring /
+times, with four scripted bot profiles, and reports clear-rate / scoring /
 economy / treat-pick-rate stats. No build step, no external libraries — same
 ethos as the game itself.
 
@@ -24,7 +24,8 @@ becomes ready to run batches.
 2. Set **games per profile** (1–500, default 50) and a **base seed** (for
    reproducible batches — the same base seed + branch + profile always
    produces the same sequence of games).
-3. Check which **profiles** to include: `solver`, `greedy`, `casual`.
+3. Check which **profiles** to include: `solver`, `greedy`, `casual`,
+   `engine`.
 4. **Run batch**. The progress line updates every hand (a
    `game / round / hand` heartbeat) and the dashboard refreshes as games
    finish; **Stop** takes effect at the next hand, even mid-game (the
@@ -122,10 +123,57 @@ the batch continues.
   with some probability once ~70% of the board is filled, occasionally
   (~25%/hand) burns a discard on a random piece first, and has a 50%
   chance each shop to buy one random affordable treat.
+- **engine** ("treat engine", `js/sim/bots-engine.js`): the profile the
+  other three cannot be — they all maximize *cat* placement, which
+  under-prices the archetype real winning play uses (AGENT_PLAYBOOK.md
+  §0/§3: flat adds early in scan order, multipliers late).
+  - *Shop* — a tiered priority table, bought through the same
+    `simAttemptBuy` plumbing as everyone else: **(1)** global Type B
+    multipliers it can satisfy (`morning_stretch`, `matching_set`,
+    `full_house`, `cuddle_puddle`, plus any unnamed `phase:'mul'` card)
+    and SCALING treats (`one_shot`, `purebred`, `seniority`,
+    `sprint_finish`) as early in the run as they are offered — their value
+    is their trigger count; **(2)** strong flat adds (`poker_face`,
+    `deep_deck`, `biscuit`, `bench_warmer`, `litter_mates`, duplicates of
+    `biscuit`/`deep_deck` welcome); **(3)** economy (`piggy_bank`,
+    `paid_leave`, `gift_wrap`) on leftover cash; **(4)** requirement-free
+    flat adds as filler bodies. On no-room it sells the **lowest-value
+    owned flat** (never a multiplier or a scaler) via the real
+    `sellTreatFromShop`, and only ever to make room for a tier-1 anchor.
+  - *Play* — flats take the earliest legal scan position, multipliers the
+    latest, and the multiplier's slot is reserved *before* cats claim the
+    bottom-right corner (`mirror_mood` inverts both). It builds up to four
+    candidate layouts per hand and lets the game's own
+    `projectScore(null).total` pick the winner, exactly like
+    `agent/pf-harness.js` `PF.plan`: a treat flood around a max-cat pack;
+    one *constrained* layout per universal requirement kind, where the cat
+    pool is restricted to the hand's largest same-shape / same-type group
+    (`simSolveHand`'s `allowIds`, the port of the harness's
+    `solveCats(allowIds)`) so `one_shot`/`purebred` can actually fire; and
+    a plain cats-only pack as an honest floor. Timing requirements
+    (`FIRST HAND only`, `LAST HAND only`/`LAST HAND`,
+    `NO DISCARDS REMAINING`) gate deployment up front — a treat played on a
+    hand where its requirement fails burns its once-per-round trigger.
+  - Records two extra per-round fields, `treatsPlayed` / `treatsWhiffed`,
+    which surface as the **Times played** / **Whiffed (req unmet)** columns
+    in the dashboard's treat table (`—` for the other profiles).
+  - Costs several times a solver hand, so it carries its own per-game
+    wall-clock budget (45s) via `bot.timeBudgetMs`; the other profiles keep
+    the shared 15s default.
 
-All three share one universal safety rule: if literally no hand piece fits
+All four share one universal safety rule: if literally no hand piece fits
 anywhere, burn a discard (bot-flavored pick of which piece); if none remain,
 the game is recorded as `stuck` rather than looping forever.
+
+**Profile independence.** Each profile draws its own per-game seeds
+(`simDeriveSeed` tags solver/greedy/casual/engine 1/2/3/4), every game
+re-seeds the iframe's `Math.random` and calls `selectBranch()` (which fully
+resets `G`), so profiles do not share randomness. The one thing they *do*
+share is the game's `TDEFS` array: a self-expiring treat sets `td._expired`
+on it and nothing clears that at `newGame()`, so a profile can very slightly
+colour the games that run after it. `engine` is therefore listed **last** in
+the run order, which keeps the original three reproducing their previous
+seeded outcomes exactly.
 
 ## How it drives the game
 
@@ -165,7 +213,23 @@ Two things worth knowing if you're extending this:
   search; if their requirement isn't met on the hand they land in, they
   simply no-op that fire (per the real game's own behavior) while still
   occupying board space and consuming their once-per-round use. Modeling
-  every requirement type was out of scope.
+  every requirement type was out of scope. The `engine` profile goes one
+  step further for the two *universal* cat requirements ("All cats must be
+  of the SAME SHAPE/TYPE") by trying a constrained cat pool, and prices
+  every other unmet requirement honestly via `projectScore` — but it does
+  not model them either.
+- The `engine` profile never deploys a treat with an `onPlace` hook
+  (`zoomies`, which permanently un-blocks board cells and rewrites
+  `G.blockedMask`): its candidate layouts are thrown away, and that side
+  effect would not be thrown away with them. It also never buys `catnado`
+  (the ×2 that destroys a random inventory treat) and never *plays*
+  `soft_landing` (which saves a round from the inventory, so putting it on
+  the board loses the save).
+- `engine` decides early-vs-late pinning from `tdef.phase` alone — the same
+  simplification the solver bot makes — so a Type A multiplier that wants to
+  fire *before* something (`head_scritches`: "×2 the NEXT cat in SCAN ORDER")
+  is still pinned late. `projectScore` arbitration absorbs most of the cost:
+  a badly-pinned layout just loses to the plain-pack candidate.
 - The solver bot has no proactive "discard to complete a fill" tactic
   (AGENT_PLAYBOOK.md §7) — only the universal "nothing fits at all, burn a
   discard" fallback shared by all three bots.

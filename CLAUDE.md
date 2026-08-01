@@ -27,9 +27,12 @@ Config is fetched at runtime from published Google Sheets CSVs (`js/config.js` �
 `SHEET_URLS`). The title screen has a "↺ Reload Config" button.
 
 `sim.html` (+ `js/sim/`) batch-runs the real game headlessly in a hidden iframe
-across seeded games with three scripted bot profiles (solver/greedy/casual) and
-reports clear rates, scoring, economy and treat pick rates. It must be served over
-HTTP (not `file://`); see `docs/sim.md`.
+across seeded games with four scripted bot profiles (solver/greedy/casual/engine)
+and reports clear rates, scoring, economy and treat pick rates. It must be served
+over HTTP (not `file://`); see `docs/sim.md`. `engine` is the treat-engine
+profile (flats early, multipliers late, constrained same-shape/same-type hands for
+one_shot/purebred) — it must stay LAST in the profile run order so the other three
+reproduce their previous seeded outcomes.
 
 ## Architecture
 

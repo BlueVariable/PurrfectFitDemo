@@ -1,6 +1,8 @@
 'use strict';
 // ══════════════════════════════════════════════════════
 //  SIM: bot profiles — solver / greedy / casual
+//  (a fourth profile, `engine`, registers itself into the same SIM_BOTS map
+//   from js/sim/bots-engine.js — it is long enough to deserve its own file.)
 //
 //  Each bot implements:
 //    shopPhase(ctx)          — buy/skip decisions for the current shop visit
@@ -21,6 +23,10 @@
 //  every call within one round (shopPhase, then one playHand per hand of
 //  that round), so bots may stash private per-round scratch state on it
 //  under an underscore-prefixed key (see greedy's `_boughtIdsThisVisit`).
+//
+//  A bot may also carry an optional `timeBudgetMs` property, which
+//  simRunOneGame (js/sim/engine.js) uses as that profile's per-game
+//  wall-clock cap instead of the shared default. Only `engine` sets one.
 // ══════════════════════════════════════════════════════
 
 const SIM_BOTS = {};

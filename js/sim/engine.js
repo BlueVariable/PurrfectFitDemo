@@ -159,7 +159,11 @@ async function simRunOneGame(win, bridge, branchId, profile, seed, runOpts){
   if (!bot) throw new Error('Unknown bot profile: ' + profile);
   const shouldStop = (runOpts && runOpts.shouldStop) || (() => false);
   const onProgress = (runOpts && runOpts.onProgress) || null;
-  const timeBudgetMs = (runOpts && runOpts.timeBudgetMs) || SIM_GAME_TIME_BUDGET_MS;
+  // Per-profile override (bot.timeBudgetMs) sits between the explicit runOpts
+  // value and the shared default: the `engine` profile explores several
+  // candidate layouts per hand and legitimately needs longer than a bot that
+  // solves once (see js/sim/bots-engine.js).
+  const timeBudgetMs = (runOpts && runOpts.timeBudgetMs) || bot.timeBudgetMs || SIM_GAME_TIME_BUDGET_MS;
   const tGame0 = Date.now();
   const result = { profile, seed, branchId, result: null, failRound: null, error: null, rounds: [] };
   try{

@@ -24,8 +24,12 @@ function simMulberry32(seed){
 
 // Derive a reproducible per-game seed from (baseSeed, profile, index-within-profile).
 // Documented + stable so re-running the same batch config reproduces the same games.
+// Each profile gets its OWN tag, so adding a profile can never shift the seeds
+// (and therefore the outcomes) of the ones that already existed. 9 stays the
+// fallback for an unrecognised name.
 function simDeriveSeed(baseSeed, profile, idx){
-  const profileTag = profile === 'solver' ? 1 : profile === 'greedy' ? 2 : profile === 'casual' ? 3 : 9;
+  const profileTag = profile === 'solver' ? 1 : profile === 'greedy' ? 2 :
+    profile === 'casual' ? 3 : profile === 'engine' ? 4 : 9;
   return ((baseSeed >>> 0) * 1000003 + profileTag * 100003 + idx * 37) >>> 0;
 }
 
