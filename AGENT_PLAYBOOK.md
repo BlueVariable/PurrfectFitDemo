@@ -31,7 +31,9 @@ clears the run.
 - The title screen live-fetches config from Google Sheets; wait ~3 s.
 - Flow: **PLAY → World Map → pick an HQ → WORK**. All HQs are unlocked
   (`isBranchUnlocked()` returns true). London (`eu_1`) = wild deck, **+1 Hand**;
-  other branches trade that for +1 discard or +$10 start.
+  other branches trade that for +1 discard or +$10 start. **Paris (`eu_2`) is the discard
+  branch**: +1 discard *and* `discard-refund` — every discard left in the round's pool pays
+  **$1** at round end, on top of the usual $5 + $1/unused hand.
 - After every branch select / round win / skip the visible screen is the
   **work-week calendar** (`s-calendar`) — 5 days × 3 rounds, boss "deadline" on rounds
   3/6/9/12/15. It's screen-only for scripted play: state (shop pool, round setup,
@@ -172,9 +174,12 @@ table is the current curve.)*
   `generatePolyomino`), **rolled once per round** and fixed for every hand of that round;
   it re-rolls next round. Some cells are `blocked` (striped). The grid dims (`G.bsr/G.bsc`)
   come from the polyomino — don't assume 5×5.
-- **Hands**: 4/round (`hand_count`), +1 in London. **Discards**: 3 (+1 in Paris/Bangkok/…).
+- **Hands**: 4/round (`hand_count`), +1 in London. **Discards**: 3 per **ROUND** (+1 in
+  Paris/Bangkok/…) — one pool shared by all of the round's hands, not 3 fresh every hand;
+  spend one on hand 1 and hand 4 has that many fewer. 0 on a NO SECONDS deadline.
   **Hand size**: 7 cards. Rounds 3/6/9/12/15 also carry a boss modifier.
-- **Economy**: start $5; each round pays $5 + $1 per unused hand. Shop stocks 3 treats;
+- **Economy**: start $5; each round pays $5 + $1 per unused hand (**+ $1 per unused discard in
+  Paris**, `eu_2`'s `discard-refund`). Shop stocks 3 treats;
   reroll costs escalate **3 → 5 → 8 → 12** within a round (resets each round). **Sell-back is
   50% of buy price** (`sell_price_coef`).
 - Buying = **drag the shop card onto a backpack cell** (a click only selects). You choose the
@@ -257,10 +262,20 @@ table is the current curve.)*
   can only ever be filled by a **1-cell treat** — no cat polyomino reaches it. If your
   treats are spent, the fill is off the table for the rest of the round; check the board
   for these before banking a plan on the purrfect bonus late-round.
-- **Paris (`eu_2`) +1 discard does not apply to round 1 hand 1** — the first hand is
-  dealt before the branch modifier lands; `dealHand()` re-derives `G.disc` correctly
-  from hand 2 onward. (Also: `G.disc` resets each hand, so `poker_face` only cares
-  about discards used THIS hand.)
+- **Discards are a ROUND pool, not a per-hand allowance (changed 2026-08-01).** `G.disc` is
+  derived exactly once per round, in `applyModifiers()` (base `discard_count` 3 + the branch's
+  `discards+N`, then `no-discard` / the boss `discards_zero`), and from there it only goes
+  **down** via `doDiscard()` — `dealHand()` no longer touches it. Two discards burned on hand 1
+  means one left for hands 2-4. Plan the whole round's discards up front. The only thing that
+  puts discards *back* mid-round is a SKIP bonus (`breakConsumePending`), which is granted at
+  the next round's setup and now survives every hand of it. (The old "Paris starts round 1 hand 1
+  with 3 instead of 4" bug is gone: the branch bonus is applied by `newGameFromBranch()` after
+  the first hand is dealt, and nothing re-derives it away.)
+- **`poker_face` now reads the round pool**, so its "+N per REMAINING discard" shrinks as the
+  round wears on — it is worth the most on hand 1 and after a discard-free round. `fence_sitter`
+  (+N per discard USED this round, `G.discUsedRound`) is its mirror and grows. `second_chance`
+  is still per-HAND (`G.discUsedHand`, reset in `dealHand()`): it needs a discard spent on the
+  hand you play it.
 
 ---
 
@@ -323,9 +338,10 @@ from the config of their day and are superseded by the table in §4.**
   late-week wall is real for engine builds too. Fixed `PF.playRound()` (button is WORK now),
   documented the calendar `goShop()` trap and the `plan()` dup-id proj bug above. Balance
   notes handed to the design owner: poker_face overtuned (its discard tension resets every
-  hand), cuddle_puddle dominates purchasable multipliers **(fixed 2026-08-01: converted from
-  ×1.4 to a flat +120 add, same "ALL cells SURROUNDING are FILLED" condition —
-  `js/treats/cuddle_puddle.js`; value parity with clean_plate/frenzy)**, requirement text (nine_lives LAST HAND, standing_ovation
+  hand — **fixed 2026-08-01: discards are a round pool now**, see §7), cuddle_puddle dominates
+  purchasable multipliers **(fixed 2026-08-01: converted from ×1.4 to a flat +120 add, same
+  "ALL cells SURROUNDING are FILLED" condition — `js/treats/cuddle_puddle.js`; value parity
+  with clean_plate/frenzy)**, requirement text (nine_lives LAST HAND, standing_ovation
   3-charge) missing from shop cards, midweek rounds fall in one hand.
 
 ---

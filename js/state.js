@@ -276,7 +276,24 @@ function newGame(deckId){
   mkDeck();dealHand();
 }
 
-// Apply per-round modifiers (hands, discard). Called each round after stats reset.
+// Does the ACTIVE branch's modifier string carry this token? Branch modifiers
+// are pipe-separated ("discards+1|discard-refund"), so a substring test would
+// false-positive across tokens — match whole trimmed tokens only.
+function hasBranchMod(token){
+  if(typeof G!=='object'||!G||!G.modifiers)return false;
+  return G.modifiers.split('|').some(m=>m.trim()===token);
+}
+
+// Apply per-round modifiers (hands, discards). Called ONCE per round, after the
+// caller has reset the raw stats (advanceRoundSetup in js/scoring.js; the G
+// literal in newGame for round 1, via newGameFromBranch).
+//
+// This is the ONLY place G.disc is derived: hands and discards are both ROUND
+// pools here, so `hands+N` / `discards+N` add on top of the base the caller just
+// set and nothing re-derives either of them again until the next round setup.
+// dealHand() deliberately leaves G.disc alone — a discard spent on hand 1 stays
+// spent for the rest of the round.
+//
 // NOTE: no longer early-returns when G.modifiers is empty — G.maxHands must
 // still get set (and the round modifier's hands_delta/discards_zero still
 // need to run) even for branches/rounds with no branch-level modifier string.
@@ -285,8 +302,11 @@ function applyModifiers(){
   mods.forEach(mod=>{
     if(mod==='hands-1')G.hands=Math.max(1,G.hands-1);
     if(mod.startsWith('hands+'))G.hands+=(parseInt(mod.slice(6))||0);
-    if(mod==='no-discard')G.disc=0;
+    if(mod.startsWith('discards+'))G.disc+=(parseInt(mod.slice(9))||0);
   });
+  // no-discard beats any discards+N in the same string, whichever order the
+  // sheet wrote them in — so it is settled after the loop, not inside it.
+  if(mods.indexOf('no-discard')>=0)G.disc=0;
   // Round modifier (boss round) composes AFTER branch modifiers, e.g.
   // London's hands+1 then short_shift's -1 nets to +0.
   G.hands=applyHandsDelta(G.hands,G.roundModifier);
@@ -313,6 +333,10 @@ function newGameFromBranch(branchId){
   G.branchId=branchId;
   G.modifiers=branch.mod||'';
   applyModifiersOnce();
+  // Round 1's hand 1 was already dealt inside newGame(), but dealHand() no
+  // longer touches G.disc — so applying the branch's discards+N here is what
+  // makes round 1 hand 1 start with the full pool (Paris used to open its run
+  // on 3 discards instead of 4 because dealHand() had derived it first).
   applyModifiers();
   gameInProgress=true;
   if(typeof pfTrackRunStart==='function')pfTrackRunStart(branchId,branch.deck);
@@ -352,12 +376,17 @@ function mkDeck(){
 }
 
 function dealHand(){
+  // Discards are a ROUND pool, not a per-hand allowance: G.disc is derived ONCE
+  // per round in applyModifiers() (round setup / newGameFromBranch), goes down in
+  // doDiscard(), and can go up from a SKIP bonus (breakConsumePending). dealHand()
+  // deliberately does NOT re-derive it — a discard spent on hand 1 stays spent —
+  // and does not re-apply the boss discards_zero either: the only writer that can
+  // add discards after round setup is that SKIP bonus, which is granted on purpose
+  // (breaks.js orders it after applyModifiers so it survives) and is exactly what
+  // the calendar card advertised for the round. Re-zeroing here would have honoured
+  // it on hand 1 and eaten it from hand 2 on. Only the per-HAND counter resets —
+  // second_chance reads it; fence_sitter reads the per-ROUND one.
   G.discUsedHand=0;
-  const mods=G.modifiers?G.modifiers.split('|').map(m=>m.trim()):[];
-  const noDiscard=mods.includes('no-discard');
-  const discPlus=mods.filter(m=>m.startsWith('discards+')).reduce((s,m)=>s+parseInt(m.slice(9))||0,0);
-  G.disc=noDiscard?0:((CFG.discard_count||3)+discPlus);
-  G.disc=applyDiscardsZero(G.disc,G.roundModifier); // re-enforced every hand — dealHand() re-derives G.disc each time
   G.newCardIndices=new Set();
   const handTarget=applyHandSizeDelta(CFG.hand_dealt_count||7,G.roundModifier);
   while(G.hand.length<handTarget&&G.deck.length>0){
