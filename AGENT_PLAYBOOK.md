@@ -69,7 +69,8 @@ Installs `window.PF`:
 | `PF.plan({K, treats:[{id, bias:'early'\|'late'}]})` | best-of-K layouts scored with `projectScore`; **leaves the winner placed**; returns `{proj, filled, playable, full, board}` |
 | `PF.fit()` | `doFit()` — then `wait` ~8 s for the animation |
 | `PF.fitFast()` | resolves the hand synchronously (animation bypassed; the score is computed in `doFit` before the animation, so results are authentic) |
-| `PF.buy(id)` / `PF.sell(id)` / `PF.reroll()` | shop ops; `buy` returns `'no-bp-room'` rather than destroying anything |
+| `PF.buy(id)` / `PF.sell(id)` / `PF.reroll()` | shop ops; `buy` tries `PF.defrag` once on no-room before returning `'no-bp-room'` — never destroys anything |
+| `PF.defrag(extraTd)` | backtracking search for a complete, all-rotations rearrangement of every owned treat (optionally reserving room for one extra treat def); atomic and lossless — `'no-arrangement'` if none exists, otherwise applies it and re-renders |
 | `PF.playRound()` / `PF.nextRound()` / `PF.discard(catId)` / `PF.ascii()` | flow control |
 
 Rules baked into it — do not "improve" them away:

@@ -8,7 +8,11 @@
 //    fetch('/agent/pf-harness.js').then(r=>r.text()).then(eval)
 //  then drive it:
 //    PF.state()                       → round/target/score/hands/cash/hand/bp/shop/board ascii
-//    PF.buy('treat_id')               → buy from shop (safe: refuses when backpack full)
+//    PF.buy('treat_id')               → buy from shop (safe: tries PF.defrag() once on
+//                                       no-room, then refuses — never destroys anything)
+//    PF.defrag(extraTd)               → backtracking bag rearrange (atomic, lossless);
+//                                       optionally proves room for one extra treat def;
+//                                       'no-arrangement' if none exists. See below.
 //    PF.sell('treat_id')              → sell from backpack (shop screen only)
 //    PF.reroll()                      → reroll shop
 //    PF.playRound()                   → leave shop, deal first hand
@@ -24,8 +28,10 @@
 //    tool's `wait` between calls (score animation ≈ 8s).
 //  - PF.buy must NEVER fall back to bpRepackAll([td]): that rebuilds the
 //    backpack and silently DESTROYS treats that don't fit back (and leaves the
-//    new one in, unpaid). Rotation-aware auto-place only; 'no-bp-room' means
-//    sell something first — exactly the choice a human player faces.
+//    new one in, unpaid). Rotation-aware auto-place first, then ONE PF.defrag()
+//    pass (atomic rearrange of what's already owned — never destructive); only
+//    after both fail does 'no-bp-room' mean sell something first — exactly the
+//    choice a human player faces.
 //  - PF.plan biases: 'early' pins a treat top-left in scan order (flat adds,
 //    big_bite), 'late' pins bottom-right (multipliers). Omit for random restarts.
 //  - plan() re-applies its best layout before returning, so proj === the exact
@@ -172,6 +178,91 @@ window.PF = (() => {
     applyCats(snap.cats);
   }
 
+  // ── Safe backpack defragmentation ──────────────────────────────────────
+  // bpAutoPlaceRot (js/backpack.js) seats ONE new treat into the CURRENT
+  // arrangement; when the bag is fragmented (free cells scattered too small
+  // for the incoming shape) it returns false even though some legal
+  // REARRANGEMENT of the existing treats would open a spot. This is the
+  // harness's analogue of a human player dragging + rotating (R) everything
+  // in the bag to make room. bpRepackAll is FORBIDDEN (destroys treats that
+  // don't re-fit) — this is atomic and lossless instead.
+  //
+  // Backtracking search: every G.bpGroups treat (rotated off its ORIGINAL
+  // tdef.bpS, same convention bpAutoPlaceRot uses — never off its current
+  // in-bag pose) plus, optionally, one virtual `extraTd` slot is placed into
+  // a fresh getBPR()×getBPC() grid. Pieces go largest-first with a
+  // remaining-cells bound (same branch-and-bound shape as solveCats above)
+  // and a hard node/time budget so a pathological bag can't blow the ~15s
+  // javascript_tool ceiling. The extra slot is a feasibility check only — it
+  // is never written back; PF.buy's own bpAutoPlaceRot retry seats it for
+  // real, and since that retry is an EXHAUSTIVE rotation×cell scan, it
+  // cannot miss a spot this search already proved exists.
+  const PF_EXTRA_KEY = '__pf_extra__';
+  function defragRotShapes(bpS) {
+    const seen = new Set(), out = [];
+    for (let rot = 0; rot < 4; rot++) {
+      const grid = rotC(bpS, rot);
+      const key = JSON.stringify(grid);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ grid, rot, size: grid.reduce((s, row) => s + row.filter(Boolean).length, 0) });
+    }
+    return out;
+  }
+  // items: [{key, tdef}, ...] → placements [{key, tdef, grid, rot, or, oc}, ...], or null
+  // (no arrangement) / 'budget' (gave up under the node/time cap — treated as none).
+  function defragSolve(items, rows, cols) {
+    const shapes = items.map(it => defragRotShapes(it.tdef.bpS));
+    const order = items.map((_, i) => i).sort((a, b) => shapes[b][0].size - shapes[a][0].size);
+    const suffix = new Array(order.length + 1).fill(0);
+    for (let i = order.length - 1; i >= 0; i--) suffix[i] = suffix[i + 1] + shapes[order[i]][0].size;
+    const occ = new Set();
+    const totalCells = rows * cols;
+    const t0 = Date.now();
+    let nodes = 0;
+    const TIME_BUDGET_MS = 8000, NODE_CAP = 300000; // well under the ~15-20s javascript_tool ceiling
+    function dfs(pos) {
+      if (pos === order.length) return [];
+      if (++nodes > NODE_CAP || Date.now() - t0 > TIME_BUDGET_MS) return 'budget';
+      if (totalCells - occ.size < suffix[pos]) return null; // remaining pieces can't possibly fit — fail fast
+      const i = order[pos], it = items[i];
+      for (const sh of shapes[i]) {
+        const rH = sh.grid.length, rW = sh.grid[0].length;
+        for (let r = 0; r <= rows - rH; r++) {
+          for (let c = 0; c <= cols - rW; c++) {
+            const cells = []; let ok = true;
+            for (let dr = 0; dr < rH && ok; dr++) for (let dc = 0; dc < rW; dc++) {
+              if (!sh.grid[dr][dc]) continue;
+              const k = (r + dr) * cols + (c + dc);
+              if (occ.has(k)) { ok = false; break; }
+              cells.push(k);
+            }
+            if (!ok) continue;
+            cells.forEach(k => occ.add(k));
+            const rest = dfs(pos + 1);
+            if (rest === 'budget') { cells.forEach(k => occ.delete(k)); return 'budget'; }
+            if (rest !== null) return [{ key: it.key, tdef: it.tdef, grid: sh.grid, rot: sh.rot, or: r, oc: c }, ...rest];
+            cells.forEach(k => occ.delete(k));
+          }
+        }
+      }
+      return null;
+    }
+    return dfs(0);
+  }
+  // Object-identity multiset compare: confirms the exact same tdef references,
+  // in the exact same quantities, survive a defrag — the "nothing lost" proof.
+  function tdefMultiset(list) {
+    const m = new Map();
+    list.forEach(td => m.set(td, (m.get(td) || 0) + 1));
+    return m;
+  }
+  function multisetsEqual(a, b) {
+    if (a.size !== b.size) return false;
+    for (const [k, v] of a) if (b.get(k) !== v) return false;
+    return true;
+  }
+
   const api = {};
   api.ascii = ascii;
 
@@ -203,12 +294,48 @@ window.PF = (() => {
     return { score: G.score, tgt: G.tgt, hands: G.hands, won: G.score >= G.tgt };
   };
 
-  // SAFE buy: rotation-aware auto-place only. Never bpRepackAll (destructive —
-  // it silently drops treats that don't re-fit and doesn't charge for the new one).
+  // Safe, atomic bag rearrange (search: defragSolve above). Returns
+  // 'no-arrangement' if no legal placement of every currently-owned treat
+  // (+ optional extraTd, reserved but never written back) exists. Otherwise
+  // rewrites G.bp/G.bpGroups from the solved layout and re-renders. Never
+  // partial: a failed lossless-assertion reverts to the exact pre-call state.
+  api.defrag = extraTd => {
+    const rows = getBPR(), cols = getBPC();
+    const items = G.bpGroups.map(gr => ({ key: gr.gid, tdef: gr.tdef }));
+    const beforeCount = items.length;
+    if (extraTd) items.push({ key: PF_EXTRA_KEY, tdef: extraTd });
+    const sol = defragSolve(items, rows, cols);
+    if (!sol || sol === 'budget') return 'no-arrangement';
+    const beforeMultiset = tdefMultiset(G.bpGroups.map(gr => gr.tdef));
+    const origBp = G.bp, origGroups = G.bpGroups; // plain refs — neither is mutated in place below, so reverting is just reassigning back
+    G.bp = mk2d(rows, cols, () => ({ filled: false, col: null, em: null, gid: null, tdef: null }));
+    G.bpGroups = [];
+    try {
+      for (const p of sol) { if (p.key !== PF_EXTRA_KEY) bpPlaceAt(p.tdef, p.grid, p.or, p.oc, p.rot); }
+      if (G.bpGroups.length !== beforeCount) throw new Error('defrag lossy: count mismatch');
+      if (!multisetsEqual(beforeMultiset, tdefMultiset(G.bpGroups.map(gr => gr.tdef))))
+        throw new Error('defrag lossy: composition mismatch');
+    } catch (e) {
+      G.bp = origBp; G.bpGroups = origGroups; // atomic revert — every treat exactly as it was
+      return 'no-arrangement';
+    }
+    bpRetryPending(); // harmless: may also seat an unrelated overflowed treat
+    if (typeof renderAll === 'function') renderAll();
+    if (typeof renderShopFull === 'function') renderShopFull();
+    return 'defragged ' + G.bpGroups.length + ' treats' + (extraTd ? ' (room reserved for ' + extraTd.id + ')' : '');
+  };
+
+  // SAFE buy: rotation-aware auto-place first, then ONE PF.defrag() pass
+  // before giving up — a fragmented bag often has room a naive scan can't
+  // see. Still never bpRepackAll (destructive — it silently drops treats
+  // that don't re-fit and doesn't charge for the new one).
   api.buy = id => {
     const td = (shopPool || []).find(t => t.id === id); if (!td) return 'not-in-shop';
     if (G.cash < td.pr) return 'no-cash';
-    if (!bpAutoPlaceRot(td)) return 'no-bp-room';
+    if (!bpAutoPlaceRot(td)) {
+      if (api.defrag(td) === 'no-arrangement') return 'no-bp-room';
+      if (!bpAutoPlaceRot(td)) return 'no-bp-room'; // defensive; the defrag proof says this shouldn't happen
+    }
     G.cash -= td.pr; shopBoughtIds.add(td.id); G.purchasedTreatIds.add(td.id);
     if (td.id === 'purrfect_record' && G.purrfectRecordBuyFits === undefined) {
       G.purrfectRecordBuyFits = G.totalFits || 0;
