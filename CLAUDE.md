@@ -80,9 +80,12 @@ fixed viewport offset they land on top of the hand tray.
 Between rounds the player lands on the **work-week calendar** (`s-calendar`,
 `js/calendar.js`) — the run as 5 days × 3 rounds (2 regular + 1 boss "deadline" on
 rounds 3/6/9/12/15, per `General!modifier_rounds`), past rounds stamped by
-hands-to-clear (`G.roundLog`; `☕` for a coffee-break'd round). It is the fork point:
-🏪 **Go to Shop** (→ shop/prep screen, then Play) or ☕ **Coffee Break** (skip, see
-`js/cafe.js`). `openCalendar()` delegates to `openRounds()` for all state setup, so
+hands-to-clear (`G.roundLog`; `☕` for a skipped round). It is the fork point:
+🏪 **WORK** (→ shop/prep screen, then Play) or **SKIP** (`js/breaks.js` — forfeit the
+round for a known bonus). **The Coffee Break café (`js/cafe.js`) is DEPRECATED** —
+SKIP replaced it; cafe.js is still loaded but has no live entry point, and the
+Treats sheet's Archetype column (which fed its blend pools) is now taxonomy only.
+`openCalendar()` delegates to `openRounds()` for all state setup, so
 `goShop()` / `selectBranch()` / `cafeFinish()` / `menuContinue()` route through it
 without changing shop-pool generation or the RNG draw order the headless sim
 depends on.
