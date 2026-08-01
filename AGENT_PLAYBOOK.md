@@ -324,8 +324,8 @@ from the config of their day and are superseded by the table in §4.**
   documented the calendar `goShop()` trap and the `plan()` dup-id proj bug above. Balance
   notes handed to the design owner: poker_face overtuned (its discard tension resets every
   hand), cuddle_puddle dominates purchasable multipliers **(fixed 2026-08-01: converted from
-  ×1.4 to a flat +150 add, same "ALL cells SURROUNDING are FILLED" condition —
-  `js/treats/cuddle_puddle.js`)**, requirement text (nine_lives LAST HAND, standing_ovation
+  ×1.4 to a flat +120 add, same "ALL cells SURROUNDING are FILLED" condition —
+  `js/treats/cuddle_puddle.js`; value parity with clean_plate/frenzy)**, requirement text (nine_lives LAST HAND, standing_ovation
   3-charge) missing from shop cards, midweek rounds fall in one hand.
 
 ---
