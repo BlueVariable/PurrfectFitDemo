@@ -37,6 +37,15 @@ clears the run.
   3/6/9/12/15. It's screen-only for scripted play: state (shop pool, round setup,
   `G.roundModifier`) is already fully set up by `openCalendar()` → `openRounds()`, so
   `startRound()` / `PF.playRound()` and the shop fns work directly.
+- **Scripted navigation (verified 2026-08-01):** calendar → shop is
+  `goToShopFromCalendar()` (the calendar's WORK button); shop → play is `startRound()`
+  (the prep screen's WORK button; `PF.playRound()` clicks it). **NEVER call `goShop()`
+  from the calendar** — despite the name it is the round-END routine (pays out,
+  restores treats, advances the round): called out of turn it silently skips the
+  current round. It is correct only after a won round — it's what the win panel's
+  "Back to the Schedule 🗓️" button runs, and if that panel/button isn't in the DOM
+  (state can land on the calendar with `G.roundOver` still true), calling `goShop()`
+  directly then is the right move.
 - **SKIP (js/breaks.js) replaced the café**: each non-deadline round's card offers a
   known bonus ("+1 hand next round", "−20% target next round", …) for forfeiting the
   round. Two-click confirm: SKIP → SURE?, and the armed state **disarms after 4 s** —
@@ -79,7 +88,12 @@ Rules baked into it — do not "improve" them away:
   cell is sometimes exactly what makes the fill impossible). `morning_stretch` is
   FIRST-HAND-only. `bell` requires NO OTHER TREAT.
 - `projectScore(null).total` **equals** the next `doFit` total exactly — the cheap way to
-  compare candidate plans without committing.
+  compare candidate plans without committing. **But `PF.plan()`'s returned `proj` can
+  overstate the layout it leaves placed when the `treats` list contains duplicate ids**
+  (two `cuddle_puddle`s, two `biscuit`s…): observed 2026-08-01, plan said 1595 / 1212
+  while the placed board projected — and scored — 1117 / 788 (applySnapshot dup-id
+  bookkeeping). The game's own projection stayed exact every time. Rule: after your
+  final `plan()`, read `projectScore(null).total` directly and decide on THAT number.
 - The scoring scan is **click-stepped for everyone** now: `Next →` / `Auto ▶` replace
   SHIP while it runs (Auto persists via `localStorage['purrfect_auto_score']`, toggles
   live mid-scan). `PF.fit()`'s ~8 s wait covers an Auto-run scan; `PF.fitFast()`
@@ -238,6 +252,15 @@ table is the current curve.)*
   unrecoverable. There is no save system: budget for restarts, log results as you go, prefer
   fewer/faster calls late in a run.
 - Loss screen "Try Again 🔄" **abandons the entire run** (back to the world map), despite the label.
+- **Blocked-cell islands can make the purrfect impossible for cats.** A playable cell
+  whose only orthogonal neighbour is blocked (seen R13: a lone bottom cell behind an X)
+  can only ever be filled by a **1-cell treat** — no cat polyomino reaches it. If your
+  treats are spent, the fill is off the table for the rest of the round; check the board
+  for these before banking a plan on the purrfect bonus late-round.
+- **Paris (`eu_2`) +1 discard does not apply to round 1 hand 1** — the first hand is
+  dealt before the branch modifier lands; `dealHand()` re-derives `G.disc` correctly
+  from hand 2 onward. (Also: `G.disc` resets each hand, so `poker_face` only cares
+  about discards used THIS hand.)
 
 ---
 
@@ -289,6 +312,18 @@ from the config of their day and are superseded by the table in §4.**
   (`scoreBonus` / `scoreMultiplier`) — the old "they do nothing" note is wrong. `rainbow_row` was
   redesigned (+N per row with 2+ types) and now pays. Failed REAPPEAR flips never destroyed
   anything.
+
+- **2026-08-01 — Paris (eu_2) run, rounds 1–12 won, lost R13 2861/3000.** First full run on the
+  played-by-hand curve since the 07-13 retune: solver-grade play + a flats×muls engine
+  (poker_face / biscuit×2 / deep_deck×2 / bench_warmer + morning_stretch / cuddle_puddle×2)
+  cleared every round in ≤2 hands through R11 (R3, R5, R11 in ONE hand), needed 3 on the R12
+  SLIM PICKINGS boss (won 2402/2400), and died at R13 to treat exhaustion + a blocked-cell
+  island that made the purrfect impossible — exactly where the sim's solver dies, so the
+  late-week wall is real for engine builds too. Fixed `PF.playRound()` (button is WORK now),
+  documented the calendar `goShop()` trap and the `plan()` dup-id proj bug above. Balance
+  notes handed to the design owner: poker_face overtuned (its discard tension resets every
+  hand), cuddle_puddle dominates purchasable multipliers, requirement text (nine_lives LAST
+  HAND, standing_ovation 3-charge) missing from shop cards, midweek rounds fall in one hand.
 
 ---
 

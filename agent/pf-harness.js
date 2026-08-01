@@ -228,7 +228,9 @@ window.PF = (() => {
   };
 
   api.playRound = () => {
-    const b = [...document.querySelectorAll('#s-rounds button')].find(x => /PLAY ROUND/i.test(x.textContent));
+    // The prep-screen start button is labelled WORK these days (was PLAY ROUND).
+    const b = [...document.querySelectorAll('#s-rounds button')].find(x => /^\s*WORK\s*$|PLAY ROUND/i.test(x.textContent));
+    if (!b) { startRound(); return 'started (direct)'; }
     b.click(); return 'started';
   };
 
