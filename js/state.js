@@ -276,14 +276,6 @@ function newGame(deckId){
   mkDeck();dealHand();
 }
 
-// Does the ACTIVE branch's modifier string carry this token? Branch modifiers
-// are pipe-separated ("discards+1|discard-refund"), so a substring test would
-// false-positive across tokens — match whole trimmed tokens only.
-function hasBranchMod(token){
-  if(typeof G!=='object'||!G||!G.modifiers)return false;
-  return G.modifiers.split('|').some(m=>m.trim()===token);
-}
-
 // Apply per-round modifiers (hands, discards). Called ONCE per round, after the
 // caller has reset the raw stats (advanceRoundSetup in js/scoring.js; the G
 // literal in newGame for round 1, via newGameFromBranch).

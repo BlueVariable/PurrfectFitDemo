@@ -39,7 +39,6 @@ const MOD_LABELS={
   'hands+2':'+2 Hands',
   'no-discard':'No Discards',
   'discards+1':'+1 Discard',
-  'discard-refund':'$1 per Unused Discard',
   'bp-small':'3×3 Backpack',
   'bp-large':'6×5 Backpack',
   'cash-2':'-$2 Starting Cash',

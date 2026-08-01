@@ -868,11 +868,7 @@ function roundWin(){
   // base earn + configurable payout per unused hand remaining (General → unused_hand_bonus, default 1)
   const perHand=CFG.unused_hand_bonus!=null?Number(CFG.unused_hand_bonus):1;
   const bonus=G.hands*perHand;
-  // Paris identity (branch modifier token `discard-refund`): $1 for every discard
-  // still in the round's pool. Only meaningful now that discards ARE a round pool
-  // — it turns each late-round discard into a real "spend it or bank it" choice.
-  const discRefund=(typeof hasBranchMod==='function'&&hasBranchMod('discard-refund'))?Math.max(0,G.disc||0):0;
-  const total=G.earn+bonus+discRefund;
+  const total=G.earn+bonus;
   G.cash+=total;
   // Telemetry (js/analytics.js) — the same funnel the calendar stamp uses, so a
   // cleared round is recorded exactly once however it was won (including a
@@ -897,11 +893,7 @@ function roundWin(){
   setRoundOverLock(true);
   const wi=g('win-inline');
   g('wi-sc').textContent=G.score.toLocaleString();
-  // Itemised the same way the base + unused-hands split always has been; the
-  // refund line only shows up for a branch that actually pays it.
   const earnParts=[`$${G.earn} base`,`$${bonus} from ${G.hands} unused hand${G.hands===1?'':'s'}`];
-  if(typeof hasBranchMod==='function'&&hasBranchMod('discard-refund'))
-    earnParts.push(`$${discRefund} from ${G.disc||0} unused discard${(G.disc||0)===1?'':'s'}`);
   g('wi-ea').textContent=`+$${total} (${earnParts.join(' + ')})`;
   wi.style.display='';
   void wi.offsetWidth;

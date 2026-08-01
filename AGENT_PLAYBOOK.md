@@ -31,9 +31,7 @@ clears the run.
 - The title screen live-fetches config from Google Sheets; wait ~3 s.
 - Flow: **PLAY → World Map → pick an HQ → WORK**. All HQs are unlocked
   (`isBranchUnlocked()` returns true). London (`eu_1`) = wild deck, **+1 Hand**;
-  other branches trade that for +1 discard or +$10 start. **Paris (`eu_2`) is the discard
-  branch**: +1 discard *and* `discard-refund` — every discard left in the round's pool pays
-  **$1** at round end, on top of the usual $5 + $1/unused hand.
+  other branches trade that for +1 discard or +$10 start.
 - After every branch select / round win / skip the visible screen is the
   **work-week calendar** (`s-calendar`) — 5 days × 3 rounds, boss "deadline" on rounds
   3/6/9/12/15. It's screen-only for scripted play: state (shop pool, round setup,
@@ -179,8 +177,7 @@ table is the current curve.)*
   Paris/Bangkok/…) — one pool shared by all of the round's hands, not 3 fresh every hand;
   spend one on hand 1 and hand 4 has that many fewer. 0 on a NO SECONDS deadline.
   **Hand size**: 7 cards. Rounds 3/6/9/12/15 also carry a boss modifier.
-- **Economy**: start $5; each round pays $5 + $1 per unused hand (**+ $1 per unused discard in
-  Paris**, `eu_2`'s `discard-refund`). Shop stocks 3 treats;
+- **Economy**: start $5; each round pays $5 + $1 per unused hand. Shop stocks 3 treats;
   reroll costs escalate **3 → 5 → 8 → 12** within a round (resets each round). **Sell-back is
   50% of buy price** (`sell_price_coef`).
 - Buying = **drag the shop card onto a backpack cell** (a click only selects). You choose the
