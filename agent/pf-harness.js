@@ -17,7 +17,12 @@
 //    PF.reroll()                      → reroll shop
 //    PF.playRound()                   → leave shop, deal first hand
 //    PF.plan({K:50, treats:[{id:'feather'},{id:'morning_stretch',bias:'late'}]})
-//                                     → best-of-K layout via projectScore; LEAVES IT PLACED
+//                                     → best-of-K layout via projectScore; LEAVES IT PLACED.
+//                                       Constrained-placement aware: pinning a treat whose req
+//                                       is "All cats must be of the SAME SHAPE/TYPE" (one_shot,
+//                                       purebred) also tries candidates restricted to one
+//                                       shape/type group — deliberately placing FEWER cats so
+//                                       the req can fire. Returns reqNotes[] per pinned req.
 //    PF.fit()                         → doFit() on whatever is placed; wait ~8s for animation
 //    PF.discard(catId)                → discard a hand cat by id
 //    PF.nextRound()                   → goShop() after a win
@@ -77,12 +82,17 @@ window.PF = (() => {
 
   // Branch-and-bound max-coverage tiling of the open cells with G.hand.
   // Groups identical shapes, prunes on remaining-open bound, caps nodes.
-  function solveCats() {
+  // allowIds (optional Set): restrict the cat pool — constrained-placement
+  // mode for universal reqs like one_shot's "All cats must be of the SAME
+  // SHAPE", where max-placement over the whole hand can never satisfy the
+  // requirement and the winning line is deliberately placing FEWER cats.
+  function solveCats(allowIds) {
     const playable = [];
     for (let r = 0; r < G.bsr; r++) for (let c = 0; c < G.bsc; c++) if (openCell(r, c)) playable.push([r, c]);
     const total = playable.length, occ = new Set(), skip = new Set();
     const groups = [], byKey = {};
     G.hand.forEach(h => {
+      if (allowIds && !allowIds.has(h.id)) return;
       const rots = rotsFor(h.cells); const key = JSON.stringify(rots);
       if (byKey[key]) { byKey[key].ids.push(h.id); byKey[key].count++; }
       else { const gp = { rots, ids: [h.id], count: 1, used: 0, size: rots[0].length }; byKey[key] = gp; groups.push(gp); }
@@ -365,21 +375,56 @@ window.PF = (() => {
   // projectScore(null).total. Leaves the best layout ON THE BOARD.
   api.plan = spec => {
     spec = spec || {}; const K = spec.K || 40; const treats = spec.treats || [];
+    // Constrained-placement pools: a pinned treat with a universal cat req
+    // ("All cats must be of the SAME SHAPE/TYPE") can never fire under
+    // max-placement — so alongside the unconstrained candidates, try pools
+    // restricted to one shape/type group and let projectScore pick the
+    // winner (it prices whiffed reqs, so honest comparison is automatic).
+    // Threshold/board reqs (matching_set, full_house…) need no pools: any
+    // candidate that happens to satisfy them simply projects higher.
+    clearBoard();
+    const pools = [null];
+    const kinds = new Set();
+    for (const ts of treats) {
+      const td = TDEFS.find(t => t.id === ts.id);
+      const rq = (td && td.req) || '';
+      if (/All cats must be of the SAME SHAPE/i.test(rq)) kinds.add('shape');
+      if (/All cats must be of the SAME TYPE/i.test(rq)) kinds.add('type');
+    }
+    kinds.forEach(kind => {
+      const byKey = {};
+      G.hand.forEach(h => { const key = kind === 'shape' ? h.shape : h.type; (byKey[key] = byKey[key] || []).push(h); });
+      Object.values(byKey)
+        .sort((a, b) => cellCnt2(b) - cellCnt2(a))
+        .slice(0, 3)
+        .forEach(grp => pools.push(new Set(grp.map(h => h.id))));
+    });
     let best = null;
     for (let k = 0; k < K; k++) {
       clearBoard();
       const usedG = new Set(), tp = [];
       for (const ts of treats) { const p = placeTreat(ts.id, usedG, ts.bias); if (p) { usedG.add(p.gid); tp.push(p); } }
-      const sol = solveCats(); applyCats(sol.placements);
+      const sol = solveCats(pools[k % pools.length]); applyCats(sol.placements);
       let sc = -1; try { sc = projectScore(null).total; } catch (e) {}
       if (!best || sc > best.score) best = { score: sc, treats: tp.map(t => ({ id: t.id, grid: t.grid, mr: t.mr, mc: t.mc })), cats: sol.placements };
     }
     applySnapshot(best);
     let proj = -1; try { proj = projectScore(null).total; } catch (e) {}
+    // Surface each pinned treat's requirement state on the final layout —
+    // a currentlyFails:true note means playing it this fit wastes the trigger.
+    const reqNotes = [];
+    for (const ts of treats) {
+      const td = TDEFS.find(t => t.id === ts.id);
+      if (!td || !td.req) continue;
+      let fails = null; try { fails = requirementFails(td.req); } catch (e) {}
+      reqNotes.push({ id: ts.id, req: td.req, currentlyFails: fails });
+    }
     const filled = G.board.flat().filter(c => c.filled).length;
     const playable = G.board.flat().filter(c => !c.blocked && !c.offShape).length;
-    return { proj, filled, playable, full: filled === playable, board: ascii() };
+    return { proj, filled, playable, full: filled === playable, board: ascii(), reqNotes };
   };
+  // Total cells across a group of hand cats (pool ranking helper).
+  function cellCnt2(grp) { return grp.reduce((s, h) => s + cellCnt(h.cells), 0); }
 
   api.fit = () => { doFit(); return 'fit-started'; };
 

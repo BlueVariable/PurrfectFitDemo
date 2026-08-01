@@ -66,7 +66,7 @@ Installs `window.PF`:
 | call | does |
 |------|------|
 | `PF.state()` | phase, round, target, score, hands, discards, cash, `hand`, backpack treats (with effect text + `req`), shop (price/affordable/owned), `boardAscii` |
-| `PF.plan({K, treats:[{id, bias:'early'\|'late'}]})` | best-of-K layouts scored with `projectScore`; **leaves the winner placed**; returns `{proj, filled, playable, full, board}` |
+| `PF.plan({K, treats:[{id, bias:'early'\|'late'}]})` | best-of-K layouts scored with `projectScore`; **leaves the winner placed**; returns `{proj, filled, playable, full, board, reqNotes}`. **Constrained-placement aware** (2026-08-02): pinning one_shot/purebred also tries same-shape/same-type-only cat pools — max-placement can never satisfy their "All cats must be of the SAME X" reqs, but placing 1-3 matching cats + a treat flood can, and often wins. `reqNotes[].currentlyFails` tells you whether a pinned treat's req holds on the placed layout — `true` means playing it wastes the trigger. |
 | `PF.fit()` | `doFit()` — then `wait` ~8 s for the animation |
 | `PF.fitFast()` | resolves the hand synchronously (animation bypassed; the score is computed in `doFit` before the animation, so results are authentic) |
 | `PF.buy(id)` / `PF.sell(id)` / `PF.reroll()` | shop ops; `buy` tries `PF.defrag` once on no-room before returning `'no-bp-room'` — never destroys anything |
