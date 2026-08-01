@@ -12,7 +12,9 @@ function _fatCatM(ef) {
   const step = sm ? parseFloat(sm[1]) : 0.1;
   const dm = ef.match(/\$(\d+)/);
   const per = dm ? parseInt(dm[1], 10) : 10;
-  const steps = Math.floor((G.cash || 0) / per);
+  // Clamp debt (tax season can push cash negative) — held wealth can boost,
+  // owing money must never shrink the score below ×base.
+  const steps = Math.floor(Math.max(0, G.cash || 0) / per);
   return Math.round((base + step * steps) * 100) / 100;
 }
 

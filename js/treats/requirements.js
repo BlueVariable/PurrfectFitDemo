@@ -72,12 +72,17 @@ const REQUIREMENT_FNS = {
   'All BOARD cells are FULL': () => !_isPurrfect(),
   'LAST HAND only': () => G.hands > 1,
   'FIRST HAND only': () => G.hands !== G.maxHands,
-  '3+ cats must SHARE a SHAPE': () => {
-    const counts = {};
-    for (const cat of G.cats) counts[cat.shape] = (counts[cat.shape] || 0) + 1;
-    return !Object.values(counts).some(n => n >= 3);
-  },
+  '3+ cats must SHARE a SHAPE': () => _lacksTripleShape(),
+  // Normalized wording (2026-08-01) — same check; the old string above stays
+  // as an alias because req strings are both card text AND lookup keys.
+  '3+ cats must be of the SAME SHAPE': () => _lacksTripleShape(),
 };
+
+function _lacksTripleShape() {
+  const counts = {};
+  for (const cat of G.cats) counts[cat.shape] = (counts[cat.shape] || 0) + 1;
+  return !Object.values(counts).some(n => n >= 3);
+}
 
 function requirementFails(req) {
   if (!req) return false;
