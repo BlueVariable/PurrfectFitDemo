@@ -166,14 +166,13 @@ function setupBoardLayout(round,mod){
   };
 }
 
-// Roll one random enabled modifier (weighted by sheet "Weight"). night_shift
-// (type_mult) additionally rolls a random cat TYPE from the current deck
-// and substitutes it into the "{TYPE}" placeholder of the description.
-function rollRoundModifier(){
-  const pool=(typeof MODIFIERS!=='undefined'?MODIFIERS:[]).filter(m=>m.enabled);
-  if(!pool.length)return null;
-  const picked=weightedSample(pool,1,m=>m.weight||1)[0];
-  if(!picked)return null;
+// Turn one raw MODIFIERS row into the mod object the game consumes.
+// night_shift (type_mult) additionally rolls a random cat TYPE from the
+// current deck and substitutes it into the "{TYPE}" placeholder of the
+// description — a fresh roll per pick, so two schedule slots that happen to
+// land on night_shift (only possible once the bag has refilled) still get
+// independently-rolled types.
+function buildModFromPick(picked){
   const mod={id:picked.id,name:picked.name,em:picked.em,desc:picked.desc,effect:picked.effect,mag:picked.mag};
   if(mod.effect==='type_mult'){
     const deck=DECKS[G.deckId];
@@ -185,22 +184,55 @@ function rollRoundModifier(){
   return mod;
 }
 
+// Roll one random enabled modifier (weighted by sheet "Weight"). This is the
+// raw draw — every call is independent, with replacement across calls — used
+// live by pickRoundModifier() only as a fallback for a run whose schedule
+// came up empty (Modifiers tab failed to load before newGame()).
+function rollRoundModifier(){
+  const pool=(typeof MODIFIERS!=='undefined'?MODIFIERS:[]).filter(m=>m.enabled);
+  if(!pool.length)return null;
+  const picked=weightedSample(pool,1,m=>m.weight||1)[0];
+  if(!picked)return null;
+  return buildModFromPick(picked);
+}
+
 // The week's deadlines are drawn ONCE, at run start, into G.modSchedule
 // (round → modifier). A deadline is a scheduled condition you can see coming,
 // so the work-week calendar names it a day or two ahead instead of only
 // warning that one is due — and the round itself then reads the same object
 // it advertised, never a fresh roll.
 //
-// SIM-SAFETY: drawing here keeps the number of RNG draws per run identical
-// (one per modifier round, still exactly one weightedSample each) and keeps
-// renderCalendar() free of Math.random, which is what the headless sim
-// depends on. Both the sim and the real game reach this through newGame().
+// Drawn as a shuffle bag: each enabled modifier can land on at most one
+// deadline round per run while the bag still has unused entries; the bag is
+// only refilled (allowing a repeat) once every entry has been drawn — so a
+// run with >= as many deadline rounds as pool entries never repeats at all,
+// and a run with more deadlines than pool entries repeats only after the
+// full pool has been used once. Weighted draws stay proportional to sheet
+// "Weight" among the entries still left in the bag (draw, remove, the next
+// draw's total renormalizes automatically since weightedSample recomputes
+// weights over the shrunken pool).
+//
+// SIM-SAFETY: drawing here keeps renderCalendar() free of Math.random, which
+// is what the headless sim's determinism rests on. The number of RNG draws
+// per run does shift versus the old plain-rollRoundModifier-per-round scheme
+// (a bag refill/removal step is not itself an RNG draw, but the sequence of
+// weightedSample outcomes differs), which is an accepted, seed-visible change
+// — it does not move WHEN in the run-start sequence the schedule is drawn
+// (still immediately after the G literal in newGame(), before mkDeck()).
 function rollModSchedule(){
   const sched={};
-  modifierRoundsList().forEach(r=>{
-    if(r<1||r>RCFG.length||sched[r])return;
-    const mod=rollRoundModifier();
-    if(mod)sched[r]=mod;
+  const rounds=modifierRoundsList().filter(r=>r>=1&&r<=RCFG.length);
+  if(!rounds.length)return sched;
+  const basePool=(typeof MODIFIERS!=='undefined'?MODIFIERS:[]).filter(m=>m.enabled);
+  if(!basePool.length)return sched;
+  let bag=[]; // unused-this-pass entries; refilled from basePool only when empty
+  rounds.forEach(r=>{
+    if(sched[r])return;
+    if(!bag.length)bag=[...basePool];
+    const picked=weightedSample(bag,1,m=>m.weight||1)[0];
+    if(!picked)return;
+    bag.splice(bag.indexOf(picked),1);
+    sched[r]=buildModFromPick(picked);
   });
   return sched;
 }
